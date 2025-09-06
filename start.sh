@@ -1,315 +1,493 @@
-#!/bin/ash
-### BPI-R4 OpenWRT USB-to-System Copy Script ###
-### Copies all files from USB Stick to /root/openWRT ###
-### Execute from USB: /mnt/usb/OpenWRT/start.cmd ###
+#!/bin/bash
+################################################################################
+### Universal Helper Functions - Bootstrap Installation Script
+### Initial setup and Installation for fresh Debian Sstems
+### Downloads and Configures the Helper Framework from Git Repository
+################################################################################
+### Project: Universal Helper Library
+### Version: 1.0.0
+### Author:  Mawage (Development Team)
+### Date:    2025-09-06
+### License: MIT
+### Usage:   bash start.sh [OPTIONS]
+################################################################################
 
+SCRIPT_VERSION="1.0.0"
+COMMIT="Bootstrap Installation Script for Helper Framework"
 
-### USB mounten                                     ###
-### mkdir -p /mnt/usb                               ###
-### mount /dev/sda1 /mnt/usb                        ###
+################################################################################
+### === CONFIGURATION === ###
+################################################################################
 
-### Script ausführbar machen                        ###
-### chmod +x /mnt/usb/OpenWRT/start.cmd             ###
+### Default values - can be overridden with arguments ###
+DEFAULT_INSTALL_PATH="$HOME/helper"
+DEFAULT_GIT_REPO="https://github.com/Tabes/helper.git"
+DEFAULT_BRANCH="main"
 
-### Windows-Zeilenendings entfernen
-### sed -i 's/\r$//' /mnt/usb/OpenWRT/start.cmd     ###
+### Runtime variables ###
+INSTALL_PATH=""
+GIT_REPO=""
+BRANCH=""
+SYSTEM_INSTALL=false
+VERBOSE=false
 
-### Script starten                                  ###
-### cd /mnt/usb/OpenWRT                             ###
-### ./start.cmd                                     ###
+################################################################################
+### === BASIC OUTPUT FUNCTIONS (Bootstrap versions) === ###
+################################################################################
 
+### Colors for bootstrap ###
+readonly NC="\033[0m"
+readonly RD="\033[0;31m"
+readonly GN="\033[0;32m"
+readonly YE="\033[1;33m"
+readonly BU="\033[0;34m"
+readonly CY="\033[0;36m"
 
-### === LOAD GLOBAL CONFIGURATION === ###
-GLOBAL_CONFIG="/root/openWRT/global.cfg"
-if [ ! -f "$GLOBAL_CONFIG" ]; then
-    echo "ERROR: Global configuration file not found: $GLOBAL_CONFIG"
-    echo "Please ensure global.cfg exists before running this script."
-    exit 1
-fi
-
-### Load global configuration ###
-. "$GLOBAL_CONFIG"
-
-set -e  ### Exit on any error ###
-
-### === LOGGING FUNCTIONS === ###
-log_message() {
-    MESSAGE="$1"
-    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$TIMESTAMP] $MESSAGE" | tee -a "$LOG_FILE"
-    echo ""
+### Simple print function for bootstrap ###
+print_info() {
+	echo -e "${CY}ℹ ${1}${NC}"
 }
 
-log_command() {
-    COMMAND="$1"
-    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$TIMESTAMP] EXECUTING: $COMMAND" | tee -a "$LOG_FILE"
+print_success() {
+	echo -e "${GN}✓ ${1}${NC}"
 }
 
-log_separator() {
-    echo "================================================================================" | tee -a "$LOG_FILE"
+print_error() {
+	echo -e "${RD}✗ ${1}${NC}" >&2
 }
 
-### === SCRIPT HEADER === ###
-clear
-log_separator
-log_message "BPI-R4 OpenWRT USB-to-System copy operation started"
-log_message "USB Source Path: $USB_BASE_PATH"
-log_message "Target Path: $TARGET_BASE_PATH"
-log_message "Helper Path: $HELPER_PATH"
-log_message "Log Path: $LOG_PATH"
-log_message "Log File: $LOG_FILE"
-log_message "Error Log: $ERROR_LOG"
-log_separator
-
-### === ENVIRONMENT CHECK === ###
-log_message "Checking environment..."
-
-### Check if running as root ###
-if [ "$(id -u)" != "0" ]; then
-    log_message "ERROR: This script must be run as root"
-    exit 1
-fi
-
-### Check if USB source exists ###
-if [ ! -d "$USB_BASE_PATH" ]; then
-    log_message "ERROR: USB source directory not found: $USB_BASE_PATH"
-    log_message "Please mount USB stick first:"
-    log_message "  mkdir -p /mnt/usb"
-    log_message "  mount /dev/sda1 /mnt/usb"
-    exit 1
-fi
-
-### Check if config source exists ###
-if [ ! -d "$CONFIG_SOURCE_PATH" ]; then
-    log_message "ERROR: Config source directory not found: $CONFIG_SOURCE_PATH"
-    log_message "Expected USB structure: $USB_BASE_PATH/config/"
-    exit 1
-fi
-
-### === CREATE TARGET DIRECTORIES === ###
-log_message "Creating target directories..."
-
-log_command "mkdir -p $TARGET_BASE_PATH"
-mkdir -p "$TARGET_BASE_PATH" || {
-    log_message "ERROR: Cannot create target directory: $TARGET_BASE_PATH"
-    exit 1
+print_warning() {
+	echo -e "${YE}⚠ ${1}${NC}"
 }
 
-log_command "mkdir -p $CONFIG_TARGET_PATH"
-mkdir -p "$CONFIG_TARGET_PATH" || {
-    log_message "ERROR: Cannot create config directory: $CONFIG_TARGET_PATH"
-    exit 1
+print_header() {
+	local line=$(printf "%80s" | tr ' ' '#')
+	echo -e "${BU}${line}${NC}"
+	echo -e "${BU}### ${1}${NC}"
+	echo -e "${BU}${line}${NC}"
 }
 
-log_command "mkdir -p $HELPER_PATH"
-mkdir -p "$HELPER_PATH" || {
-    log_message "ERROR: Cannot create helper directory: $HELPER_PATH"
-    exit 1
+################################################################################
+### === SYSTEM CHECK FUNCTIONS === ###
+################################################################################
+
+### Check system requirements ###
+check_requirements() {
+
+	print_header "System Requirements Check"
+	
+	local errors=0
+	
+	### Check OS ###
+	if [ -f /etc/debian_version ]; then
+		print_success "Debian system detected: $(cat /etc/debian_version)"
+	else
+		print_warning "Non-Debian system detected"
+	fi
+	
+	### Check essential commands ###
+	local required_commands=("git" "curl" "wget" "sudo")
+	
+	for cmd in "${required_commands[@]}"; do
+	
+		if command -v "$cmd" >/dev/null 2>&1; then
+			print_success "Command found: $cmd"
+		else
+			print_error "Command missing: $cmd"
+			((errors++))
+		fi
+		
+	done
+	
+	### Check internet connectivity ###
+	if ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
+		print_success "Internet connection: OK"
+	else
+		print_error "No internet connection"
+		((errors++))
+	fi
+	
+	### Check user permissions ###
+	if [ "$EUID" -eq 0 ]; then
+		print_warning "Running as root - will install system-wide"
+		SYSTEM_INSTALL=true
+	else
+		print_info "Running as user: $USER"
+		
+		### Check sudo access ###
+		if sudo -n true 2>/dev/null; then
+			print_success "Passwordless sudo available"
+		elif sudo -v 2>/dev/null; then
+			print_success "Sudo access available"
+		else
+			print_warning "No sudo access - limited installation"
+		fi
+	fi
+	
+	return $errors
+
 }
 
-log_command "mkdir -p $LOG_PATH"
-mkdir -p "$LOG_PATH" || {
-    log_message "ERROR: Cannot create log directory: $LOG_PATH"
-    exit 1
+### Install missing packages ###
+install_dependencies() {
+
+	print_header "Installing Dependencies"
+	
+	local packages=()
+	
+	### Check and collect missing packages ###
+	command -v git >/dev/null 2>&1 || packages+=("git")
+	command -v curl >/dev/null 2>&1 || packages+=("curl")
+	command -v wget >/dev/null 2>&1 || packages+=("wget")
+	command -v rsync >/dev/null 2>&1 || packages+=("rsync")
+	
+	if [ ${#packages[@]} -eq 0 ]; then
+		print_success "All dependencies installed"
+		return 0
+	fi
+	
+	print_info "Missing packages: ${packages[*]}"
+	
+	### Try to install ###
+	if [ "$EUID" -eq 0 ]; then
+		apt-get update && apt-get install -y "${packages[@]}"
+	elif sudo -n true 2>/dev/null; then
+		sudo apt-get update && sudo apt-get install -y "${packages[@]}"
+	else
+		print_error "Cannot install packages - need root or sudo access"
+		print_info "Please run: sudo apt-get install ${packages[*]}"
+		return 1
+	fi
+	
+	print_success "Dependencies installed"
+
 }
 
-log_command "mkdir -p $HELPER_PATH"
-mkdir -p "$HELPER_PATH" || {
-    log_message "ERROR: Cannot create helper directory: $HELPER_PATH"
-    exit 1
+################################################################################
+### === INSTALLATION FUNCTIONS === ###
+################################################################################
+
+### Download framework from Git ###
+download_framework() {
+
+	print_header "Downloading Framework"
+	
+	### Check if directory exists ###
+	if [ -d "$INSTALL_PATH" ]; then
+		print_warning "Directory exists: $INSTALL_PATH"
+		read -p "Remove and reinstall? [y/N]: " -n 1 -r
+		echo
+		
+		if [[ $REPLY =~ ^[Yy]$ ]]; then
+			rm -rf "$INSTALL_PATH"
+			print_success "Removed existing installation"
+		else
+			print_info "Keeping existing installation"
+			return 1
+		fi
+	fi
+	
+	### Clone repository ###
+	print_info "Cloning from: $GIT_REPO"
+	
+	if git clone -b "$BRANCH" "$GIT_REPO" "$INSTALL_PATH" 2>/dev/null; then
+		print_success "Repository cloned successfully"
+	else
+		print_error "Failed to clone repository"
+		print_info "Trying alternative download method..."
+		
+		### Try wget as fallback ###
+		local archive_url="${GIT_REPO%.git}/archive/refs/heads/${BRANCH}.tar.gz"
+		
+		if wget -q -O /tmp/helper.tar.gz "$archive_url"; then
+			mkdir -p "$INSTALL_PATH"
+			tar -xzf /tmp/helper.tar.gz -C "$INSTALL_PATH" --strip-components=1
+			rm /tmp/helper.tar.gz
+			print_success "Downloaded via wget"
+		else
+			print_error "All download methods failed"
+			return 1
+		fi
+	fi
+	
+	### Set permissions ###
+	chmod -R 755 "$INSTALL_PATH"
+	print_success "Framework downloaded to: $INSTALL_PATH"
+
 }
 
-log_command "mkdir -p $LOG_PATH"
-mkdir -p "$LOG_PATH" || {
-    log_message "ERROR: Cannot create log directory: $LOG_PATH"
-    exit 1
+### Setup directory structure ###
+setup_structure() {
+
+	print_header "Setting Up Directory Structure"
+	
+	cd "$INSTALL_PATH" || return 1
+	
+	### Create required directories ###
+	local dirs=(
+		"backup"
+		"configs"
+		"docs/help"
+		"logs"
+		"scripts/helper"
+		"utilities"
+	)
+	
+	for dir in "${dirs[@]}"; do
+	
+		if mkdir -p "$dir"; then
+			print_success "Created: $dir"
+		else
+			print_error "Failed to create: $dir"
+		fi
+		
+	done
+	
+	### Create default config if not exists ###
+	if [ ! -f "configs/project.conf" ]; then
+		cat > "configs/project.conf" << 'EOF'
+################################################################################
+### Project Configuration - Auto-generated
+################################################################################
+PROJECT_NAME="helper"
+PROJECT_VERSION="1.0.0"
+PROJECT_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
+
+### Directories ###
+BACKUP_DIR="$PROJECT_ROOT/backup"
+CONFIGS_DIR="$PROJECT_ROOT/configs"
+DOCS_DIR="$PROJECT_ROOT/docs"
+LOG_DIR="$PROJECT_ROOT/logs"
+SCRIPTS_DIR="$PROJECT_ROOT/scripts"
+UTILITIES_DIR="$PROJECT_ROOT/utilities"
+
+### Source helper configuration ###
+[ -f "$CONFIGS_DIR/helper.conf" ] && source "$CONFIGS_DIR/helper.conf"
+EOF
+		print_success "Created default project.conf"
+	fi
+
 }
 
-### === BACKUP EXISTING CONFIGURATION === ###
-if [ -d "$TARGET_BASE_PATH" ] && [ "$(ls -A $TARGET_BASE_PATH 2>/dev/null)" ]; then
-    log_message "Existing configuration found, creating backup..."
-    BACKUP_DIR="/root/backup/openWRT_$(date +%Y%m%d_%H%M%S)"
-    log_command "mkdir -p $BACKUP_DIR"
-    mkdir -p "$BACKUP_DIR"
-    
-    log_command "cp -r $TARGET_BASE_PATH/* $BACKUP_DIR/"
-    cp -r "$TARGET_BASE_PATH"/* "$BACKUP_DIR/" 2>/dev/null || true
-    log_message "Backup saved to: $BACKUP_DIR"
-fi
+### Configure system integration ###
+configure_system() {
 
-### === COPY CONFIG FILES FROM USB === ###
-log_separator
-log_message "Copying configuration files from USB..."
+	print_header "System Integration"
+	
+	local helper_script="$INSTALL_PATH/scripts/helper.sh"
+	
+	### Check if helper.sh exists ###
+	if [ ! -f "$helper_script" ]; then
+		print_warning "helper.sh not found - skipping system integration"
+		return 0
+	fi
+	
+	### Source helper to use cmd function ###
+	source "$helper_script"
+	
+	### Install system integration ###
+	if declare -f cmd >/dev/null 2>&1; then
+		print_info "Installing system commands..."
+		cmd --all "helper" "$helper_script"
+	else
+		print_warning "cmd function not available"
+	fi
+	
+	### Add to bashrc for user ###
+	local bashrc="$HOME/.bashrc"
+	local source_line="[ -f \"$helper_script\" ] && source \"$helper_script\""
+	
+	if ! grep -q "$helper_script" "$bashrc" 2>/dev/null; then
+		echo "" >> "$bashrc"
+		echo "### Universal Helper Functions ###" >> "$bashrc"
+		echo "$source_line" >> "$bashrc"
+		print_success "Added to $bashrc"
+	else
+		print_info "Already in $bashrc"
+	fi
 
-### List available files on USB ###
-log_message "Available files on USB:"
-ls -la "$CONFIG_SOURCE_PATH"/ | tee -a "$LOG_FILE" 2>/dev/null || {
-    log_message "WARNING: Cannot list files in $CONFIG_SOURCE_PATH"
 }
 
-echo ""
+################################################################################
+### === INTERACTIVE SETUP === ###
+################################################################################
 
-### Copy all .cfg files ###
-log_message "Copying .cfg files..."
-for cfg_file in "$CONFIG_SOURCE_PATH"/*.cfg; do
-    if [ -f "$cfg_file" ]; then
-        FILE_NAME=$(basename "$cfg_file")
-        log_command "cp $cfg_file $CONFIG_TARGET_PATH/$FILE_NAME"
-        
-        if cp "$cfg_file" "$CONFIG_TARGET_PATH/$FILE_NAME" 2>/dev/null; then
-            log_message "SUCCESS: Copied $FILE_NAME"
-        else
-            log_message "ERROR: Failed to copy $FILE_NAME"
-            echo "ERROR copying $FILE_NAME" >> "$ERROR_LOG"
-        fi
-    fi
-done
+### Interactive configuration ###
+interactive_setup() {
 
-### Copy start.cmd from config directory if exists ###
-if [ -f "$CONFIG_SOURCE_PATH/start.cmd" ]; then
-    log_command "cp $CONFIG_SOURCE_PATH/start.cmd $CONFIG_TARGET_PATH/start.cmd"
-    
-    if cp "$CONFIG_SOURCE_PATH/start.cmd" "$CONFIG_TARGET_PATH/start.cmd" 2>/dev/null; then
-        log_message "SUCCESS: Copied config/start.cmd"
-    else
-        log_message "ERROR: Failed to copy config/start.cmd"
-        echo "ERROR copying config/start.cmd" >> "$ERROR_LOG"
-    fi
-fi
+	print_header "Interactive Setup"
+	
+	### Get installation path ###
+	read -p "Installation path [$DEFAULT_INSTALL_PATH]: " user_path
+	INSTALL_PATH="${user_path:-$DEFAULT_INSTALL_PATH}"
+	
+	### Get Git repository ###
+	read -p "Git repository URL [$DEFAULT_GIT_REPO]: " user_repo
+	GIT_REPO="${user_repo:-$DEFAULT_GIT_REPO}"
+	
+	### Get branch ###
+	read -p "Git branch [$DEFAULT_BRANCH]: " user_branch
+	BRANCH="${user_branch:-$DEFAULT_BRANCH}"
+	
+	### Confirm settings ###
+	echo
+	print_info "Installation settings:"
+	print_info "  Path: $INSTALL_PATH"
+	print_info "  Repository: $GIT_REPO"
+	print_info "  Branch: $BRANCH"
+	echo
+	
+	read -p "Continue with installation? [Y/n]: " -n 1 -r
+	echo
+	
+	if [[ ! $REPLY =~ ^[Yy]$ ]] && [ -n "$REPLY" ]; then
+		print_warning "Installation cancelled"
+		exit 0
+	fi
 
-### Move start.cmd from config to root directory ###
-if [ -f "$CONFIG_TARGET_PATH/start.cmd" ]; then
-    log_command "mv $CONFIG_TARGET_PATH/start.cmd $TARGET_BASE_PATH/start.cmd"
-    
-    if mv "$CONFIG_TARGET_PATH/start.cmd" "$TARGET_BASE_PATH/start.cmd" 2>/dev/null; then
-        log_message "SUCCESS: Moved start.cmd to root directory"
-    else
-        log_message "ERROR: Failed to move start.cmd to root directory"
-        echo "ERROR moving start.cmd to root" >> "$ERROR_LOG"
-    fi
-fi
-
-### === MAKE FILES EXECUTABLE === ###
-log_separator
-log_message "Making files executable..."
-
-### Make all .cfg files executable ###
-for cfg_file in "$CONFIG_TARGET_PATH"/*.cfg; do
-    if [ -f "$cfg_file" ]; then
-        FILE_NAME=$(basename "$cfg_file")
-        log_command "chmod +x $cfg_file"
-        
-        if chmod +x "$cfg_file" 2>/dev/null; then
-            log_message "SUCCESS: Made $FILE_NAME executable"
-        else
-            log_message "WARNING: Could not make $FILE_NAME executable"
-        fi
-    fi
-done
-
-### Make start.cmd executable ###
-if [ -f "$TARGET_BASE_PATH/start.cmd" ]; then
-    log_command "chmod +x $TARGET_BASE_PATH/start.cmd"
-    
-    if chmod +x "$TARGET_BASE_PATH/start.cmd" 2>/dev/null; then
-        log_message "SUCCESS: Made start.cmd executable"
-    else
-        log_message "WARNING: Could not make start.cmd executable"
-    fi
-fi
-
-### === REMOVE WINDOWS LINE ENDINGS === ###
-log_separator
-log_message "Removing Windows line endings..."
-
-### Process all .cfg files ###
-for cfg_file in "$CONFIG_TARGET_PATH"/*.cfg; do
-    if [ -f "$cfg_file" ]; then
-        FILE_NAME=$(basename "$cfg_file")
-        log_command "sed -i 's/\r$//' $cfg_file"
-        
-        if sed -i 's/\r$//' "$cfg_file" 2>/dev/null; then
-            log_message "SUCCESS: Cleaned line endings in $FILE_NAME"
-        else
-            log_message "WARNING: Could not clean line endings in $FILE_NAME"
-        fi
-    fi
-done
-
-### Process start.cmd ###
-if [ -f "$TARGET_BASE_PATH/start.cmd" ]; then
-    log_command "sed -i 's/\r$//' $TARGET_BASE_PATH/start.cmd"
-    
-    if sed -i 's/\r$//' "$TARGET_BASE_PATH/start.cmd" 2>/dev/null; then
-        log_message "SUCCESS: Cleaned line endings in start.cmd"
-    else
-        log_message "WARNING: Could not clean line endings in start.cmd"
-    fi
-fi
-
-### === VERIFY COPIED FILES === ###
-log_separator
-log_message "Verifying copied files..."
-
-log_message "Files in target directory:"
-ls -la "$TARGET_BASE_PATH"/ | tee -a "$LOG_FILE" 2>/dev/null || {
-    log_message "WARNING: Cannot list target directory"
 }
 
-echo ""
+################################################################################
+### === MAIN EXECUTION === ###
+################################################################################
 
-log_message "Files in config directory:"
-ls -la "$CONFIG_TARGET_PATH"/ | tee -a "$LOG_FILE" 2>/dev/null || {
-    log_message "WARNING: Cannot list config directory"
+### Parse command line arguments ###
+parse_arguments() {
+
+	while [[ $# -gt 0 ]]; do
+	
+		case $1 in
+			--path|-p)
+				INSTALL_PATH="$2"
+				shift 2
+				;;
+				
+			--repo|-r)
+				GIT_REPO="$2"
+				shift 2
+				;;
+				
+			--branch|-b)
+				BRANCH="$2"
+				shift 2
+				;;
+				
+			--system|-s)
+				SYSTEM_INSTALL=true
+				INSTALL_PATH="/opt/helper"
+				shift
+				;;
+				
+			--verbose|-v)
+				VERBOSE=true
+				set -x
+				shift
+				;;
+				
+			--help|-h)
+				show_help
+				exit 0
+				;;
+				
+			*)
+				print_error "Unknown option: $1"
+				show_help
+				exit 1
+				;;
+		esac
+		
+	done
+	
+	### Set defaults if not provided ###
+	INSTALL_PATH="${INSTALL_PATH:-$DEFAULT_INSTALL_PATH}"
+	GIT_REPO="${GIT_REPO:-$DEFAULT_GIT_REPO}"
+	BRANCH="${BRANCH:-$DEFAULT_BRANCH}"
+
 }
 
-### === INSTALLATION SUMMARY === ###
-log_separator
-log_message "Copy Operation Summary"
-log_separator
+### Show help ###
+show_help() {
 
-if [ -f "$ERROR_LOG" ] && [ -s "$ERROR_LOG" ]; then
-    log_message "ERRORS OCCURRED during copy operation:"
-    cat "$ERROR_LOG" | tee -a "$LOG_FILE"
-    echo ""
-else
-    log_message "SUCCESS: All files copied successfully"
-fi
+	print_header "Universal Helper Functions - Bootstrap Installer"
+	echo
+	echo "Usage: bash start.sh [OPTIONS]"
+	echo
+	echo "Options:"
+	echo "  -p, --path PATH      Installation path (default: $DEFAULT_INSTALL_PATH)"
+	echo "  -r, --repo URL       Git repository URL"
+	echo "  -b, --branch NAME    Git branch (default: $DEFAULT_BRANCH)"
+	echo "  -s, --system         System-wide installation (/opt/helper)"
+	echo "  -v, --verbose        Verbose output"
+	echo "  -h, --help           Show this help"
+	echo
+	echo "Examples:"
+	echo "  bash start.sh                    # Interactive installation"
+	echo "  bash start.sh --path ~/custom    # Custom path"
+	echo "  bash start.sh --system           # System-wide installation"
+	echo
 
-log_message "Copy operation logs saved to: $LOG_FILE"
+}
 
-if [ -f "$ERROR_LOG" ] && [ -s "$ERROR_LOG" ]; then
-    log_message "Error log saved to: $ERROR_LOG"
-fi
+### Main function ###
+main() {
 
-log_message "Next steps:"
-log_message "1. Change to target directory: cd $TARGET_BASE_PATH"
-log_message "2. Execute configuration: ./start.cmd"
-log_message "3. Review logs for any errors"
+	print_header "Universal Helper Functions - Installation"
+	print_info "Version: $SCRIPT_VERSION"
+	echo
+	
+	### Parse arguments ###
+	parse_arguments "$@"
+	
+	### Interactive mode if no repo specified ###
+	if [ "$GIT_REPO" = "$DEFAULT_GIT_REPO" ]; then
+		interactive_setup
+	fi
+	
+	### Check requirements ###
+	if ! check_requirements; then
+		print_error "System requirements not met"
+		install_dependencies || exit 1
+	fi
+	
+	### Download framework ###
+	if ! download_framework; then
+		print_error "Failed to download framework"
+		exit 1
+	fi
+	
+	### Setup structure ###
+	if ! setup_structure; then
+		print_error "Failed to setup directory structure"
+		exit 1
+	fi
+	
+	### Configure system ###
+	if ! configure_system; then
+		print_warning "System integration incomplete"
+	fi
+	
+	### Success message ###
+	echo
+	print_header "Installation Complete"
+	print_success "Framework installed to: $INSTALL_PATH"
+	print_info "To use the helper functions:"
+	print_info "  1. Restart your shell or run: source ~/.bashrc"
+	print_info "  2. Type: helper --help"
+	echo
 
-log_separator
-log_message "Files successfully copied from USB to system"
-log_message "Ready for configuration execution"
-log_separator
+}
 
-### === OPTIONAL EXECUTION === ###
-echo ""
-echo "Copy operation completed!"
-read -p "Execute configuration now? (y/N): " EXEC_CHOICE
+### Cleanup on exit ###
+cleanup() {
 
-if [ "$EXEC_CHOICE" = "y" ] || [ "$EXEC_CHOICE" = "Y" ]; then
-    log_message "Starting configuration execution..."
-    
-    if [ -f "$TARGET_BASE_PATH/start.cmd" ]; then
-        cd "$TARGET_BASE_PATH"
-        log_command "./start.cmd"
-        ./start.cmd
-    else
-        log_message "ERROR: start.cmd not found in target directory"
-        exit 1
-    fi
-else
-    log_message "Configuration execution skipped by user"
-    echo "Manual execution: cd $TARGET_BASE_PATH && ./start.cmd"
-fi
+	if [ "$VERBOSE" = "true" ]; then
+		set +x
+	fi
+
+}
+
+### Set trap ###
+trap cleanup EXIT
+
+### Execute main ###
+main "$@"
