@@ -964,13 +964,13 @@ main() {
 	fi
 	
 	### Check requirements ###
-	if ! check_requirements; then
+	if ! setup --requirements; then
 		print --error "System requirements not met"
 		install_dependencies || exit 1
 	fi
 	
 	### Download framework ###
-	if ! download_framework; then
+	if ! setup --download; then
 		print --error "Failed to download framework"
 		exit 1
 	fi
@@ -981,11 +981,17 @@ main() {
 		exit 1
 	fi
 	
-	### Configure system ###
-	if ! configure_system; then
+	### Configure System ###
+	if ! setup --configure; then
 		print --warning "System integration incomplete"
 	fi
-	
+
+    ### Run complete setup ###
+    if ! setup --complete; then
+        print --error "Installation failed"
+        exit 1
+    fi
+
 	### Success message ###
 	echo
 	print --header "Installation Complete"
