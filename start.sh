@@ -51,131 +51,6 @@ readonly SYMBOL_ERROR="✗"
 readonly SYMBOL_WARNING="⚠"
 readonly SYMBOL_INFO="ℹ"
 
-### Bootstrap print function - simplified version of helper.sh print() ###
-print() {
-
-	### Local variables ###
-	local output_buffer=""
-	local current_color="${NC}"
-	local suppress_newline=false
-	local has_output=false
-	
-    ### Compatibility wrapper functions ###
-    print_info() {
-        print --info "$1"
-    }
-
-    print_success() {
-        print --success "$1"
-    }
-
-    print_error() {
-        print --error "$1"
-    }
-
-    print_warning() {
-        print --warning "$1"
-    }
-
-    print_header() {
-        print --header "$1"
-    }
-
-
-
-	### Parse and Execute Arguments sequentially ###
-	while [[ $# -gt 0 ]]; do
-	
-		case $1 in
-			### Special operations ###
-			--success)
-				printf "${GN}${SYMBOL_SUCCESS} $2${NC}\n"
-				has_output=true
-				suppress_newline=true
-				shift 2
-				;;
-				
-			--error)
-				printf "${RD}${SYMBOL_ERROR} $2${NC}\n" >&2
-				has_output=true
-				suppress_newline=true
-				shift 2
-				;;
-				
-			--warning)
-				printf "${YE}${SYMBOL_WARNING} $2${NC}\n"
-				has_output=true
-				suppress_newline=true
-				shift 2
-				;;
-				
-			--info)
-				printf "${CY}${SYMBOL_INFO} $2${NC}\n"
-				has_output=true
-				suppress_newline=true
-				shift 2
-				;;
-				
-			--header)
-				local line=$(printf "%80s" | tr ' ' '#')
-				printf "${BU}${line}\n### $2\n${line}${NC}\n"
-				has_output=true
-				suppress_newline=true
-				shift 2
-				;;
-				
-			--line)
-				local char="${2:-#}"
-				local line=$(printf "%80s" | tr ' ' "$char")
-				printf "${line}\n"
-				has_output=true
-				suppress_newline=true
-				shift 2
-				;;
-				
-			### Formatting options ###
-			--no-nl|-n)
-				suppress_newline=true
-				shift
-				;;
-				
-			--cr)
-				if [[ "${2}" =~ ^[0-9]+$ ]]; then
-					for ((i=0; i<$2; i++)); do
-						printf "\n"
-					done
-					shift 2
-				else
-					printf "\n"
-					shift
-				fi
-				has_output=true
-				suppress_newline=true
-				;;
-				
-			### Color detection ###
-			NC|RD|GN|YE|BU|CY|WH|MG)
-				current_color="${!1}"
-				shift
-				;;
-				
-			### Regular text ###
-			*)
-				### Apply color ###
-				printf "${current_color}$1${NC}"
-				has_output=true
-				shift
-				;;
-		esac
-		
-	done
-	
-	### Add standard newline unless suppressed ###
-	if [ "$has_output" = "true" ] && [ "$suppress_newline" = "false" ]; then
-		printf "\n"
-	fi
-	
-}
 
 ################################################################################
 ### === SYSTEM CHECK FUNCTIONS === ###
@@ -272,6 +147,7 @@ install_dependencies() {
 	print_success "Dependencies installed"
 
 }
+
 
 ################################################################################
 ### === INSTALLATION FUNCTIONS === ###
@@ -418,6 +294,7 @@ configure_system() {
 
 }
 
+
 ################################################################################
 ### === INTERACTIVE SETUP === ###
 ################################################################################
@@ -456,6 +333,138 @@ interactive_setup() {
 	fi
 
 }
+
+
+################################################################################
+### === STATUS & NOTIFICATION FUNCTIONS, LOGGING === ###
+################################################################################
+
+### Bootstrap Print Function - simplified Version of helper.sh print() ###
+print() {
+
+	### Local variables ###
+	local output_buffer=""
+	local current_color="${NC}"
+	local suppress_newline=false
+	local has_output=false
+	
+    ### Compatibility wrapper functions ###
+    print_info() {
+        print --info "$1"
+    }
+
+    print_success() {
+        print --success "$1"
+    }
+
+    print_error() {
+        print --error "$1"
+    }
+
+    print_warning() {
+        print --warning "$1"
+    }
+
+    print_header() {
+        print --header "$1"
+    }
+
+
+
+	### Parse and Execute Arguments sequentially ###
+	while [[ $# -gt 0 ]]; do
+	
+		case $1 in
+			### Special operations ###
+			--success)
+				printf "${GN}${SYMBOL_SUCCESS} $2${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--error)
+				printf "${RD}${SYMBOL_ERROR} $2${NC}\n" >&2
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--warning)
+				printf "${YE}${SYMBOL_WARNING} $2${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--info)
+				printf "${CY}${SYMBOL_INFO} $2${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--header)
+				local line=$(printf "%80s" | tr ' ' '#')
+				printf "${BU}${line}\n### $2\n${line}${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--line)
+				local char="${2:-#}"
+				local line=$(printf "%80s" | tr ' ' "$char")
+				printf "${line}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			### Formatting options ###
+			--no-nl|-n)
+				suppress_newline=true
+				shift
+				;;
+				
+			--cr)
+				if [[ "${2}" =~ ^[0-9]+$ ]]; then
+					for ((i=0; i<$2; i++)); do
+						printf "\n"
+					done
+					shift 2
+				else
+					printf "\n"
+					shift
+				fi
+				has_output=true
+				suppress_newline=true
+				;;
+				
+			### Color detection ###
+			NC|RD|GN|YE|BU|CY|WH|MG)
+				current_color="${!1}"
+				shift
+				;;
+				
+			### Regular text ###
+			*)
+				### Apply color ###
+				printf "${current_color}$1${NC}"
+				has_output=true
+				shift
+				;;
+		esac
+		
+	done
+	
+	### Add standard newline unless suppressed ###
+	if [ "$has_output" = "true" ] && [ "$suppress_newline" = "false" ]; then
+		printf "\n"
+	fi
+	
+}
+
 
 ################################################################################
 ### === MAIN EXECUTION === ###
