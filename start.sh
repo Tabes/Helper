@@ -13,7 +13,7 @@
 ################################################################################
 
 SCRIPT_VERSION="1.0.0"
-COMMIT="Bootstrap installation script for helper framework"
+COMMIT="Bootstrap Installation Script for Helper Framework"
 
 ################################################################################
 ### === CONFIGURATION === ###
@@ -339,7 +339,7 @@ interactive_setup() {
 ### === STATUS & NOTIFICATION FUNCTIONS, LOGGING === ###
 ################################################################################
 
-### Bootstrap Print Function - simplified Version of helper.sh print() ###
+### Bootstrap print function - simplified version of helper.sh print() ###
 print() {
 
 	### Local variables ###
@@ -348,29 +348,31 @@ print() {
 	local suppress_newline=false
 	local has_output=false
 	
-    ### Compatibility wrapper functions ###
-    print_info() {
-        print --info "$1"
-    }
-
-    print_success() {
-        print --success "$1"
-    }
-
-    print_error() {
-        print --error "$1"
-    }
-
-    print_warning() {
-        print --warning "$1"
-    }
-
-    print_header() {
-        print --header "$1"
-    }
-
-
-
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_print_info() {
+		print --info "$1"
+	}
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_print_success() {
+		print --success "$1"
+	}
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_print_error() {
+		print --error "$1"
+	}
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_print_warning() {
+		print --warning "$1"
+	}
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_print_header() {
+		print --header "$1"
+	}
+	
 	### Parse and Execute Arguments sequentially ###
 	while [[ $# -gt 0 ]]; do
 	
@@ -527,7 +529,7 @@ parse_arguments() {
 ### Show help ###
 show_help() {
 
-	print_header "Universal Helper Functions - Bootstrap Installer"
+	print --header "Universal Helper Functions - Bootstrap Installer"
 	echo
 	echo "Usage: bash start.sh [OPTIONS]"
 	echo
@@ -550,8 +552,8 @@ show_help() {
 ### Main function ###
 main() {
 
-	print_header "Universal Helper Functions - Installation"
-	print_info "Version: $SCRIPT_VERSION"
+	print --header "Universal Helper Functions - Installation"
+	print --info "Version: $SCRIPT_VERSION"
 	echo
 	
 	### Parse arguments ###
@@ -564,34 +566,34 @@ main() {
 	
 	### Check requirements ###
 	if ! check_requirements; then
-		print_error "System requirements not met"
+		print --error "System requirements not met"
 		install_dependencies || exit 1
 	fi
 	
 	### Download framework ###
 	if ! download_framework; then
-		print_error "Failed to download framework"
+		print --error "Failed to download framework"
 		exit 1
 	fi
 	
 	### Setup structure ###
 	if ! setup_structure; then
-		print_error "Failed to setup directory structure"
+		print --error "Failed to setup directory structure"
 		exit 1
 	fi
 	
 	### Configure system ###
 	if ! configure_system; then
-		print_warning "System integration incomplete"
+		print --warning "System integration incomplete"
 	fi
 	
 	### Success message ###
 	echo
-	print_header "Installation Complete"
-	print_success "Framework installed to: $INSTALL_PATH"
-	print_info "To use the helper functions:"
-	print_info "  1. Restart your shell or run: source ~/.bashrc"
-	print_info "  2. Type: helper --help"
+	print --header "Installation Complete"
+	print --success "Framework installed to: $INSTALL_PATH"
+	print --info "To use the helper functions:"
+	print --info "  1. Restart your shell or run: source ~/.bashrc"
+	print --info "  2. Type: helper --help"
 	echo
 
 }
