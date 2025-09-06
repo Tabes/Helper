@@ -202,59 +202,6 @@ download_framework() {
 
 }
 
-### Setup directory structure ###
-setup_structure() {
-
-	print_header "Setting Up Directory Structure"
-	
-	cd "$INSTALL_PATH" || return 1
-	
-	### Create required directories ###
-	local dirs=(
-		"backup"
-		"configs"
-		"docs/help"
-		"logs"
-		"scripts/helper"
-		"utilities"
-	)
-	
-	for dir in "${dirs[@]}"; do
-	
-		if mkdir -p "$dir"; then
-			print_success "Created: $dir"
-		else
-			print_error "Failed to create: $dir"
-		fi
-		
-	done
-	
-	### Create default config if not exists ###
-	if [ ! -f "configs/project.conf" ]; then
-		cat > "configs/project.conf" << 'EOF'
-################################################################################
-### Project Configuration - Auto-generated
-################################################################################
-PROJECT_NAME="helper"
-PROJECT_VERSION="1.0.0"
-PROJECT_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
-
-### Directories ###
-BACKUP_DIR="$PROJECT_ROOT/backup"
-CONFIGS_DIR="$PROJECT_ROOT/configs"
-DOCS_DIR="$PROJECT_ROOT/docs"
-LOG_DIR="$PROJECT_ROOT/logs"
-SCRIPTS_DIR="$PROJECT_ROOT/scripts"
-UTILITIES_DIR="$PROJECT_ROOT/utilities"
-
-### Source helper configuration ###
-[ -f "$CONFIGS_DIR/helper.conf" ] && source "$CONFIGS_DIR/helper.conf"
-EOF
-		print_success "Created default project.conf"
-	fi
-
-}
-
 ### Configure system integration ###
 configure_system() {
 
@@ -299,7 +246,7 @@ configure_system() {
 ### === INSTALLATION SETUP === ###
 ################################################################################
 
-### Setup Function with Interactive and Parameter Modes ###
+### Setup Function with complete Installation Workflow ###
 setup() {
     
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
@@ -337,6 +284,256 @@ setup() {
         
     }
     
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _setup_check_requirements() {
+        
+        print --header "System Requirements Check"
+        
+        local errors=0
+        
+        ### Check OS ###
+        if [ -f /etc/debian_version ]; then
+            print --success "Debian system detected: $(cat /etc/debian_version)"
+        else
+            print --warning "Non-Debian system detected"
+        fi
+        
+        ### Check essential commands ###
+        local required_commands=("git" "curl" "wget" "sudo")
+        
+        for cmd in "${required_commands[@]}"; do
+        
+            if command -v "$cmd" >/dev/null 2>&1; then
+                print --success "Command found: $cmd"
+            else
+                print --error "Command missing: $cmd"
+                ((errors++))
+            fi
+            
+        done
+        
+        ### Check internet connectivity ###
+        if ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
+            print --success "Internet connection: OK"
+        else
+            print --error "No internet connection"
+            ((errors++))
+        fi
+        
+        ### Check user permissions ###
+        if [ "$EUID" -eq 0 ]; then
+            print --warning "Running as root - will install system-wide"
+            SYSTEM_INSTALL=true
+        else
+            print --info "Running as user: $USER"
+            
+            ### Check sudo access ###
+            if sudo -n true 2>/dev/null; then
+                print --success "Passwordless sudo available"
+            elif sudo -v 2>/dev/null; then
+                print --success "Sudo access available"
+            else
+                print --warning "No sudo access - limited installation"
+            fi
+        fi
+        
+        return $errors
+        
+    }
+    
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _setup_install_dependencies() {
+        
+        print --header "Installing Dependencies"
+        
+        local packages=()
+        
+        ### Check and collect missing packages ###
+        command -v git >/dev/null 2>&1 || packages+=("git")
+        command -v curl >/dev/null 2>&1 || packages+=("curl")
+        command -v wget >/dev/null 2>&1 || packages+=("wget")
+        command -v rsync >/dev/null 2>&1 || packages+=("rsync")
+        
+        if [ ${#packages[@]} -eq 0 ]; then
+            print --success "All dependencies installed"
+            return 0
+        fi
+        
+        print --info "Missing packages: ${packages[*]}"
+        
+        ### Try to install ###
+        if [ "$EUID" -eq 0 ]; then
+            apt-get update && apt-get install -y "${packages[@]}"
+        elif sudo -n true 2>/dev/null; then
+            sudo apt-get update && sudo apt-get install -y "${packages[@]}"
+        else
+            print --error "Cannot install packages - need root or sudo access"
+            print --info "Please run: sudo apt-get install ${packages[*]}"
+            return 1
+        fi
+        
+        print --success "Dependencies installed"
+        
+    }
+    
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _setup_download_framework() {
+        
+        print --header "Downloading Framework"
+        
+        ### Check if directory exists ###
+        if [ -d "$INSTALL_PATH" ]; then
+            print --warning "Directory exists: $INSTALL_PATH"
+            read -p "Remove and reinstall? [y/N]: " -n 1 -r
+            echo
+            
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                rm -rf "$INSTALL_PATH"
+                print --success "Removed existing installation"
+            else
+                print --info "Keeping existing installation"
+                return 1
+            fi
+        fi
+        
+        ### Clone repository ###
+        print --info "Cloning from: $GIT_REPO"
+        
+        if git clone -b "$BRANCH" "$GIT_REPO" "$INSTALL_PATH" 2>/dev/null; then
+            print --success "Repository cloned successfully"
+        else
+            print --error "Failed to clone repository"
+            print --info "Trying alternative download method..."
+            
+            ### Try wget as fallback ###
+            local archive_url="${GIT_REPO%.git}/archive/refs/heads/${BRANCH}.tar.gz"
+            
+            if wget -q -O /tmp/helper.tar.gz "$archive_url"; then
+                mkdir -p "$INSTALL_PATH"
+                tar -xzf /tmp/helper.tar.gz -C "$INSTALL_PATH" --strip-components=1
+                rm /tmp/helper.tar.gz
+                print --success "Downloaded via wget"
+            else
+                print --error "All download methods failed"
+                return 1
+            fi
+        fi
+        
+        ### Set permissions ###
+        chmod -R 755 "$INSTALL_PATH"
+        print --success "Framework downloaded to: $INSTALL_PATH"
+        
+    }
+    
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _setup_structure() {
+        
+        print --header "Setting Up Directory Structure"
+        
+        cd "$INSTALL_PATH" || return 1
+        
+        ### Create required directories ###
+        local dirs=(
+            "backup"
+            "configs"
+            "docs/help"
+            "logs"
+            "scripts/helper"
+            "utilities"
+        )
+        
+        for dir in "${dirs[@]}"; do
+        
+            if mkdir -p "$dir"; then
+                print --success "Created: $dir"
+            else
+                print --error "Failed to create: $dir"
+            fi
+            
+        done
+        
+        ### Create default config if not exists ###
+        if [ ! -f "configs/project.conf" ]; then
+            cat > "configs/project.conf" << 'EOF'
+################################################################################
+### Project Configuration - Auto-generated
+################################################################################
+PROJECT_NAME="helper"
+PROJECT_VERSION="1.0.0"
+PROJECT_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
+
+### Directories ###
+BACKUP_DIR="$PROJECT_ROOT/backup"
+CONFIGS_DIR="$PROJECT_ROOT/configs"
+DOCS_DIR="$PROJECT_ROOT/docs"
+LOG_DIR="$PROJECT_ROOT/logs"
+SCRIPTS_DIR="$PROJECT_ROOT/scripts"
+UTILITIES_DIR="$PROJECT_ROOT/utilities"
+
+### Source helper configuration ###
+[ -f "$CONFIGS_DIR/helper.conf" ] && source "$CONFIGS_DIR/helper.conf"
+EOF
+            print --success "Created default project.conf"
+        fi
+        
+    }
+    
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _setup_configure_system() {
+        
+        print --header "System Integration"
+        
+        local helper_script="$INSTALL_PATH/scripts/helper.sh"
+        
+        ### Check if helper.sh exists ###
+        if [ ! -f "$helper_script" ]; then
+            print --warning "helper.sh not found - skipping system integration"
+            return 0
+        fi
+        
+        ### Source helper to use cmd function ###
+        source "$helper_script"
+        
+        ### Install system integration ###
+        if declare -f cmd >/dev/null 2>&1; then
+            print --info "Installing system commands..."
+            cmd --all "helper" "$helper_script"
+        else
+            print --warning "cmd function not available"
+        fi
+        
+        ### Add to bashrc for user ###
+        local bashrc="$HOME/.bashrc"
+        local source_line="[ -f \"$helper_script\" ] && source \"$helper_script\""
+        
+        if ! grep -q "$helper_script" "$bashrc" 2>/dev/null; then
+            echo "" >> "$bashrc"
+            echo "### Universal Helper Functions ###" >> "$bashrc"
+            echo "$source_line" >> "$bashrc"
+            print --success "Added to $bashrc"
+        else
+            print --info "Already in $bashrc"
+        fi
+        
+    }
+    
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _setup_complete() {
+        
+        ### Run complete installation workflow ###
+        _setup_check_requirements || {
+            print --error "System requirements not met"
+            _setup_install_dependencies || return 1
+        }
+        
+        _setup_download_framework || return 1
+        _setup_structure || return 1
+        _setup_configure_system || print --warning "System integration incomplete"
+        
+        return 0
+        
+    }
+    
     ### Parse arguments ###
     while [[ $# -gt 0 ]]; do
         
@@ -346,13 +543,49 @@ setup() {
                 shift
                 ;;
                 
+            --check|-c)
+                _setup_check_requirements
+                return $?
+                ;;
+                
+            --dependencies|-d)
+                _setup_install_dependencies
+                shift
+                ;;
+                
+            --download)
+                _setup_download_framework
+                shift
+                ;;
+                
+            --structure|-s)
+                _setup_structure
+                shift
+                ;;
+                
+            --configure)
+                _setup_configure_system
+                shift
+                ;;
+                
+            --complete)
+                _setup_complete
+                shift
+                ;;
+                
             --help|-h)
                 print --header "Setup Function Help"
                 echo "Usage: setup [OPTIONS]"
                 echo
                 echo "Options:"
                 echo "  --interactive, -i    Interactive setup mode"
-                echo "  --help, -h          Show this help"
+                echo "  --check, -c          Check system requirements"
+                echo "  --dependencies, -d   Install missing dependencies"
+                echo "  --download           Download framework from repository"
+                echo "  --structure, -s      Create directory structure"
+                echo "  --configure          Configure system integration"
+                echo "  --complete           Run complete installation"
+                echo "  --help, -h           Show this help"
                 return 0
                 ;;
                 
@@ -363,11 +596,6 @@ setup() {
         esac
         
     done
-    
-    ### Default to interactive if no arguments ###
-    if [ $# -eq 0 ]; then
-        _setup_interactive
-    fi
     
 }
 
@@ -748,8 +976,8 @@ main() {
 	fi
 	
 	### Setup structure ###
-	if ! setup_structure; then
-		print --error "Failed to setup directory structure"
+	if ! setup --structure; then
+		print --error "Failed to setup Directory Structure"
 		exit 1
 	fi
 	
