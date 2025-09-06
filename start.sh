@@ -13,7 +13,7 @@
 ################################################################################
 
 SCRIPT_VERSION="1.0.0"
-COMMIT="Bootstrap Installation Script for Helper Framework"
+COMMIT="Bootstrap installation script for helper framework"
 
 ################################################################################
 ### === CONFIGURATION === ###
@@ -21,7 +21,7 @@ COMMIT="Bootstrap Installation Script for Helper Framework"
 
 ### Default values - can be overridden with arguments ###
 DEFAULT_INSTALL_PATH="$HOME/helper"
-DEFAULT_GIT_REPO="https://github.com/Tabes/helper.git"
+DEFAULT_GIT_REPO="https://github.com/USERNAME/helper-framework.git"
 DEFAULT_BRANCH="main"
 
 ### Runtime variables ###
@@ -42,29 +42,139 @@ readonly GN="\033[0;32m"
 readonly YE="\033[1;33m"
 readonly BU="\033[0;34m"
 readonly CY="\033[0;36m"
+readonly WH="\033[1;37m"
+readonly MG="\033[0;35m"
 
-### Simple print function for bootstrap ###
-print_info() {
-	echo -e "${CY}ℹ ${1}${NC}"
-}
+### Unicode symbols ###
+readonly SYMBOL_SUCCESS="✓"
+readonly SYMBOL_ERROR="✗"
+readonly SYMBOL_WARNING="⚠"
+readonly SYMBOL_INFO="ℹ"
 
-print_success() {
-	echo -e "${GN}✓ ${1}${NC}"
-}
+### Bootstrap print function - simplified version of helper.sh print() ###
+print() {
 
-print_error() {
-	echo -e "${RD}✗ ${1}${NC}" >&2
-}
+	### Local variables ###
+	local output_buffer=""
+	local current_color="${NC}"
+	local suppress_newline=false
+	local has_output=false
+	
+    ### Compatibility wrapper functions ###
+    print_info() {
+        print --info "$1"
+    }
 
-print_warning() {
-	echo -e "${YE}⚠ ${1}${NC}"
-}
+    print_success() {
+        print --success "$1"
+    }
 
-print_header() {
-	local line=$(printf "%80s" | tr ' ' '#')
-	echo -e "${BU}${line}${NC}"
-	echo -e "${BU}### ${1}${NC}"
-	echo -e "${BU}${line}${NC}"
+    print_error() {
+        print --error "$1"
+    }
+
+    print_warning() {
+        print --warning "$1"
+    }
+
+    print_header() {
+        print --header "$1"
+    }
+
+
+
+	### Parse and Execute Arguments sequentially ###
+	while [[ $# -gt 0 ]]; do
+	
+		case $1 in
+			### Special operations ###
+			--success)
+				printf "${GN}${SYMBOL_SUCCESS} $2${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--error)
+				printf "${RD}${SYMBOL_ERROR} $2${NC}\n" >&2
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--warning)
+				printf "${YE}${SYMBOL_WARNING} $2${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--info)
+				printf "${CY}${SYMBOL_INFO} $2${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--header)
+				local line=$(printf "%80s" | tr ' ' '#')
+				printf "${BU}${line}\n### $2\n${line}${NC}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			--line)
+				local char="${2:-#}"
+				local line=$(printf "%80s" | tr ' ' "$char")
+				printf "${line}\n"
+				has_output=true
+				suppress_newline=true
+				shift 2
+				;;
+				
+			### Formatting options ###
+			--no-nl|-n)
+				suppress_newline=true
+				shift
+				;;
+				
+			--cr)
+				if [[ "${2}" =~ ^[0-9]+$ ]]; then
+					for ((i=0; i<$2; i++)); do
+						printf "\n"
+					done
+					shift 2
+				else
+					printf "\n"
+					shift
+				fi
+				has_output=true
+				suppress_newline=true
+				;;
+				
+			### Color detection ###
+			NC|RD|GN|YE|BU|CY|WH|MG)
+				current_color="${!1}"
+				shift
+				;;
+				
+			### Regular text ###
+			*)
+				### Apply color ###
+				printf "${current_color}$1${NC}"
+				has_output=true
+				shift
+				;;
+		esac
+		
+	done
+	
+	### Add standard newline unless suppressed ###
+	if [ "$has_output" = "true" ] && [ "$suppress_newline" = "false" ]; then
+		printf "\n"
+	fi
+	
 }
 
 ################################################################################
