@@ -296,42 +296,79 @@ configure_system() {
 
 
 ################################################################################
-### === INTERACTIVE SETUP === ###
+### === INSTALLATION SETUP === ###
 ################################################################################
 
-### Interactive configuration ###
-interactive_setup() {
-
-	print_header "Interactive Setup"
-	
-	### Get installation path ###
-	read -p "Installation path [$DEFAULT_INSTALL_PATH]: " user_path
-	INSTALL_PATH="${user_path:-$DEFAULT_INSTALL_PATH}"
-	
-	### Get Git repository ###
-	read -p "Git repository URL [$DEFAULT_GIT_REPO]: " user_repo
-	GIT_REPO="${user_repo:-$DEFAULT_GIT_REPO}"
-	
-	### Get branch ###
-	read -p "Git branch [$DEFAULT_BRANCH]: " user_branch
-	BRANCH="${user_branch:-$DEFAULT_BRANCH}"
-	
-	### Confirm settings ###
-	echo
-	print_info "Installation settings:"
-	print_info "  Path: $INSTALL_PATH"
-	print_info "  Repository: $GIT_REPO"
-	print_info "  Branch: $BRANCH"
-	echo
-	
-	read -p "Continue with installation? [Y/n]: " -n 1 -r
-	echo
-	
-	if [[ ! $REPLY =~ ^[Yy]$ ]] && [ -n "$REPLY" ]; then
-		print_warning "Installation cancelled"
-		exit 0
-	fi
-
+### Setup Function with Interactive and Parameter Modes ###
+setup() {
+    
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _setup_interactive() {
+        
+        print --header "Interactive Setup"
+        
+        ### Get installation path ###
+        read -p "Installation path [$DEFAULT_INSTALL_PATH]: " user_path
+        INSTALL_PATH="${user_path:-$DEFAULT_INSTALL_PATH}"
+        
+        ### Get Git repository ###
+        read -p "Git repository URL [$DEFAULT_GIT_REPO]: " user_repo
+        GIT_REPO="${user_repo:-$DEFAULT_GIT_REPO}"
+        
+        ### Get branch ###
+        read -p "Git branch [$DEFAULT_BRANCH]: " user_branch
+        BRANCH="${user_branch:-$DEFAULT_BRANCH}"
+        
+        ### Confirm settings ###
+        echo
+        print --info "Installation settings:"
+        print --info "  Path: $INSTALL_PATH"
+        print --info "  Repository: $GIT_REPO"
+        print --info "  Branch: $BRANCH"
+        echo
+        
+        read -p "Continue with installation? [Y/n]: " -n 1 -r
+        echo
+        
+        if [[ ! $REPLY =~ ^[Yy]$ ]] && [ -n "$REPLY" ]; then
+            print --warning "Installation cancelled"
+            exit 0
+        fi
+        
+    }
+    
+    ### Parse arguments ###
+    while [[ $# -gt 0 ]]; do
+        
+        case $1 in
+            --interactive|-i)
+                _setup_interactive
+                shift
+                ;;
+                
+            --help|-h)
+                print --header "Setup Function Help"
+                echo "Usage: setup [OPTIONS]"
+                echo
+                echo "Options:"
+                echo "  --interactive, -i    Interactive setup mode"
+                echo "  --help, -h          Show this help"
+                return 0
+                ;;
+                
+            *)
+                print --error "Unknown setup option: $1"
+                return 1
+                ;;
+        esac
+        
+    done
+    
+    ### Default to interactive if no arguments ###
+    if [ $# -eq 0 ]; then
+        _setup_interactive
+    fi
+    
 }
 
 
@@ -469,6 +506,163 @@ print() {
 
 
 ################################################################################
+### === INTERACTIVE DISPLAY FUNCTIONS === ###
+################################################################################
+
+### Show help ###
+show_help() {
+
+	print --header "Universal Helper Functions - Bootstrap Installer"
+	echo
+	echo "Usage: bash start.sh [OPTIONS]"
+	echo
+	echo "Options:"
+	echo "  -p, --path PATH      Installation path (default: $DEFAULT_INSTALL_PATH)"
+	echo "  -r, --repo URL       Git repository URL"
+	echo "  -b, --branch NAME    Git branch (default: $DEFAULT_BRANCH)"
+	echo "  -s, --system         System-wide installation (/opt/helper)"
+	echo "  -v, --verbose        Verbose output"
+	echo "  -h, --help           Show this help"
+	echo
+	echo "Examples:"
+	echo "  bash start.sh                    # Interactive installation"
+	echo "  bash start.sh --path ~/custom    # Custom path"
+	echo "  bash start.sh --system           # System-wide installation"
+	echo
+
+}
+
+### Unified show function for interactive displays and menus ###
+show() {
+
+	### Local variables ###
+	local operation=""
+	local title=""
+	local content=""
+	local options=()
+	local selected=0
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_show_menu() {
+		local menu_title="$1"
+		shift
+		local menu_options=("$@")
+		local choice
+		
+		### Display menu ###
+		print --header "$menu_title"
+		echo
+		
+		### Display options ###
+		local i=1
+		for option in "${menu_options[@]}"; do
+			printf "  [%d]  %s\n" "$i" "$option"
+			((i++))
+		done
+		printf "  [0]  Exit\n"
+		echo
+		
+		### Get user choice ###
+		read -p "Please select [0-$((i-1))]: " choice
+		echo "$choice"
+	}
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_show_spinner() {
+		local pid="$1"
+		local delay="${2:-0.1}"
+		local spinstr='|/-\'
+		
+		while kill -0 "$pid" 2>/dev/null; do
+			local temp=${spinstr#?}
+			printf " [%c]  " "$spinstr"
+			local spinstr=$temp${spinstr%"$temp"}
+			sleep $delay
+			printf "\b\b\b\b\b\b"
+		done
+		printf "    \b\b\b\b"
+	}
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_show_progress() {
+		local current="$1"
+		local total="$2"
+		local description="${3:-Progress}"
+		local width="${4:-50}"
+		
+		local percent=$((current * 100 / total))
+		local filled=$((width * current / total))
+		
+		printf "\r["
+		printf "%${filled}s" | tr ' ' '='
+		printf "%$((width - filled))s" | tr ' ' '-'
+		printf "] %3d%% %s" "$percent" "$description"
+		
+		[ "$current" -eq "$total" ] && echo
+	}
+	
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_show_version() {
+		print --header "Universal Helper Functions - Bootstrap Installer"
+		printf "  Version:  %s\n" "$SCRIPT_VERSION"
+		printf "  Commit:   %s\n" "$COMMIT"
+		printf "  Author:   Mawage (Development Team)\n"
+		printf "  License:  MIT\n"
+	}
+	
+	### Parse arguments ###
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			--menu)
+				shift
+				title="$1"
+				shift
+				while [[ $# -gt 0 ]] && [[ ! "$1" =~ ^-- ]]; do
+					options+=("$1")
+					shift
+				done
+				_show_menu "$title" "${options[@]}"
+				return $?
+				;;
+				
+			--spinner)
+				_show_spinner "$2" "${3:-0.1}"
+				shift $#
+				;;
+				
+			--progress)
+				_show_progress "$2" "$3" "${4:-Progress}" "${5:-50}"
+				shift $#
+				;;
+				
+			--version)
+				_show_version
+				shift
+				;;
+				
+			--help|-h)
+				print --header "Show Function Help"
+				echo "Usage: show [OPERATION] [OPTIONS]"
+				echo
+				echo "Operations:"
+				echo "  --menu TITLE OPTIONS...  Display interactive menu"
+				echo "  --spinner PID [DELAY]    Show progress spinner"
+				echo "  --progress CUR TOT [MSG] Show progress bar"
+				echo "  --version                Show version info"
+				echo "  --help, -h               Show this help"
+				return 0
+				;;
+				
+			*)
+				print --error "Unknown show operation: $1"
+				return 1
+				;;
+		esac
+	done
+}
+
+
+################################################################################
 ### === MAIN EXECUTION === ###
 ################################################################################
 
@@ -526,29 +720,6 @@ parse_arguments() {
 
 }
 
-### Show help ###
-show_help() {
-
-	print --header "Universal Helper Functions - Bootstrap Installer"
-	echo
-	echo "Usage: bash start.sh [OPTIONS]"
-	echo
-	echo "Options:"
-	echo "  -p, --path PATH      Installation path (default: $DEFAULT_INSTALL_PATH)"
-	echo "  -r, --repo URL       Git repository URL"
-	echo "  -b, --branch NAME    Git branch (default: $DEFAULT_BRANCH)"
-	echo "  -s, --system         System-wide installation (/opt/helper)"
-	echo "  -v, --verbose        Verbose output"
-	echo "  -h, --help           Show this help"
-	echo
-	echo "Examples:"
-	echo "  bash start.sh                    # Interactive installation"
-	echo "  bash start.sh --path ~/custom    # Custom path"
-	echo "  bash start.sh --system           # System-wide installation"
-	echo
-
-}
-
 ### Main function ###
 main() {
 
@@ -559,9 +730,9 @@ main() {
 	### Parse arguments ###
 	parse_arguments "$@"
 	
-	### Interactive mode if no repo specified ###
+	### Interactive Mode if no Repository specified ###
 	if [ "$GIT_REPO" = "$DEFAULT_GIT_REPO" ]; then
-		interactive_setup
+		setup --interactive
 	fi
 	
 	### Check requirements ###
