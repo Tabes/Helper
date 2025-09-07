@@ -53,196 +53,6 @@ readonly SYMBOL_INFO="ℹ"
 
 
 ################################################################################
-### === SYSTEM CHECK FUNCTIONS === ###
-################################################################################
-
-### Check system requirements ###
-check_requirements() {
-
-	print_header "System Requirements Check"
-	
-	local errors=0
-	
-	### Check OS ###
-	if [ -f /etc/debian_version ]; then
-		print_success "Debian system detected: $(cat /etc/debian_version)"
-	else
-		print_warning "Non-Debian system detected"
-	fi
-	
-	### Check essential commands ###
-	local required_commands=("git" "curl" "wget" "sudo")
-	
-	for cmd in "${required_commands[@]}"; do
-	
-		if command -v "$cmd" >/dev/null 2>&1; then
-			print_success "Command found: $cmd"
-		else
-			print_error "Command missing: $cmd"
-			((errors++))
-		fi
-		
-	done
-	
-	### Check internet connectivity ###
-	if ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
-		print_success "Internet connection: OK"
-	else
-		print_error "No internet connection"
-		((errors++))
-	fi
-	
-	### Check user permissions ###
-	if [ "$EUID" -eq 0 ]; then
-		print_warning "Running as root - will install system-wide"
-		SYSTEM_INSTALL=true
-	else
-		print_info "Running as user: $USER"
-		
-		### Check sudo access ###
-		if sudo -n true 2>/dev/null; then
-			print_success "Passwordless sudo available"
-		elif sudo -v 2>/dev/null; then
-			print_success "Sudo access available"
-		else
-			print_warning "No sudo access - limited installation"
-		fi
-	fi
-	
-	return $errors
-
-}
-
-### Install missing packages ###
-install_dependencies() {
-
-	print_header "Installing Dependencies"
-	
-	local packages=()
-	
-	### Check and collect missing packages ###
-	command -v git >/dev/null 2>&1 || packages+=("git")
-	command -v curl >/dev/null 2>&1 || packages+=("curl")
-	command -v wget >/dev/null 2>&1 || packages+=("wget")
-	command -v rsync >/dev/null 2>&1 || packages+=("rsync")
-	
-	if [ ${#packages[@]} -eq 0 ]; then
-		print_success "All dependencies installed"
-		return 0
-	fi
-	
-	print_info "Missing packages: ${packages[*]}"
-	
-	### Try to install ###
-	if [ "$EUID" -eq 0 ]; then
-		apt-get update && apt-get install -y "${packages[@]}"
-	elif sudo -n true 2>/dev/null; then
-		sudo apt-get update && sudo apt-get install -y "${packages[@]}"
-	else
-		print_error "Cannot install packages - need root or sudo access"
-		print_info "Please run: sudo apt-get install ${packages[*]}"
-		return 1
-	fi
-	
-	print_success "Dependencies installed"
-
-}
-
-
-################################################################################
-### === INSTALLATION FUNCTIONS === ###
-################################################################################
-
-### Download framework from Git ###
-download_framework() {
-
-	print_header "Downloading Framework"
-	
-	### Check if directory exists ###
-	if [ -d "$INSTALL_PATH" ]; then
-		print_warning "Directory exists: $INSTALL_PATH"
-		read -p "Remove and reinstall? [y/N]: " -n 1 -r
-		echo
-		
-		if [[ $REPLY =~ ^[Yy]$ ]]; then
-			rm -rf "$INSTALL_PATH"
-			print_success "Removed existing installation"
-		else
-			print_info "Keeping existing installation"
-			return 1
-		fi
-	fi
-	
-	### Clone repository ###
-	print_info "Cloning from: $GIT_REPO"
-	
-	if git clone -b "$BRANCH" "$GIT_REPO" "$INSTALL_PATH" 2>/dev/null; then
-		print_success "Repository cloned successfully"
-	else
-		print_error "Failed to clone repository"
-		print_info "Trying alternative download method..."
-		
-		### Try wget as fallback ###
-		local archive_url="${GIT_REPO%.git}/archive/refs/heads/${BRANCH}.tar.gz"
-		
-		if wget -q -O /tmp/helper.tar.gz "$archive_url"; then
-			mkdir -p "$INSTALL_PATH"
-			tar -xzf /tmp/helper.tar.gz -C "$INSTALL_PATH" --strip-components=1
-			rm /tmp/helper.tar.gz
-			print_success "Downloaded via wget"
-		else
-			print_error "All download methods failed"
-			return 1
-		fi
-	fi
-	
-	### Set permissions ###
-	chmod -R 755 "$INSTALL_PATH"
-	print_success "Framework downloaded to: $INSTALL_PATH"
-
-}
-
-### Configure system integration ###
-configure_system() {
-
-	print_header "System Integration"
-	
-	local helper_script="$INSTALL_PATH/scripts/helper.sh"
-	
-	### Check if helper.sh exists ###
-	if [ ! -f "$helper_script" ]; then
-		print_warning "helper.sh not found - skipping system integration"
-		return 0
-	fi
-	
-	### Source helper to use cmd function ###
-	source "$helper_script"
-	
-	### Install system integration ###
-	if declare -f cmd >/dev/null 2>&1; then
-		print_info "Installing system commands..."
-		cmd --all "helper" "$helper_script"
-	else
-		print_warning "cmd function not available"
-	fi
-	
-	### Add to bashrc for user ###
-	local bashrc="$HOME/.bashrc"
-	local source_line="[ -f \"$helper_script\" ] && source \"$helper_script\""
-	
-	if ! grep -q "$helper_script" "$bashrc" 2>/dev/null; then
-		echo "" >> "$bashrc"
-		echo "### Universal Helper Functions ###" >> "$bashrc"
-		echo "$source_line" >> "$bashrc"
-		print_success "Added to $bashrc"
-	else
-		print_info "Already in $bashrc"
-	fi
-
-}
-
-
-################################################################################
 ### === INSTALLATION SETUP === ###
 ################################################################################
 
@@ -285,7 +95,7 @@ setup() {
     }
     
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-    _setup_check_requirements() {
+    _check_requirements() {
         
         print --header "System Requirements Check"
         
@@ -342,7 +152,7 @@ setup() {
     }
     
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-    _setup_install_dependencies() {
+    _install_dependencies() {
         
         print --header "Installing Dependencies"
         
@@ -377,7 +187,7 @@ setup() {
     }
     
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-    _setup_download_framework() {
+    _download_framework() {
         
         print --header "Downloading Framework"
         
@@ -479,7 +289,7 @@ EOF
     }
     
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-    _setup_configure_system() {
+    _configure_system() {
         
         print --header "System Integration"
         
@@ -521,14 +331,14 @@ EOF
     _setup_complete() {
         
         ### Run complete installation workflow ###
-        _setup_check_requirements || {
+        _check_requirements || {
             print --error "System requirements not met"
-            _setup_install_dependencies || return 1
+            _install_dependencies || return 1
         }
         
-        _setup_download_framework || return 1
+        _download_framework || return 1
         _setup_structure || return 1
-        _setup_configure_system || print --warning "System integration incomplete"
+        _configure_system || print --warning "System integration incomplete"
         
         return 0
         
@@ -543,18 +353,18 @@ EOF
                 shift
                 ;;
                 
-            --check|-c)
-                _setup_check_requirements
+            --requirements |-r)
+                _check_requirements
                 return $?
                 ;;
                 
             --dependencies|-d)
-                _setup_install_dependencies
+                _install_dependencies
                 shift
                 ;;
                 
             --download)
-                _setup_download_framework
+                _download_framework
                 shift
                 ;;
                 
@@ -564,7 +374,7 @@ EOF
                 ;;
                 
             --configure)
-                _setup_configure_system
+                _configure_system
                 shift
                 ;;
                 
@@ -612,31 +422,6 @@ print() {
 	local current_color="${NC}"
 	local suppress_newline=false
 	local has_output=false
-	
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_print_info() {
-		print --info "$1"
-	}
-	
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_print_success() {
-		print --success "$1"
-	}
-	
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_print_error() {
-		print --error "$1"
-	}
-	
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_print_warning() {
-		print --warning "$1"
-	}
-	
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_print_header() {
-		print --header "$1"
-	}
 	
 	### Parse and Execute Arguments sequentially ###
 	while [[ $# -gt 0 ]]; do
@@ -960,7 +745,8 @@ main() {
 	
 	### Interactive Mode if no Repository specified ###
 	if [ "$GIT_REPO" = "$DEFAULT_GIT_REPO" ]; then
-		setup --interactive
+		setup --interactive "Installation failed"
+        exit 1
 	fi
 	
 	### Check requirements ###
