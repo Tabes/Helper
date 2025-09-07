@@ -414,7 +414,7 @@ EOF
 ### === STATUS & NOTIFICATION FUNCTIONS, LOGGING === ###
 ################################################################################
 
-### Bootstrap print function - simplified version of helper.sh print() ###
+### Bootstrap Print Function - simplified Version of helper.sh print() ###
 print() {
 
 	### Local variables ###
@@ -479,7 +479,7 @@ print() {
 				shift
 				;;
 				
-			--cr)
+			--cr|-cr)
 				if [[ "${2}" =~ ^[0-9]+$ ]]; then
 					for ((i=0; i<$2; i++)); do
 						printf "\n"
