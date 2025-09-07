@@ -738,7 +738,7 @@ main() {
 
     clear
 
-	print --cr 2 --header "Universal Helper Functions - Installation" -cr
+	print --header "Universal Helper Functions - Installation" -cr
 	print --info "Version: $SCRIPT_VERSION"
 	echo
 	
