@@ -12,7 +12,7 @@
   - [2. Grundlegende Nutzung](#2-grundlegende-nutzung)
     - [Direkte Ausführung](#direkte-ausführung)
     - [Einbindung (Sourcing)](#einbindung-sourcing)
-  - [3. Konfigurationsmanagement (`load_config`)](#3-konfigurationsmanagement-load_config)
+  - [3. Konfiguration](#3-konfiguration)
   - [4. Kernfunktionen](#4-kernfunktionen)
     - [4.1 `print` - Formatierte Ausgabe](#41-print---formatierte-ausgabe)
     - [4.2 `log` - Protokollierung](#42-log---protokollierung)
@@ -72,7 +72,8 @@ log --info "Das Skript wurde beendet."
 
 ---
 
-## 3. Konfigurationsmanagement (`load_config`)
+## 3. Konfiguration
+3.1 Management (`load_config`)
 
 Diese Funktion wird automatisch beim Start des Skripts (sowohl bei direkter Ausführung als auch beim Sourcing) aufgerufen. Sie ist das Herzstück der Konfiguration und führt folgende Schritte aus:
 
@@ -81,6 +82,9 @@ Diese Funktion wird automatisch beim Start des Skripts (sowohl bei direkter Ausf
 3.  **Skripte einbinden:** Lädt automatisch alle weiteren Hilfsskripte aus den Verzeichnissen `scripts/helper/` und `scripts/`.
 
 > **Hinweis:** Skripte, deren Dateiname mit einem Unterstrich (`_`) beginnt, werden ignoriert. Dies erlaubt es, "private" oder unfertige Skripte im Verzeichnis zu belassen, ohne dass sie geladen werden.
+
+3.2 Verzeichnisstruktur
+3.3 Konfigurationsdateien
 
 ---
 
