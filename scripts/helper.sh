@@ -1380,6 +1380,9 @@ parse_arguments() {
 
 ### Main function ###
 main() {
+
+    Clear
+
     ### Load configuration and dependencies ###
     load_config
     
