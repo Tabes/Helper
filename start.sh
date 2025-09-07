@@ -718,7 +718,7 @@ parse_arguments() {
 				;;
 				
 			*)
-				print_error
+				print --error
 				show_help
 				exit 1
 				;;
@@ -771,7 +771,7 @@ main() {
 		print --warning "System integration incomplete"
 	fi
 
-    ### Run complete setup ###
+    ### Run complete Setup ###
     if ! setup --complete; then
         print --error "Installation failed"
         exit 1
