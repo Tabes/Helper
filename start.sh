@@ -62,7 +62,7 @@ setup() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _setup_interactive() {
         
-        print --header "Interactive Setup"
+        print --cr 2 --header "Interactive Setup" --cr
         
         ### Get installation path ###
         read -p "Installation path [$DEFAULT_INSTALL_PATH]: " user_path
@@ -97,7 +97,7 @@ setup() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _check_requirements() {
         
-        print --header "System Requirements Check"
+        print --cr 2 --header "System Requirements Check" --cr
         
         local errors=0
         
@@ -154,7 +154,7 @@ setup() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _install_dependencies() {
         
-        print --header "Installing Dependencies"
+        print --cr 2 --header "Installing Dependencies" --cr
         
         local packages=()
         
@@ -189,7 +189,7 @@ setup() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _download_framework() {
         
-        print --header "Downloading Framework"
+        print --cr 2 --header "Downloading Framework" --cr
         
         ### Check if directory exists ###
         if [ -d "$INSTALL_PATH" ]; then
@@ -238,7 +238,7 @@ setup() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _setup_structure() {
         
-        print --header "Setting Up Directory Structure"
+        print --cr 2 --header "Setting Up Directory Structure" --cr
         
         cd "$INSTALL_PATH" || return 1
         
@@ -291,7 +291,7 @@ EOF
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _configure_system() {
         
-        print --header "System Integration"
+        print --cr 2 --header "System Integration" --cr
         
         local helper_script="$INSTALL_PATH/scripts/helper.sh"
         
@@ -384,7 +384,7 @@ EOF
                 ;;
                 
             --help|-h)
-                print --header "Setup Function Help"
+                print --cr 2 --header "Setup Function Help" --cr
                 echo "Usage: setup [OPTIONS]"
                 echo
                 echo "Options:"
@@ -525,7 +525,7 @@ print() {
 ### Show help ###
 show_help() {
 
-	print --header "Universal Helper Functions - Bootstrap Installer"
+	print --cr 2 --header "Universal Helper Functions - Bootstrap Installer" --cr
 	echo
 	echo "Usage: bash start.sh [OPTIONS]"
 	echo
@@ -563,7 +563,7 @@ show() {
 		local choice
 		
 		### Display menu ###
-		print --header "$menu_title"
+		print --cr 2 --header "$menu_title" --cr
 		echo
 		
 		### Display options ###
@@ -616,7 +616,7 @@ show() {
 	
 	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
 	_show_version() {
-		print --header "Universal Helper Functions - Bootstrap Installer"
+		print --cr 2 --header "Universal Helper Functions - Bootstrap Installer" --cr
 		printf "  Version:  %s\n" "$SCRIPT_VERSION"
 		printf "  Commit:   %s\n" "$COMMIT"
 		printf "  Author:   Mawage (Development Team)\n"
@@ -654,7 +654,7 @@ show() {
 				;;
 				
 			--help|-h)
-				print --header "Show Function Help"
+				print --cr 2 --header "Show Function Help"
 				echo "Usage: show [OPERATION] [OPTIONS]"
 				echo
 				echo "Operations:"
@@ -736,7 +736,9 @@ parse_arguments() {
 ### Main function ###
 main() {
 
-	print --header "Universal Helper Functions - Installation"
+    clear
+
+	print --cr 2 --header "Universal Helper Functions - Installation" -cr
 	print --info "Version: $SCRIPT_VERSION"
 	echo
 	
@@ -756,7 +758,7 @@ main() {
 
 	### Success message ###
 	echo
-	print --header "Installation Complete"
+	print --cr 2 --header "Installation Complete" --cr
 	print --success "Framework installed to: $INSTALL_PATH"
 	print --info "To use the helper functions:"
 	print --info "  1. Restart your shell or run: source ~/.bashrc"
