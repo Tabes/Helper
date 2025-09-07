@@ -262,30 +262,6 @@ setup() {
             
         done
         
-        ### Create default config if not exists ###
-        if [ ! -f "configs/project.conf" ]; then
-            cat > "configs/project.conf" << 'EOF'
-################################################################################
-### Project Configuration - Auto-generated
-################################################################################
-PROJECT_NAME="helper"
-PROJECT_VERSION="1.0.0"
-PROJECT_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
-
-### Directories ###
-BACKUP_DIR="$PROJECT_ROOT/backup"
-CONFIGS_DIR="$PROJECT_ROOT/configs"
-DOCS_DIR="$PROJECT_ROOT/docs"
-LOG_DIR="$PROJECT_ROOT/logs"
-SCRIPTS_DIR="$PROJECT_ROOT/scripts"
-UTILITIES_DIR="$PROJECT_ROOT/utilities"
-
-### Source helper configuration ###
-[ -f "$CONFIGS_DIR/helper.conf" ] && source "$CONFIGS_DIR/helper.conf"
-EOF
-            print --success "Created default: project.conf"
-        fi
-        
     }
     
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
