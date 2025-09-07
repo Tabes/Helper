@@ -24,6 +24,7 @@
     - [Farben](#farben)
     - [Symbole](#symbole)
     - [Layout](#layout)
+    - [ToDo Liste](#todo-liste)
 
 ---
 
@@ -335,3 +336,34 @@ Die Symbole für Statusmeldungen können ebenfalls überschrieben werden.
 
 * `POS=(...)`: Ein Array von Zahlen, das die Spaltenpositionen für tabellarische Ausgaben in `show_help` definiert.
     * Beispiel: `POS=(4 25 50)` setzt die erste Spalte auf Position 4, die zweite auf 25 und die dritte auf 50.
+
+### ToDo Liste
+
+Bringe das mit ein, als 2. nach der Einleitung:
+
+Features
+
+Modulares Design - Automatisches Laden von Konfigurationen und Helper-Skripten
+
+Umfassende Output-Funktionen - Formatierte Ausgaben mit Farben und Symbolen
+
+Professionelles Logging - Multi-Level-Logging mit Rotation und Suchfunktionen
+
+System-Integration - Globale Commands, Bash-Completion und Aliase
+
+Permission-Management - ACL, Gruppen und sudo-Konfiguration
+
+Interaktive Elemente - Menüs, Spinner, Fortschrittsbalken
+
+
+Die Kernfunktionen solle als 3. kommen.
+
+4. ist dann die grundlegende Nutzung.
+
+
+5. Globale Variablen & Anpassung mit in die Konfiguration
+
+
+Kannst du auch nach jedem Abschnitt einen Link zu Inhaltsverzeichnis setzen.
+
+Die Ausgabe als formatierte Markdown ausgeben. 
