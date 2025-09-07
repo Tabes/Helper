@@ -88,7 +88,7 @@ setup() {
         echo
         
         if [[ ! $REPLY =~ ^[Yy]$ ]] && [ -n "$REPLY" ]; then
-            print --warning "Installation cancelled"
+            print -cr --warning "Installation cancelled" -cr
             exit 0
         fi
         
@@ -105,7 +105,7 @@ setup() {
         if [ -f /etc/debian_version ]; then
             print --success "Debian system detected: $(cat /etc/debian_version)"
         else
-            print --warning "Non-Debian system detected"
+            print -cr --warning "Non-Debian system detected" -cr
         fi
         
         ### Check essential commands ###
@@ -132,7 +132,7 @@ setup() {
         
         ### Check user permissions ###
         if [ "$EUID" -eq 0 ]; then
-            print --warning "Running as root - will install system-wide"
+            print -cr --warning "Running as root - will install system-wide" -cr
             SYSTEM_INSTALL=true
         else
             print --info "Running as user: $USER"
@@ -143,7 +143,7 @@ setup() {
             elif sudo -v 2>/dev/null; then
                 print --success "Sudo access available"
             else
-                print --warning "No sudo access - limited installation"
+                print -cr --warning "No sudo access - limited installation" -cr
             fi
         fi
         
@@ -193,7 +193,7 @@ setup() {
         
         ### Check if directory exists ###
         if [ -d "$INSTALL_PATH" ]; then
-            print --warning "Directory exists: $INSTALL_PATH"
+            print -cr --warning "Directory exists: $INSTALL_PATH" -cr
             read -p "Remove and reinstall? [y/N]: " -n 1 -r
             echo
             
@@ -297,7 +297,7 @@ EOF
         
         ### Check if helper.sh exists ###
         if [ ! -f "$helper_script" ]; then
-            print --warning "helper.sh not found - skipping system integration"
+            print -cr --warning "helper.sh not found - skipping system integration" -cr
             return 0
         fi
         
@@ -309,7 +309,7 @@ EOF
             print --info "Installing system commands..."
             cmd --all "helper" "$helper_script"
         else
-            print --warning "cmd function not available"
+            print -cr --warning "cmd function not available" -cr
         fi
         
         ### Add to bashrc for user ###
@@ -338,7 +338,7 @@ EOF
         
         _download_framework || return 1
         _setup_structure || return 1
-        _configure_system || print --warning "System integration incomplete"
+        _configure_system || print -cr --warning "System integration incomplete" -cr
         
         return 0
         
