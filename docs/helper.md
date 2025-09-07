@@ -1,3 +1,4 @@
+# Test
 # Dokumentation: Universal Helper Functions (`helper.sh`)
 
 **Version:** 2.1.0
