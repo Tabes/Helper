@@ -353,7 +353,7 @@ EOF
                 shift
                 ;;
                 
-            --requirements |-r)
+            --requirements |-q)
                 _check_requirements
                 return $?
                 ;;
@@ -389,7 +389,7 @@ EOF
                 echo
                 echo "Options:"
                 echo "  --interactive, -i     Interactive Setup Mode"
-                echo "  --requirements , -r   Check System Requirements"
+                echo "  --requirements , -q   Check System Requirements"
                 echo "  --dependencies, -d    Install missing Dependencies"
                 echo "  --download            Download Framework from Repository"
                 echo "  --structure, -s       Create Directory Structure"
