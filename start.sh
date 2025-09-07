@@ -736,7 +736,9 @@ parse_arguments() {
 ### Main function ###
 main() {
 
-	print --header "Universal Helper Functions - Installation"
+    clear
+
+	print --cr 2 --header "Universal Helper Functions - Installation" -cr
 	print --info "Version: $SCRIPT_VERSION"
 	echo
 	
