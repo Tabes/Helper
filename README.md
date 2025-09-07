@@ -226,3 +226,5 @@ Contributions sind willkommen! Bitte:
 - Feature-Branch anlegen
 - Änderungen committen
 - Pull Request erstellen
+
+### Universal Helper Functions - Making bash scripting easier
