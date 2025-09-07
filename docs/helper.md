@@ -36,58 +36,23 @@ Das Design zielt auf hohe Konfigurierbarkeit, Erweiterbarkeit und Benutzerfreund
 
 ---
 
-## 2. Grundlegende Nutzung
+## 2. Features
 
-Das Skript kann auf zwei Arten verwendet werden: direkt ausgeführt oder in andere Skripte eingebunden (gesourct).
-
-### Direkte Ausführung
-
-Wenn das Skript direkt ausgeführt wird, startet es die `main`-Funktion. Ohne Argumente zeigt es eine Standard-Hilfeseite an.
-
-```bash
-./scripts/helper.sh
-./scripts/helper.sh --help
-./scripts/helper.sh --version
-```
-
-### Einbindung (Sourcing)
-
-Dies ist der primäre Anwendungsfall. Durch das Sourcing des Skripts werden alle enthaltenen Funktionen in der aktuellen Shell-Sitzung oder in Ihrem eigenen Skript verfügbar gemacht.
-
-**Beispiel für die Einbindung in ein eigenes Skript:**
-
-```bash
-#!/bin/bash
-
-# Pfad zur helper.sh anpassen
-source /pfad/zu/deinem/projekt/scripts/helper.sh
-
-# Jetzt können die Funktionen genutzt werden
-print --header "Mein Super-Skript"
-log --info "Das Skript wurde gestartet."
-
-# ... weiterer Code ...
-
-log --info "Das Skript wurde beendet."
-```
+- **Automatische Systemprüfung** - Erkennt Debian-Version und prüft Voraussetzungen
+- **Abhängigkeiten-Management** - Installiert fehlende Pakete automatisch
+- **Flexible Installation** - Unterstützt User- und System-weite Installation
+- **Git-Integration** - Klont Framework direkt vom Repository
+- **Fallback-Mechanismen** - Alternative Download-Methoden bei Problemen
+- **System-Integration** - Richtet globale Commands und Bash-Completion ein
 
 ---
 
-## 3. Konfiguration
-3.1 Management (`load_config`)
+## 3. Voraussetzungen
 
-Diese Funktion wird automatisch beim Start des Skripts (sowohl bei direkter Ausführung als auch beim Sourcing) aufgerufen. Sie ist das Herzstück der Konfiguration und führt folgende Schritte aus:
-
-1.  **Projektverzeichnis finden:** Ermittelt dynamisch das Wurzelverzeichnis des Projekts.
-2.  **Konfigurationen laden:** Sucht und lädt `project.conf` und alle weiteren `.conf`-Dateien aus dem `configs/`-Verzeichnis.
-3.  **Skripte einbinden:** Lädt automatisch alle weiteren Hilfsskripte aus den Verzeichnissen `scripts/helper/` und `scripts/`.
-
-> **Hinweis:** Skripte, deren Dateiname mit einem Unterstrich (`_`) beginnt, werden ignoriert. Dies erlaubt es, "private" oder unfertige Skripte im Verzeichnis zu belassen, ohne dass sie geladen werden.
-
-3.2 Verzeichnisstruktur
-3.3 Konfigurationsdateien
-
----
+- Debian-basiertes System (empfohlen: aktuellste Version)
+- Internetverbindung
+- SSH-Zugang mit bekanntem root-Passwort
+- Git-Repository mit dem Helper-Framework
 
 ## 4. Kernfunktionen
 
@@ -306,7 +271,103 @@ secure --wizard /var/www/html webdev
 
 ---
 
-## 5. Globale Variablen & Anpassung
+## 5. Installation
+
+### Quick Start
+
+```bash
+# Download start.sh
+wget https://raw.githubusercontent.com/Tabes/helper/main/start.sh
+
+# Ausführbar machen
+chmod +x start.sh
+
+# Interaktive Installation starten
+./start.sh
+```
+
+### Installation mit Parametern
+
+```bash
+# Eigener Installationspfad
+./start.sh --path ~/my-helper
+
+# System-weite Installation (als root)
+sudo ./start.sh --system
+
+# Mit eigenem Repository
+./start.sh --repo https://github.com/MYUSER/helper.git --branch develop
+
+# Verbose-Modus für Debugging
+./start.sh --verbose
+
+---
+
+## 2. Grundlegende Nutzung
+
+Das Skript kann auf zwei Arten verwendet werden: direkt ausgeführt oder in andere Skripte eingebunden (gesourct).
+
+### Direkte Ausführung
+
+Wenn das Skript direkt ausgeführt wird, startet es die `main`-Funktion. Ohne Argumente zeigt es eine Standard-Hilfeseite an.
+
+```bash
+./scripts/helper.sh
+./scripts/helper.sh --help
+./scripts/helper.sh --version
+```
+
+### Einbindung (Sourcing)
+
+Dies ist der primäre Anwendungsfall. Durch das Sourcing des Skripts werden alle enthaltenen Funktionen in der aktuellen Shell-Sitzung oder in Ihrem eigenen Skript verfügbar gemacht.
+
+**Beispiel für die Einbindung in ein eigenes Skript:**
+
+```bash
+#!/bin/bash
+
+# Pfad zur helper.sh anpassen
+source /pfad/zu/deinem/projekt/scripts/helper.sh
+
+# Jetzt können die Funktionen genutzt werden
+print --header "Mein Super-Skript"
+log --info "Das Skript wurde gestartet."
+
+# ... weiterer Code ...
+
+log --info "Das Skript wurde beendet."
+```
+
+### Nach der Installation
+
+Nach erfolgreicher Installation:
+
+1. Shell neu starten oder .bashrc neu laden:
+
+```bash
+source ~/.bashrc
+```
+
+---
+
+## 6. Konfiguration
+3.1 Management (`load_config`)
+
+Diese Funktion wird automatisch beim Start des Skripts (sowohl bei direkter Ausführung als auch beim Sourcing) aufgerufen. Sie ist das Herzstück der Konfiguration und führt folgende Schritte aus:
+
+1.  **Projektverzeichnis finden:** Ermittelt dynamisch das Wurzelverzeichnis des Projekts.
+
+2.  **Konfigurationen laden:** Sucht und lädt `project.conf` und alle weiteren `.conf`-Dateien aus dem `configs/`-Verzeichnis.
+
+3.  **Skripte einbinden:** Lädt automatisch alle weiteren Hilfsskripte aus den Verzeichnissen `scripts/helper/` und `scripts/`.
+
+> **Hinweis:** Skripte, deren Dateiname mit einem Unterstrich (`_`) beginnt, werden ignoriert. Dies erlaubt es, "private" oder unfertige Skripte im Verzeichnis zu belassen, ohne dass sie geladen werden.
+
+3.2 Verzeichnisstruktur
+
+3.3 Konfigurationsdateien
+
+### 5. Globale Variablen & Anpassung
 
 Das Verhalten und Aussehen der Helper-Funktionen kann durch globale Variablen angepasst werden, die typischerweise in `project.conf` oder einer anderen `.conf`-Datei im `configs/`-Verzeichnis gesetzt werden.
 
@@ -337,7 +398,63 @@ Die Symbole für Statusmeldungen können ebenfalls überschrieben werden.
 * `POS=(...)`: Ein Array von Zahlen, das die Spaltenpositionen für tabellarische Ausgaben in `show_help` definiert.
     * Beispiel: `POS=(4 25 50)` setzt die erste Spalte auf Position 4, die zweite auf 25 und die dritte auf 50.
 
-### ToDo Liste
+---
+
+## 7. Optionen
+
+```Markdown
+| Option          | Kurzform | Beschreibung                                               |
+|-----------------|----------|------------------------------------------------------------|
+| --path PATH     | -p       | Installations-Verzeichnis (Standard: `~/helper`)           |
+| --repo URL      | -r       | Git-Repository URL                                         |
+| --branch NAME   | -b       | Git-Branch (Standard: main`)                               |
+| --system        | -s       | System-weite Installation in `/opt/helper                  |
+| --verbose       | -v       | Ausführliche Ausgabe für Debugging                         |
+| --help          | -h       | Zeigt Hilfe an                                             |
+```
+
+OptionKurzBeschreibung--path PATH-pInstallations-Verzeichnis (Standard: ~/helper)--repo URL-rGit-Repository URL--branch NAME-bGit-Branch (Standard: main)--system-sSystem-weite Installation in /opt/helper--verbose-vAusführliche Ausgabe für Debugging--help-hZeigt Hilfe an
+
+---
+
+## 8. Workflow
+
+Die Installation durchläuft folgende Schritte:
+
+### 01. Interaktive Konfiguration (optional)
+
+- Abfrage von Installationspfad, Repository und Branch
+
+### 02. System-Check
+
+- Prüfung der Debian-Version
+- Kontrolle essentieller Commands (git, curl, wget, sudo)
+- Test der Internetverbindung
+- Prüfung der Benutzerrechte
+
+### 03. Abhängigkeiten installieren
+
+- Automatische Installation fehlender Pakete
+- Fallback zu manueller Installation bei fehlendem sudo
+
+### 04. Framework Download
+
+- Git clone als primäre Methode
+- Wget als Fallback-Option
+- Automatisches Setzen der Berechtigungen
+
+### 05. Struktur erstellen
+
+- Anlegen der Verzeichnisstruktur
+- Generierung der project.conf
+
+### 06. System-Integration
+
+- Installation globaler Commands
+- Bash-Completion Setup
+- Integration in .bashrc
+
+## 9. ToDo Liste
 
 Bringe das mit ein, als 2. nach der Einleitung:
 
