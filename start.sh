@@ -748,29 +748,6 @@ main() {
 		setup --interactive
 	fi
 	
-	### Check requirements ###
-	if ! setup --requirements; then
-		print --error "System requirements not met"
-		install_dependencies || exit 1
-	fi
-	
-	### Download framework ###
-	if ! setup --download; then
-		print --error "Failed to download framework"
-		exit 1
-	fi
-	
-	### Setup structure ###
-	if ! setup --structure; then
-		print --error "Failed to setup Directory Structure"
-		exit 1
-	fi
-	
-	### Configure System ###
-	if ! setup --configure; then
-		print --warning "System integration incomplete"
-	fi
-
     ### Run complete Setup ###
     if ! setup --complete; then
         print --error "Installation failed"
