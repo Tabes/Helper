@@ -1,7 +1,7 @@
 #!/bin/bash
 ################################################################################
 ### Universal Helper Functions - Bootstrap Installation Script
-### Initial setup and Installation for fresh Debian Sstems
+### Initial Setup and Installation for fresh Debian Systems
 ### Downloads and Configures the Helper Framework from Git Repository
 ################################################################################
 ### Project: Universal Helper Library
@@ -21,7 +21,7 @@ COMMIT="Bootstrap Installation Script for Helper Framework"
 
 ### Default values - can be overridden with arguments ###
 DEFAULT_INSTALL_PATH="$HOME/helper"
-DEFAULT_GIT_REPO="https://github.com/USERNAME/helper-framework.git"
+DEFAULT_GIT_REPO="https://github.com/Tabes/helper.git"
 DEFAULT_BRANCH="main"
 
 ### Runtime variables ###
@@ -389,7 +389,7 @@ EOF
                 echo
                 echo "Options:"
                 echo "  --interactive, -i     Interactive Setup Mode"
-                echo "  --requirements , -c   Check System Requirements"
+                echo "  --requirements , -r   Check System Requirements"
                 echo "  --dependencies, -d    Install missing Dependencies"
                 echo "  --download            Download Framework from Repository"
                 echo "  --structure, -s       Create Directory Structure"
@@ -718,7 +718,7 @@ parse_arguments() {
 				;;
 				
 			*)
-				print --error
+				print --error "Unknown option: $1"
 				show_help
 				exit 1
 				;;
