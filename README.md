@@ -75,7 +75,6 @@ Die Installation durchläuft folgende Schritte:
 
 - Abfrage von Installationspfad, Repository und Branch
 
-
 ### 02. System-Check
 
 - Prüfung der Debian-Version
@@ -83,12 +82,10 @@ Die Installation durchläuft folgende Schritte:
 - Test der Internetverbindung
 - Prüfung der Benutzerrechte
 
-
 ### 03. Abhängigkeiten installieren
 
 - Automatische Installation fehlender Pakete
 - Fallback zu manueller Installation bei fehlendem sudo
-
 
 ### 04. Framework Download
 
@@ -96,12 +93,10 @@ Die Installation durchläuft folgende Schritte:
 - Wget als Fallback-Option
 - Automatisches Setzen der Berechtigungen
 
-
 ### 05. Struktur erstellen
 
 - Anlegen der Verzeichnisstruktur
 - Generierung der project.conf
-
 
 ### 06. System-Integration
 
