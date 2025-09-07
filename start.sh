@@ -759,7 +759,7 @@ main() {
 	### Success message ###
 	echo
 	print --cr 2 --header "Installation Complete" -cr
-	print --success "Framework installed to: $INSTALL_PATH"
+	print --success "Framework installed to: $INSTALL_PATH" -cr
 	print --info "To use the helper functions:"
 	print --info "  1. Restart your shell or run: source ~/.bashrc"
 	print --info "  2. Type: helper --help"
