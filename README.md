@@ -24,8 +24,7 @@ Die `start.sh` ist ein Bootstrap-Installationsskript für das Universal Helper F
 
 ### Quick Start
 
-```
-bash
+```bash
 # Download start.sh
 wget https://raw.githubusercontent.com/Tabes/helper/main/start.sh
 
@@ -38,77 +37,93 @@ chmod +x start.sh
 
 # Installation mit Parametern
 
-## Eigener Installationspfad
+```bash
+# Eigener Installationspfad
 ./start.sh --path ~/my-helper
 
-## System-weite Installation (als root)
+# System-weite Installation (als root)
 sudo ./start.sh --system
 
-## Mit eigenem Repository
+# Mit eigenem Repository
 ./start.sh --repo https://github.com/MYUSER/helper.git --branch develop
 
-## Verbose-Modus für Debugging
+# Verbose-Modus für Debugging
 ./start.sh --verbose
 
+```
 
-# Optionen
+## Optionen
+
+```Markdown
+| Option          | Kurzform | Beschreibung                                               |
+|-----------------|----------|------------------------------------------------------------|
+| --path PATH     | -p       | Installations-Verzeichnis (Standard: `~/helper`)           |
+| --repo URL      | -r       | Git-Repository URL                                         |
+| --branch NAME   | -b       | Git-Branch (Standard: main`)                               |
+| --system        | -s       | System-weite Installation in `/opt/helper                  |
+| --verbose       | -v       | Ausführliche Ausgabe für Debugging                         |
+| --help          | -h       | Zeigt Hilfe an                                             |
+```
 
 OptionKurzBeschreibung--path PATH-pInstallations-Verzeichnis (Standard: ~/helper)--repo URL-rGit-Repository URL--branch NAME-bGit-Branch (Standard: main)--system-sSystem-weite Installation in /opt/helper--verbose-vAusführliche Ausgabe für Debugging--help-hZeigt Hilfe an
 
+## Workflow
 
-Workflow
 Die Installation durchläuft folgende Schritte:
 
-Interaktive Konfiguration (optional)
+### 01. Interaktive Konfiguration (optional)
 
-Abfrage von Installationspfad, Repository und Branch
-
-
-System-Check
-
-Prüfung der Debian-Version
-Kontrolle essentieller Commands (git, curl, wget, sudo)
-Test der Internetverbindung
-Prüfung der Benutzerrechte
+- Abfrage von Installationspfad, Repository und Branch
 
 
-Abhängigkeiten installieren
+### 02. System-Check
 
-Automatische Installation fehlender Pakete
-Fallback zu manueller Installation bei fehlendem sudo
-
-
-Framework Download
-
-Git clone als primäre Methode
-Wget als Fallback-Option
-Automatisches Setzen der Berechtigungen
+- Prüfung der Debian-Version
+- Kontrolle essentieller Commands (git, curl, wget, sudo)
+- Test der Internetverbindung
+- Prüfung der Benutzerrechte
 
 
-Struktur erstellen
+### 03. Abhängigkeiten installieren
 
-Anlegen der Verzeichnisstruktur
-Generierung der project.conf
-
-
-System-Integration
-
-Installation globaler Commands
-Bash-Completion Setup
-Integration in .bashrc
+- Automatische Installation fehlender Pakete
+- Fallback zu manueller Installation bei fehlendem sudo
 
 
+### 04. Framework Download
 
-Nach der Installation
+- Git clone als primäre Methode
+- Wget als Fallback-Option
+- Automatisches Setzen der Berechtigungen
+
+
+### 05. Struktur erstellen
+
+- Anlegen der Verzeichnisstruktur
+- Generierung der project.conf
+
+
+### 06. System-Integration
+
+- Installation globaler Commands
+- Bash-Completion Setup
+- Integration in .bashrc
+
+## Nach der Installation
+
 Nach erfolgreicher Installation:
 
-Shell neu starten oder .bashrc neu laden:
+1. Shell neu starten oder .bashrc neu laden:
 
+```bash
 source ~/.bashrc
+```
 
-Erweiterte Nutzung
+## Erweiterte Nutzung
+
 Die setup Funktion kann auch einzeln aufgerufen werden:
 
+```bash
 # Nur System-Check
 setup --check
 
@@ -126,20 +141,93 @@ setup --configure
 
 # Komplette Installation
 setup --complete
+```
 
+## Fehlerbehebung
 
-Fehlerbehebung
 Bei Problemen:
 
-Verbose-Modus aktivieren: ./start.sh --verbose
-Log-Ausgaben prüfen
-Manuelle Installation der Abhängigkeiten:
+1. Verbose-Modus aktivieren: ./start.sh --verbose
+2. Log-Ausgaben prüfen
+3. Manuelle Installation der Abhängigkeiten:
 
-bash
+```bash
 sudo apt-get install git curl wget rsync
+```
+
+## Dateien und Verzeichnisse
+
+Nach der Installation wird folgende Struktur angelegt:
+
+```bash
+helper/
+├── backup/              # Backup-Dateien
+├── configs/             # Konfigurationsdateien
+│   ├── project.conf     # Projekt-Konfiguration
+│   └── helper.conf      # Helper-Konfiguration
+├── docs/                # Dokumentation
+│   └── help/            # Hilfe-Dateien
+├── logs/                # Log-Dateien
+├── scripts/             # Skripte- Verzeichnis
+│   ├── helper.sh        # Hauptmodul
+│   └── helper/          # Ausgelagerte Helper Funktionen
+└── utilities/           # Zusätzliche Tools
+```
+
+## Umgebungsvariablen
+
+Die Installation setzt folgende Variablen:
+
+- PROJECT_ROOT - Installations-Verzeichnis
+- BACKUP_DIR - Backup-Verzeichnis
+- CONFIGS_DIR - Konfigurationsverzeichnis
+- DOCS_DIR - Dokumentationsverzeichnis
+- LOG_DIR - Log-Verzeichnis
+- SCRIPTS_DIR - Skript-Verzeichnis
+- UTILITIES_DIR - Utilities-Verzeichnis
+
+## Deinstallation
+
+Zur vollständigen Entfernung:
+
+```bash
+# Helper-Command entfernen
+sudo rm -f /usr/local/bin/helper
+
+# Bash-Completion entfernen
+sudo rm -f /etc/bash_completion.d/helper
+
+# Installation entfernen
+rm -rf ~/helper
+
+# .bashrc bereinigen (manuell die Helper-Zeilen entfernen)
+nano ~/.bashrc
+```
+
+## Versionierung
+
+- Version: 1.0.0
+- Autor: Mawage (Development Team)
+- Datum: 2025-09-06
 
 
-Lizenz
+## Lizenz
+
 MIT License - siehe LICENSE Datei im Repository
-Support
-Bei Fragen oder Problemen: Issues im GitHub-Repository erstellen
+
+## Support
+
+Bei Fragen oder Problemen:
+
+- Issues im GitHub-Repository erstellen
+- Dokumentation im docs/ Verzeichnis konsultieren
+- Log-Dateien im logs/ Verzeichnis prüfen
+
+## Beiträge
+
+Contributions sind willkommen! Bitte:
+
+- Fork des Repositories erstellen
+- Feature-Branch anlegen
+- Änderungen committen
+- Pull Request erstellen
