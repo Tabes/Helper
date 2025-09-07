@@ -222,7 +222,7 @@ setup() {
                 mkdir -p "$INSTALL_PATH"
                 tar -xzf /tmp/helper.tar.gz -C "$INSTALL_PATH" --strip-components=1
                 rm /tmp/helper.tar.gz
-                print --success "Downloaded via wget"
+                print -cr --success "Downloaded via wget"
             else
                 print --error "All download methods failed"
                 return 1
@@ -283,7 +283,7 @@ UTILITIES_DIR="$PROJECT_ROOT/utilities"
 ### Source helper configuration ###
 [ -f "$CONFIGS_DIR/helper.conf" ] && source "$CONFIGS_DIR/helper.conf"
 EOF
-            print --success "Created default project.conf"
+            print --success "Created default: project.conf"
         fi
         
     }
