@@ -21,7 +21,7 @@ COMMIT="Bootstrap Installation Script for Helper Framework"
 
 ### Default values - can be overridden with arguments ###
 DEFAULT_INSTALL_PATH="$HOME/helper"
-DEFAULT_GIT_REPO="https://github.com/Tabes/helper.git"
+DEFAULT_GIT_REPO="https://github.com/Tabes/Helper.git"
 DEFAULT_BRANCH="main"
 
 ### Runtime variables ###
