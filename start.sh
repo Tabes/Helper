@@ -388,14 +388,14 @@ EOF
                 echo "Usage: setup [OPTIONS]"
                 echo
                 echo "Options:"
-                echo "  --interactive, -i    Interactive setup mode"
-                echo "  --check, -c          Check system requirements"
-                echo "  --dependencies, -d   Install missing dependencies"
-                echo "  --download           Download framework from repository"
-                echo "  --structure, -s      Create directory structure"
-                echo "  --configure          Configure system integration"
-                echo "  --complete           Run complete installation"
-                echo "  --help, -h           Show this help"
+                echo "  --interactive, -i     Interactive Setup Mode"
+                echo "  --requirements , -c   Check System Requirements"
+                echo "  --dependencies, -d    Install missing Dependencies"
+                echo "  --download            Download Framework from Repository"
+                echo "  --structure, -s       Create Directory Structure"
+                echo "  --configure           Configure System Integration"
+                echo "  --complete            Run complete Installation"
+                echo "  --help, -h            Show this Help"
                 return 0
                 ;;
                 
@@ -718,7 +718,7 @@ parse_arguments() {
 				;;
 				
 			*)
-				print_error "Unknown option: $1"
+				print_error
 				show_help
 				exit 1
 				;;
@@ -745,8 +745,7 @@ main() {
 	
 	### Interactive Mode if no Repository specified ###
 	if [ "$GIT_REPO" = "$DEFAULT_GIT_REPO" ]; then
-		setup --interactive "Installation failed"
-        exit 1
+		setup --interactive
 	fi
 	
 	### Check requirements ###
