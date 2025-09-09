@@ -297,7 +297,6 @@ select_from_menu() {
     done
 }
 
-
 ### Confirm Action ###
 confirm_action() {
     local action="$1"
