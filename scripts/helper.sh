@@ -99,6 +99,12 @@ ask() {
         local question="$1"
         local default="${2:-no}"
         
+        ### Auto-answer with yes if YES variable is set to true ###
+        if [ "${YES:-false}" = "true" ]; then
+            print --info "$question [auto-answered: yes]"
+            return 0
+        fi
+        
         local prompt="$question"
         case "$default" in
             yes|y) prompt="$prompt [Y/n]" ;;
@@ -117,7 +123,7 @@ ask() {
             case "$answer" in
                 yes|y|Y|YES) return 0 ;;
                 no|n|N|NO)   return 1 ;;
-                *) print_warning "Please answer yes or no" ;;
+                *) print --warning "Please answer yes or no" ;;
             esac
         done
     }
@@ -143,7 +149,7 @@ ask() {
                     echo "$input"
                     return 0
                 else
-                    print_warning "Invalid input, please try again"
+                    print --warning "Invalid input, please try again"
                 fi
             else
                 echo "$input"
@@ -170,7 +176,7 @@ ask() {
                     echo "$password"
                     return 0
                 else
-                    print_error "Passwords do not match. Please try again."
+                    print --error "Passwords do not match. Please try again."
                 fi
             else
                 echo "$password"
@@ -186,13 +192,13 @@ ask() {
         shift
         local options=("$@")
         
-        print_subheader "$title"
+        print --header "$title"
         
         for i in "${!options[@]}"; do
-            print_msg "$WHITE" "  [$((i+1))] ${options[$i]}"
+            print "  [$((i+1))] ${options[$i]}"
         done
-        print_msg "$WHITE" "  [0] Cancel"
-        echo ""
+        print "  [0] Cancel"
+        print --cr
         
         while true; do
             read -p "Please select [0-${#options[@]}]: " selection
@@ -203,7 +209,7 @@ ask() {
                 echo $((selection - 1))
                 return 0
             else
-                print_warning "Invalid selection"
+                print --warning "Invalid selection"
             fi
         done
     }
@@ -215,7 +221,7 @@ ask() {
         local danger="${2:-false}"
         
         if [ "$danger" = "true" ]; then
-            print_warning "This action cannot be undone!"
+            print --warning "This action cannot be undone!"
         fi
         
         _yes_no "Are you sure you want to $action?" "no"
@@ -224,24 +230,30 @@ ask() {
     ### Parse Arguments ###
     case "$1" in
         --yes-no|-y)
+            shift
             _yes_no "$@"
             ;;
 
         --input|-i)
+            shift
             _input "$@"
             ;;
 
         --password|-p)
+            shift
             _password "$@"
             ;;
 
         --select|-s)
+            shift
             _select "$@"
             ;;
 
         --confirm|-c)
+            shift
             _confirm "$@"
             ;;
+            
         --help|-h)
             show_help
             return 0
@@ -249,71 +261,13 @@ ask() {
 
         *)
             print --invalid "${FUNCNAME[0]}" "$1"
-
             return 1
             ;;
 
     esac
-    
 }
 
 
-### Ask yes/no question ###
-ask_yes_no() {
-    local question="$1"
-    local default="${2:-no}"
-    
-    local prompt="$question"
-    case "$default" in
-        yes|y) prompt="$prompt [Y/n]" ;;
-        no|n)  prompt="$prompt [y/N]" ;;
-        *)     prompt="$prompt [y/n]" ;;
-    esac
-    
-    while true; do
-        read -p "$prompt: " answer
-        
-        ### Use default if empty ###
-        if [ -z "$answer" ]; then
-            answer="$default"
-        fi
-        
-        case "$answer" in
-            yes|y|Y|YES) return 0 ;;
-            no|n|N|NO)   return 1 ;;
-            *) print_warning "Please answer yes or no" ;;
-        esac
-    done
-}
-
-### Ask for input with validation ###
-ask_input() {
-    local prompt="$1"
-    local default="$2"
-    local validator="$3"  ### Optional validation function ###
-    
-    while true; do
-        if [ -n "$default" ]; then
-            read -p "$prompt [$default]: " input
-            input="${input:-$default}"
-        else
-            read -p "$prompt: " input
-        fi
-        
-        ### Validate input if validator provided ###
-        if [ -n "$validator" ] && declare -f "$validator" >/dev/null 2>&1; then
-            if "$validator" "$input"; then
-                echo "$input"
-                return 0
-            else
-                print_warning "Invalid input, please try again"
-            fi
-        else
-            echo "$input"
-            return 0
-        fi
-    done
-}
 
 ### Select from menu ###
 select_from_menu() {
@@ -343,31 +297,6 @@ select_from_menu() {
     done
 }
 
-### Ask for password ###
-ask_password() {
-    local prompt="${1:-Enter password}"
-    local verify="${2:-false}"
-    
-    while true; do
-        read -s -p "$prompt: " password
-        echo ""
-        
-        if [ "$verify" = "true" ]; then
-            read -s -p "Verify password: " password2
-            echo ""
-            
-            if [ "$password" = "$password2" ]; then
-                echo "$password"
-                return 0
-            else
-                print_error "Passwords do not match. Please try again."
-            fi
-        else
-            echo "$password"
-            return 0
-        fi
-    done
-}
 
 ### Confirm Action ###
 confirm_action() {
