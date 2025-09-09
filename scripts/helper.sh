@@ -267,65 +267,124 @@ ask() {
     esac
 }
 
+### Universal Utility Function ###
+utility() {
+    ### Log startup arguments ###
+    log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
-
-### Select from menu ###
-select_from_menu() {
-    local title="$1"
-    shift
-    local options=("$@")
+    ################################################################################
+    ### === INTERNAL UTILITY FUNCTIONS === ###
+    ################################################################################
     
-    print_subheader "$title"
+    ### Pause execution (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _pause() {
+        local message="${1:-Press Enter to continue...}"
+        read -p "$message" -r
+    }
     
-    for i in "${!options[@]}"; do
-        print_msg "$WHITE" "  [$((i+1))] ${options[$i]}"
-    done
-    print_msg "$WHITE" "  [0] Cancel"
-    echo ""
-    
-    while true; do
-        read -p "Please select [0-${#options[@]}]: " selection
+    ### Countdown timer (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _countdown() {
+        local seconds="${1:-10}"
+        local message="${2:-Continuing in}"
         
-        if [ "$selection" = "0" ]; then
-            return 1
-        elif [ "$selection" -ge 1 ] && [ "$selection" -le "${#options[@]}" ] 2>/dev/null; then
-            echo $((selection - 1))
-            return 0
+        while [ $seconds -gt 0 ]; do
+            printf "\r%s %d seconds... " "$message" "$seconds"
+            sleep 1
+            ((seconds--))
+        done
+        printf "\r%*s\r" ${#message} ""  ### Clear line ###
+    }
+    
+    ### Show spinner (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _spinner() {
+        local pid="$1"
+        local delay="${2:-0.1}"
+        local spinstr='|/-\'
+        
+        while kill -0 "$pid" 2>/dev/null; do
+            local temp=${spinstr#?}
+            printf " [%c]  " "$spinstr"
+            local spinstr=$temp${spinstr%"$temp"}
+            sleep $delay
+            printf "\b\b\b\b\b\b"
+        done
+        printf "    \b\b\b\b"
+    }
+    
+    ### Progress bar (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _progress() {
+        local current="$1"
+        local total="$2"
+        local description="${3:-Progress}"
+        local width="${4:-50}"
+        
+        local percent=$((current * 100 / total))
+        local filled=$((width * current / total))
+        
+        printf "\r["
+        printf "%${filled}s" | tr ' ' '='
+        printf "%$((width - filled))s" | tr ' ' '-'
+        printf "] %3d%% %s" "$percent" "$description"
+        
+        [ "$current" -eq "$total" ] && echo
+    }
+    
+    ### Clear screen with optional lines (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _clear() {
+        local lines="${1:-0}"
+        
+        if [ "$lines" -eq 0 ]; then
+            clear
         else
-            print_warning "Invalid selection"
+            for ((i=0; i<lines; i++)); do
+                printf "\n"
+            done
         fi
-    done
-}
-
-### Confirm Action ###
-confirm_action() {
-    local action="$1"
-    local danger="${2:-false}"
+    }
     
-    if [ "$danger" = "true" ]; then
-        print_warning "⚠️  This action cannot be undone!"
-    fi
-    
-    ask_yes_no "Are you sure you want to $action?" "no"
-}
+    ### Parse Arguments ###
+    case "$1" in
+        --pause|-p)
+            shift
+            _pause "$@"
+            ;;
 
-### Pause Execution ###
-pause() {
-    local message="${1:-Press Enter to continue...}"
-    read -p "$message" -r
-}
+        --countdown|-c)
+            shift
+            _countdown "$@"
+            ;;
 
-### Countdown Timer ###
-countdown() {
-    local seconds="${1:-10}"
-    local message="${2:-Continuing in}"
-    
-    while [ $seconds -gt 0 ]; do
-        printf "\r%s %d seconds... " "$message" "$seconds"
-        sleep 1
-        ((seconds--))
-    done
-    printf "\r%*s\r" ${#message} ""  ### Clear line ###
+        --spinner|-s)
+            shift
+            _spinner "$@"
+            ;;
+
+        --progress|-pr)
+            shift
+            _progress "$@"
+            ;;
+
+        --clear|-cl)
+            shift
+            _clear "$@"
+            ;;
+            
+        --help|-h)
+            show_help
+            return 0
+            ;;
+
+        *)
+            print --invalid "${FUNCNAME[0]}" "$1"
+            return 1
+            ;;
+
+    esac
 }
 
 
@@ -393,5 +452,5 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 else
    ### Being sourced ###
    load_config
-   print --success "Helper functions loaded. Type 'show --menu' for an interactive menu."
+   print --success "Helper functions loaded. Type 'show --menu' for an interactive Menu."
 fi
