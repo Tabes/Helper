@@ -12,8 +12,39 @@
 ### Usage:   Source this File to load System Integration Functions
 ################################################################################
 
-SCRIPT_VERSION="1.0.0"
-COMMIT="System Integration Functions for Command Wrappers and bash Completion"
+readonly header="System Integration Library"
+
+readonly version="1.0.0"
+readonly commit="System Integration Functions for Command Wrappers and bash Completion"
+
+
+################################################################################
+### Parse Command Line Arguments ###
+################################################################################
+
+### Parse all Command Line Arguments ###
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+
+            --version|-V)
+                print --version "${header}" "${version}" "${commit}"
+                exit 0
+                ;;
+
+            *)
+                ### Pass all other arguments to cmd function ###
+                cmd "$@"
+                exit $?
+                ;;
+        esac
+        shift
+    done
+}
 
 
 ################################################################################
@@ -22,29 +53,127 @@ COMMIT="System Integration Functions for Command Wrappers and bash Completion"
 
 ### Universal Command Integration Function ###
 cmd() {
-   ### Local variables ###
-   local operation=""
-   local cmd_name="${PROJECT_NAME:-helper}"
-   local install_path="/usr/local/bin"
-   local completion_path="/etc/bash_completion.d"
-   
-   # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-   _cmd_create_wrapper() {
-       local name="${1:-$cmd_name}"
-       local script="${2:-${BASH_SOURCE[0]}}"
-       local target="$install_path/$name"
-       
-       ### Check if running as root for system-wide installation ###
-       if [ "$EUID" -ne 0 ] && [[ "$install_path" == "/usr/local/bin" ]]; then
-           print --warning "Need sudo privileges for system-wide installation"
-           print --info "Installing to user directory instead: ~/.local/bin"
-           install_path="$HOME/.local/bin"
-           target="$install_path/$name"
-           [ ! -d "$install_path" ] && mkdir -p "$install_path"
-       fi
-       
-       ### Create wrapper script ###
-       cat > "$target" << EOF
+    ### Log startup arguments ###
+    log --info "${FUNCNAME[0]} called with Arguments: ($*)"
+
+    ### Local variables ###
+    local cmd_name="${PROJECT_NAME:-helper}"
+    local install_path="/usr/local/bin"
+    local completion_path="/etc/bash_completion.d"
+
+    ################################################################################
+    ### === INTERNAL CMD FUNCTIONS === ###
+    ################################################################################
+
+    ### Check if command is available (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _check() {
+        local commands=("$@")
+        local missing_commands=()
+        
+        print --header "Command Availability Check"
+        
+        for cmd_check in "${commands[@]}"; do
+            if command -v "$cmd_check" >/dev/null 2>&1; then
+                print --success "$cmd_check is available: $(which "$cmd_check")"
+            else
+                print --error "$cmd_check is missing"
+                missing_commands+=("$cmd_check")
+            fi
+        done
+        
+        if [ ${#missing_commands[@]} -gt 0 ]; then
+            print --cr
+            print --warning "Missing commands: ${missing_commands[*]}"
+            return 1
+        else
+            print --cr
+            print --success "All commands are available"
+            return 0
+        fi
+    }
+    
+    ### Install missing packages (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _install() {
+        local packages=("$@")
+        local package_manager=""
+        
+        ### Detect package manager ###
+        if command -v apt >/dev/null 2>&1; then
+            package_manager="apt"
+        elif command -v yum >/dev/null 2>&1; then
+            package_manager="yum"
+        elif command -v dnf >/dev/null 2>&1; then
+            package_manager="dnf"
+        elif command -v pacman >/dev/null 2>&1; then
+            package_manager="pacman"
+        elif command -v brew >/dev/null 2>&1; then
+            package_manager="brew"
+        else
+            print --error "No supported package manager found"
+            return 1
+        fi
+        
+        print --header "Package Installation"
+        print --info "Package manager: $package_manager"
+        print --info "Packages to install: ${packages[*]}"
+        print --cr
+        
+        ### Ask for confirmation ###
+        if ! ask --yes-no "Install missing packages?" "yes"; then
+            print --info "Installation cancelled"
+            return 1
+        fi
+        
+        ### Install packages ###
+        local install_cmd=""
+        case "$package_manager" in
+            apt)
+                install_cmd="sudo apt update && sudo apt install -y"
+                ;;
+            yum)
+                install_cmd="sudo yum install -y"
+                ;;
+            dnf)
+                install_cmd="sudo dnf install -y"
+                ;;
+            pacman)
+                install_cmd="sudo pacman -S --noconfirm"
+                ;;
+            brew)
+                install_cmd="brew install"
+                ;;
+        esac
+        
+        for package in "${packages[@]}"; do
+            print --info "Installing: $package"
+            if eval "$install_cmd $package"; then
+                print --success "Installed: $package"
+            else
+                print --error "Failed to install: $package"
+            fi
+        done
+    }
+
+    ### Create wrapper script (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _wrapper() {
+        local name="${1:-$cmd_name}"
+        local script="${2:-${BASH_SOURCE[0]}}"
+        local target="$install_path/$name"
+        
+        ### Check if running as root for system-wide installation ###
+        if [ "$EUID" -ne 0 ] && [[ "$install_path" == "/usr/local/bin" ]]; then
+            print --warning "Need sudo privileges for system-wide installation"
+            print --info "Installing to user directory instead: ~/.local/bin"
+            install_path="$HOME/.local/bin"
+            target="$install_path/$name"
+            [ ! -d "$install_path" ] && mkdir -p "$install_path"
+        fi
+        
+        ### Create wrapper script ###
+        cat > "$target" << EOF
 #!/bin/bash
 ################################################################################
 ### $name Wrapper - Safe execution wrapper
@@ -93,54 +222,56 @@ else
    fi
 fi
 EOF
-       
-       chmod +x "$target"
-       print --success "Wrapper created: $target"
-       
-       ### Add to PATH if needed ###
-       if [[ ":$PATH:" != *":$install_path:"* ]] && [[ "$install_path" == "$HOME/.local/bin" ]]; then
-           print --info "Add to PATH: export PATH=\"\$PATH:$install_path\""
-           print --info "Add this line to ~/.bashrc for permanent effect"
-       fi
-   }
-   
-   # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-   _cmd_create_alias() {
-       local name="${1:-$cmd_name}"
-       local script="${2:-${BASH_SOURCE[0]}}"
-       local alias_file="$HOME/.bash_aliases"
-       
-       ### Create alias entry ###
-       local alias_line="alias $name='source $script; '"
-       
-       ### Check if alias already exists ###
-       if grep -q "alias $name=" "$alias_file" 2>/dev/null; then
-           print --warning "Alias '$name' already exists in $alias_file"
-           return 1
-       fi
-       
-       ### Add alias ###
-       echo "$alias_line" >> "$alias_file"
-       print --success "Alias added to $alias_file"
-       print --info "Reload with: source $alias_file"
-   }
-   
-   # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-   _cmd_create_completion() {
-       local name="${1:-$cmd_name}"
-       local script="${2:-${BASH_SOURCE[0]}}"
-       local comp_file="$completion_path/${name}"
-       
-       ### Check permissions ###
-       if [ "$EUID" -ne 0 ] && [[ "$completion_path" == "/etc/bash_completion.d" ]]; then
-           print --warning "Need sudo privileges for system-wide completion"
-           comp_file="$HOME/.bash_completion.d/${name}"
-           completion_path="$HOME/.bash_completion.d"
-           [ ! -d "$completion_path" ] && mkdir -p "$completion_path"
-       fi
-       
-       ### Create dynamic completion script ###
-       cat > "$comp_file" << 'EOF'
+        
+        chmod +x "$target"
+        print --success "Wrapper created: $target"
+        
+        ### Add to PATH if needed ###
+        if [[ ":$PATH:" != *":$install_path:"* ]] && [[ "$install_path" == "$HOME/.local/bin" ]]; then
+            print --info "Add to PATH: export PATH=\"\$PATH:$install_path\""
+            print --info "Add this line to ~/.bashrc for permanent effect"
+        fi
+    }
+    
+    ### Create alias (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _alias() {
+        local name="${1:-$cmd_name}"
+        local script="${2:-${BASH_SOURCE[0]}}"
+        local alias_file="$HOME/.bash_aliases"
+        
+        ### Create alias entry ###
+        local alias_line="alias $name='source $script; '"
+        
+        ### Check if alias already exists ###
+        if grep -q "alias $name=" "$alias_file" 2>/dev/null; then
+            print --warning "Alias '$name' already exists in $alias_file"
+            return 1
+        fi
+        
+        ### Add alias ###
+        echo "$alias_line" >> "$alias_file"
+        print --success "Alias added to $alias_file"
+        print --info "Reload with: source $alias_file"
+    }
+    
+    ### Create completion (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _completion() {
+        local name="${1:-$cmd_name}"
+        local script="${2:-${BASH_SOURCE[0]}}"
+        local comp_file="$completion_path/${name}"
+        
+        ### Check permissions ###
+        if [ "$EUID" -ne 0 ] && [[ "$completion_path" == "/etc/bash_completion.d" ]]; then
+            print --warning "Need sudo privileges for system-wide completion"
+            comp_file="$HOME/.bash_completion.d/${name}"
+            completion_path="$HOME/.bash_completion.d"
+            [ ! -d "$completion_path" ] && mkdir -p "$completion_path"
+        fi
+        
+        ### Create dynamic completion script ###
+        cat > "$comp_file" << 'EOF'
 # Bash completion for CMDNAME - Auto-generated
 _CMDNAME_completion() {
    local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -182,78 +313,123 @@ _CMDNAME_completion() {
 
 complete -F _CMDNAME_completion CMDNAME
 EOF
-       
-       ### Replace placeholders ###
-       sed -i "s|CMDNAME|${name}|g" "$comp_file"
-       sed -i "s|SCRIPTPATH|${script}|g" "$comp_file"
-       
-       chmod +r "$comp_file"
-       print --success "Completion created: $comp_file"
-       print --info "Reload with: source $comp_file"
-   }
-   
-   # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-   _cmd_remove() {
-       local name="${1:-$cmd_name}"
-       
-       ### Remove wrapper ###
-       for path in "/usr/local/bin" "$HOME/.local/bin"; do
-           if [ -f "$path/$name" ]; then
-               rm -f "$path/$name"
-               print --success "Removed wrapper: $path/$name"
-           fi
-       done
-       
-       ### Remove completion ###
-       for path in "/etc/bash_completion.d" "$HOME/.bash_completion.d"; do
-           if [ -f "$path/$name" ]; then
-               rm -f "$path/$name"
-               print --success "Removed completion: $path/$name"
-           fi
-       done
-       
-       ### Remove alias ###
-       if grep -q "alias $name=" "$HOME/.bash_aliases" 2>/dev/null; then
-           sed -i "/alias $name=/d" "$HOME/.bash_aliases"
-           print --success "Removed alias from ~/.bash_aliases"
-       fi
-   }
-   
-   ### Parse arguments ###
-   while [[ $# -gt 0 ]]; do
-       case $1 in
-           --wrapper|-w)
-               _cmd_create_wrapper "${2:-$cmd_name}" "${3:-${BASH_SOURCE[0]}}"
-               shift $#
-               ;;
-           --alias|-a)
-               _cmd_create_alias "${2:-$cmd_name}" "${3:-${BASH_SOURCE[0]}}"
-               shift $#
-               ;;
-           --completion|-c)
-               _cmd_create_completion "${2:-$cmd_name}" "${3:-${BASH_SOURCE[0]}}"
-               shift $#
-               ;;
-           --all)
-               local name="${2:-$cmd_name}"
-               local script="${3:-${BASH_SOURCE[0]}}"
-               print --header "Installing $name system integration"
-               _cmd_create_wrapper "$name" "$script"
-               _cmd_create_completion "$name" "$script"
-               print --success "Installation complete!"
-               print --info "Restart shell or run: source $completion_path/$name"
-               shift $#
-               ;;
-           --remove|-r)
-               _cmd_remove "${2:-$cmd_name}"
-               shift $#
-               ;;
-           *)
-               print --error "Unknown operation: $1"
-               print "Usage: cmd [OPERATION] [NAME] [SCRIPT]"
-               print "Operations: --wrapper, --alias, --completion, --all, --remove"
-               return 1
-               ;;
-       esac
-   done
+        
+        ### Replace placeholders ###
+        sed -i "s|CMDNAME|${name}|g" "$comp_file"
+        sed -i "s|SCRIPTPATH|${script}|g" "$comp_file"
+        
+        chmod +r "$comp_file"
+        print --success "Completion created: $comp_file"
+        print --info "Reload with: source $comp_file"
+    }
+    
+    ### Remove all integrations (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _remove() {
+        local name="${1:-$cmd_name}"
+        
+        ### Remove wrapper ###
+        for path in "/usr/local/bin" "$HOME/.local/bin"; do
+            if [ -f "$path/$name" ]; then
+                rm -f "$path/$name"
+                print --success "Removed wrapper: $path/$name"
+            fi
+        done
+        
+        ### Remove completion ###
+        for path in "/etc/bash_completion.d" "$HOME/.bash_completion.d"; do
+            if [ -f "$path/$name" ]; then
+                rm -f "$path/$name"
+                print --success "Removed completion: $path/$name"
+            fi
+        done
+        
+        ### Remove alias ###
+        if grep -q "alias $name=" "$HOME/.bash_aliases" 2>/dev/null; then
+            sed -i "/alias $name=/d" "$HOME/.bash_aliases"
+            print --success "Removed alias from ~/.bash_aliases"
+        fi
+    }
+
+    ### Parse Arguments ###
+    case "$1" in
+        --check|-ck)
+            shift
+            _check "$@"
+            ;;
+
+        --install|-i)
+            shift
+            _install "$@"
+            ;;
+
+        --wrapper|-w)
+            shift
+            _wrapper "$@"
+            ;;
+
+        --alias|-a)
+            shift
+            _alias "$@"
+            ;;
+
+        --completion|-c)
+            shift
+            _completion "$@"
+            ;;
+
+        --all)
+            shift
+            local name="${1:-$cmd_name}"
+            local script="${2:-${BASH_SOURCE[0]}}"
+            print --header "Installing $name system integration"
+            _wrapper "$name" "$script"
+            _completion "$name" "$script"
+            print --success "Installation complete!"
+            print --info "Restart shell or run: source $completion_path/$name"
+            ;;
+
+        --remove|-r)
+            shift
+            _remove "$@"
+            ;;
+
+        --help|-h)
+            show_help
+            return 0
+            ;;
+
+        *)
+            print --invalid "${FUNCNAME[0]}" "$1"
+            return 1
+            ;;
+
+    esac
 }
+
+
+################################################################################
+### === MAIN EXECUTION === ###
+################################################################################
+
+### Main Function ###
+main() {
+    ### Check if no arguments provided ###
+    if [ $# -eq 0 ]; then
+        show_help
+        exit 0
+    else
+        ### Parse and execute arguments ###
+        parse_arguments "$@"
+    fi
+}
+
+### Initialize when run directly ###
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    ### Running directly as script ###
+    main "$@"
+else
+    ### Being sourced as library ###
+    ### Functions loaded and ready for use ###
+    :
+fi

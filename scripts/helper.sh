@@ -19,6 +19,34 @@ readonly commit="Initial Helper Functions Library Structure"
 
 
 ################################################################################
+### Parse Command Line Arguments ###
+################################################################################
+
+### Parse Command Line Arguments ###
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+
+            --version|-V)
+                print --version "${header}" "${version}" "${commit}"
+                exit 0
+                ;;
+
+            *)
+                ### Pass all other arguments to main processing ###
+                break
+                ;;
+        esac
+        shift
+    done
+}
+
+
+################################################################################
 ### === INITIALIZATION === ###
 ################################################################################
 
@@ -398,29 +426,6 @@ utility() {
 ################################################################################
 ### === MAIN EXECUTION === ###
 ################################################################################
-
-### Parse Command Line Arguments ###
-parse_arguments() {
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --help|-h)
-                show_help
-                exit 0
-                ;;
-
-            --version|-V)
-                print --version "${header}" "${version}" "${commit}"
-                exit 0
-                ;;
-
-            *)
-                ### Pass all other arguments to main processing ###
-                break
-                ;;
-        esac
-        shift
-    done
-}
 
 ### Cleanup Function ###
 cleanup() {
