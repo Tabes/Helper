@@ -63,7 +63,6 @@ show_help() {
 
     ### Read File Line by Line and Format Content ###
     while IFS= read -r line; do
-
         case "${line}" in
             "# "*)
                 print --header "${line#\# }"
@@ -121,7 +120,6 @@ show_help() {
                 ;;
 
         esac
-
     done < "${help_file}"
 }
 
