@@ -158,71 +158,86 @@ cmd() {
 
     ### Create Wrapper Script (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+
     _wrapper() {
-    local name="${1:-$cmd_name}"
-    local script="${2:-${BASH_SOURCE[0]}}"
-    local target="$install_path/$name"
-    local template_file="${WRAPPER_DIR}/wrapper.md"
-    local mask_pattern="${3:-\{\{([^}]+)\}\}}"  ### Default: {{variable}} format ###
-    
-    ### Check if running as root for system-wide installation ###
-    if [ "$EUID" -ne 0 ] && [[ "$install_path" == "/usr/local/bin" ]]; then
-        print --warning "Need sudo privileges for system-wide installation"
-        print --info "Installing to user directory instead: ~/.local/bin"
-        install_path="$HOME/.local/bin"
-        target="$install_path/$name"
-        [ ! -d "$install_path" ] && mkdir -p "$install_path"
-    fi
-    
-    ### Check if template file exists ###
-    if [ ! -f "$template_file" ]; then
-        print --error "Template file not found: $template_file"
-        return 1
-    fi
-    
-    ### Extract content from markdown code block ###
-    local template_content=$(sed -n '/```bash/,/```/p' "$template_file" | sed '1d;$d')
-    
-    ### Variable replacement based on mask pattern ###
-    case "$mask_pattern" in
-        *\{\{*\}\}*)
-            ### {{variable}} format ###
-            template_content=${template_content//\{\{NAME\}\}/$name}
-            template_content=${template_content//\{\{SCRIPT_PATH\}\}/$script}
-            template_content=${template_content//\{\{VERSION\}\}/${version:-1.0.0}}
-            ;;
-        *\{*\}*)
-            ### {variable} format ###
-            template_content=${template_content//\{NAME\}/$name}
-            template_content=${template_content//\{SCRIPT_PATH\}/$script}
-            template_content=${template_content//\{VERSION\}/${version:-1.0.0}}
-            ;;
-        *\$*\$*)
-            ### $variable$ format ###
-            template_content=${template_content//\$NAME\$/$name}
-            template_content=${template_content//\$SCRIPT_PATH\$/$script}
-            template_content=${template_content//\$VERSION\$/${version:-1.0.0}}
-            ;;
-        *)
-            ### Default to {{variable}} if pattern not recognized ###
-            template_content=${template_content//\{\{NAME\}\}/$name}
-            template_content=${template_content//\{\{SCRIPT_PATH\}\}/$script}
-            template_content=${template_content//\{\{VERSION\}\}/${version:-1.0.0}}
-            ;;
-    esac
-    
-    ### Write processed template to target file ###
-    echo "$template_content" > "$target"
-    chmod +x "$target"
-    
-    print --success "Wrapper created: $target"
-    
-    ### Add to PATH if needed ###
-    if [[ ":$PATH:" != *":$install_path:"* ]] && [[ "$install_path" == "$HOME/.local/bin" ]]; then
-        print --info "Add to PATH: export PATH=\"\$PATH:$install_path\""
-        print --info "Add this line to ~/.bashrc for permanent effect"
-    fi
+        local name="${1:-$cmd_name}"
+        local script="${2:-${BASH_SOURCE[0]}}"
+        local target="$install_path/$name"
+        local template_file="${WRAPPER_DIR}/wrapper.md"
+        local pattern="${3:-\$}"
+        
+        ### Check if running as root for system-wide installation ###
+        if [ "$EUID" -ne 0 ] && [[ "$install_path" == "/usr/local/bin" ]]; then
+            print --warning "Need sudo privileges for system-wide installation"
+            print --info "Installing to user directory instead: ~/.local/bin"
+            install_path="$HOME/.local/bin"
+            target="$install_path/$name"
+            [ ! -d "$install_path" ] && mkdir -p "$install_path"
+        fi
+        
+        ### Check if template file exists ###
+        if [ ! -f "$template_file" ]; then
+            print --error "Template file not found: $template_file"
+            return 1
+        fi
+        
+        ### Extract content from markdown code block ###
+        local template_content=$(sed -n '/```bash/,/```/p' "$template_file" | sed '1d;$d')
+        
+        ### Build regex pattern dynamically for ANY pattern ###
+        local regex_pattern=""
+        local start_delimiter=""
+        local end_delimiter=""
+        
+        if [ ${#pattern} -eq 1 ]; then
+            ### Single character delimiter (like @ or %) ###
+            regex_pattern="${pattern}([^${pattern}]+)${pattern}"
+            start_delimiter="$pattern"
+            end_delimiter="$pattern"
+        elif [ ${#pattern} -eq 2 ]; then
+            ### Two characters - treat as start/end pair ###
+            start_delimiter="${pattern:0:1}"
+            end_delimiter="${pattern:1:1}"
+            regex_pattern="${start_delimiter}([^${end_delimiter}]+)${end_delimiter}"
+        else
+            ### Multi-character - split in half ###
+            local half_len=$((${#pattern} / 2))
+            start_delimiter="${pattern:0:$half_len}"
+            end_delimiter="${pattern:$half_len}"
+            regex_pattern="${start_delimiter}([^${end_delimiter}]+)${end_delimiter}"
+        fi
+        
+        ### Replace variables using the constructed pattern ###
+        while [[ $template_content =~ $regex_pattern ]]; do
+            local var_name="${BASH_REMATCH[1]}"
+            local full_match="${BASH_REMATCH[0]}"
+            local var_value=""
+            
+            ### Map known variables ###
+            case "$var_name" in
+                NAME) var_value="$name" ;;
+                SCRIPT_PATH) var_value="$script" ;;
+                VERSION) var_value="${version:-1.0.0}" ;;
+                *) var_value="${!var_name:-}" ;;
+            esac
+            
+            ### Replace the matched pattern with the value ###
+            template_content="${template_content//$full_match/$var_value}"
+        done
+        
+        ### Write processed template to target file ###
+        echo "$template_content" > "$target"
+        chmod +x "$target"
+        
+        print --success "Wrapper created: $target"
+        
+        ### Add to PATH if needed ###
+        if [[ ":$PATH:" != *":$install_path:"* ]] && [[ "$install_path" == "$HOME/.local/bin" ]]; then
+            print --info "Add to PATH: export PATH=\"\$PATH:$install_path\""
+            print --info "Add this line to ~/.bashrc for permanent effect"
+        fi
     }
+}
 
 
 ################################################################################
