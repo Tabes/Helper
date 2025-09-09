@@ -699,15 +699,30 @@ Contributions sind willkommen! Bitte:
 
 ## 16. ToDo Liste
 
-  1. Ich habe eine Variable hinzugefügt:
-
-  - ### Interactive Dialog Variables ####
+- ### Interactive Dialog Variables
 
   - YES=true    ### Can be used to enable additional Package Installation by default ###
 
-  -Erstelle in der secure.sh eine Abfrage, wenn Pakete fehlen, ob sie installiert werden sollen (. ob alle erforderlichen Pakete für die secure.sh installiert sind. Werte $YES ebenfalls aus
+---
 
-  2. Print() Option --Version hinzufügen 
+- ### Abfrage, wenn Pakete fehlen, ob sie installiert werden sollen.
+
+  - Werte $YES ebenfalls aus.
+
+---
+
+- ### Print() Routine
+  
+  - Option --Version hinzufügen
+
+---
+
+- ### show.sh (Skript)
+
+  - IFS= read -r line;
+  - kommt mehfach vor
+  - zusammenfassen zu einer Funktion, die Markdown Dateien ließt
+
 ---
 
 ↑ [zurück](#inhaltsverzeichnis)
