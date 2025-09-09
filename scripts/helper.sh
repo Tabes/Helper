@@ -12,8 +12,10 @@
 ### Usage:   Source this File to Load Helper Functions
 ################################################################################
 
-SCRIPT_VERSION="1.0.0"
-COMMIT="Initial Helper Functions Library Structure"
+readonly header="Universal Helper Functions"
+
+readonly version="2.1.0"
+readonly commit="Initial Helper Functions Library Structure"
 
 
 ################################################################################
@@ -267,6 +269,11 @@ ask() {
     esac
 }
 
+
+################################################################################
+### === UTILITY & FLOW CONTROL FUNCTIONS === ###
+################################################################################
+
 ### Universal Utility Function ###
 utility() {
     ### Log startup arguments ###
@@ -394,25 +401,25 @@ utility() {
 
 ### Parse Command Line Arguments ###
 parse_arguments() {
-   ### Store original arguments for logging ###
-   local ORIGINAL_ARGS=("$@")
-   
-   ### Parse Command Line Arguments ###
-   while [[ $# -gt 0 ]]; do
-       case $1 in
-           -h|--help)
-               show --help
-               exit 0
-               ;;
-           -V|--version)
-               show --version
-               exit 0
-               ;;
-           *)
-               shift
-               ;;
-       esac
-   done
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+
+            --version|-V)
+                print --version "${header}" "${version}" "${commit}"
+                exit 0
+                ;;
+
+            *)
+                ### Pass all other arguments to main processing ###
+                break
+                ;;
+        esac
+        shift
+    done
 }
 
 ### Cleanup Function ###
@@ -422,21 +429,20 @@ cleanup() {
 
 ### Main Function ###
 main() {
-
     clear
 
     ### Load configuration and dependencies ###
     load_config
     
     ### Initialize logging ###
-    log --init "${LOG_DIR}/${PROJECT_NAME}.log" "${LOG_LEVEL:-INFO}"
+    log --init "${LOG_DIR}/${PROJECT_NAME:-helper}.log" "${LOG_LEVEL:-INFO}"
     
     ### Log startup ###
-    log --info "Helper Functions startup: $*"
+    log --info "${header} v${version} startup: $*"
     
     ### Check if no arguments provided ###
     if [ $# -eq 0 ]; then
-        show --header "Universal Helper Functions v${SCRIPT_VERSION}"
+        show --header "${header} v${version}"
         show --doc --help
         exit 0
     else
