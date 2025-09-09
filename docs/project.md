@@ -8,35 +8,62 @@
 
 - [Dokumentation: Universal Helper Functions (`helper.sh`)](#dokumentation-universal-helper-functions-helpersh)
   - [Inhaltsverzeichnis](#inhaltsverzeichnis)
-  - [1. Einleitung](#1-einleitung)
-  - [2. Grundlegende Nutzung](#2-grundlegende-nutzung)
-    - [Direkte Ausführung](#direkte-ausführung)
-    - [Einbindung (Sourcing)](#einbindung-sourcing)
-  - [3. Konfiguration](#3-konfiguration)
-  - [4. Kernfunktionen](#4-kernfunktionen)
+  - [01. Einleitung](#01-einleitung)
+  - [02. Features](#02-features)
+  - [03. Voraussetzungen](#03-voraussetzungen)
+  - [04. Kernfunktionen](#04-kernfunktionen)
     - [4.1 `print` - Formatierte Ausgabe](#41-print---formatierte-ausgabe)
     - [4.2 `log` - Protokollierung](#42-log---protokollierung)
     - [4.3 `show` - Interaktive Anzeigen](#43-show---interaktive-anzeigen)
     - [4.4 `show_help` - Dynamische Hilfe](#44-show_help---dynamische-hilfe)
     - [4.5 `cmd` - Systemintegration](#45-cmd---systemintegration)
     - [4.6 `secure` - Berechtigungsverwaltung](#46-secure---berechtigungsverwaltung)
-  - [5. Globale Variablen \& Anpassung](#5-globale-variablen--anpassung)
-    - [Farben](#farben)
-    - [Symbole](#symbole)
-    - [Layout](#layout)
-    - [ToDo Liste](#todo-liste)
+  - [05. Installation](#05-installation)
+    - [Quick Start](#quick-start)
+    - [Installation mit Parametern](#installation-mit-parametern)
+    - [Einbindung (Sourcing)](#einbindung-sourcing)
+    - [Nach der Installation](#nach-der-installation)
+  - [06. Konfiguration](#06-konfiguration)
+    - [6.1 Management (`load_config`)](#61-management-load_config)
+    - [6.2 Verzeichnisstruktur](#62-verzeichnisstruktur)
+      - [Dateien \& Verzeichnisse](#dateien--verzeichnisse)
+    - [6.3 Konfigurationsdateien](#63-konfigurationsdateien)
+    - [6.4 Globale Variablen \& Anpassung](#64-globale-variablen--anpassung)
+      - [6.4.1 Farben](#641-farben)
+      - [6.4.2 Symbole](#642-symbole)
+      - [6.4.3 Layout](#643-layout)
+  - [07. Optionen](#07-optionen)
+  - [08. Workflow](#08-workflow)
+    - [8.1 Interaktive Konfiguration (optional)](#81-interaktive-konfiguration-optional)
+    - [8.2 System-Check](#82-system-check)
+    - [8.3 Abhängigkeiten installieren](#83-abhängigkeiten-installieren)
+    - [8.4 Framework Download](#84-framework-download)
+    - [8.5 Struktur erstellen](#85-struktur-erstellen)
+    - [8.6 System-Integration](#86-system-integration)
+  - [09. Erweiterte Nutzung](#09-erweiterte-nutzung)
+  - [10. Deinstallation](#10-deinstallation)
+  - [11. Fehlerbehebung](#11-fehlerbehebung)
+  - [12. Lizenz](#12-lizenz)
+  - [13. Support](#13-support)
+  - [14. Versionsverlauf](#14-versionsverlauf)
+  - [15. Beiträge](#15-beiträge)
+    - [Universal Helper Functions - Making bash scripting easier](#universal-helper-functions---making-bash-scripting-easier)
+  - [16. ToDo Liste](#16-todo-liste)
+
 
 ---
 
-## 1. Einleitung
+## 01. Einleitung
 
 Die `helper.sh` ist das Kernmodul des Universal Helper Frameworks. Sie ist eine umfangreiche und modular aufgebaute Bibliothek von Hilfsfunktionen für die Bash-Programmierung. Sie dient als universelles Toolkit, um wiederkehrende Aufgaben wie formatierte Ausgaben, Protokollierung, interaktive Anzeigen, Systemintegration und Berechtigungsmanagement zu standardisieren und zu vereinfachen.
 
 Das Design zielt auf hohe Konfigurierbarkeit, Erweiterbarkeit und Benutzerfreundlichkeit ab, indem es eine konsistente API für komplexe Operationen bereitstellt.
 
+↑ [zurück](#inhaltsverzeichnis)
+
 ---
 
-## 2. Features
+## 02. Features
 
 - **Automatische Systemprüfung** - Erkennt Debian-Version und prüft Voraussetzungen
 - **Abhängigkeiten-Management** - Installiert fehlende Pakete automatisch
@@ -45,16 +72,22 @@ Das Design zielt auf hohe Konfigurierbarkeit, Erweiterbarkeit und Benutzerfreund
 - **Fallback-Mechanismen** - Alternative Download-Methoden bei Problemen
 - **System-Integration** - Richtet globale Commands und Bash-Completion ein
 
+↑ [zurück](#inhaltsverzeichnis)
+
 ---
 
-## 3. Voraussetzungen
+## 03. Voraussetzungen
 
 - Debian-basiertes System (empfohlen: aktuellste Version)
 - Internetverbindung
 - SSH-Zugang mit bekanntem root-Passwort
 - Git-Repository mit dem Helper-Framework
 
-## 4. Kernfunktionen
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+## 04. Kernfunktionen
 
 Die Bibliothek ist in logische Funktionsblöcke unterteilt.
 
@@ -64,19 +97,24 @@ Diese Funktion ersetzt `echo` und `printf` durch eine einzige, vielseitige Schni
 
 **Syntax:** `print [OPTIONEN] [TEXT]...`
 
-| Option                 | Beschreibung                                                                                             |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `--success <MSG>`      | Gibt eine Erfolgsmeldung in Grün mit einem ✓-Symbol aus.                                                 |
-| `--error <MSG>`        | Gibt eine Fehlermeldung in Rot mit einem ✗-Symbol aus (auf `stderr`).                                    |
-| `--warning <MSG>`      | Gibt eine Warnung in Gelb mit einem ⚠-Symbol aus.                                                        |
-| `--info <MSG>`         | Gibt eine Info-Nachricht in Cyan mit einem ℹ-Symbol aus.                                                 |
-| `--header <TITEL>`     | Zeigt einen prominenten, von Rauten umgebenen Header an.                                                  |
-| `--line [CHAR]`        | Druckt eine horizontale Trennlinie. Das Zeichen (Standard: `#`) kann optional angegeben werden.         |
-| `--left|-l <POS> <TXT>`| Richtet den Text `TXT` linksbündig an der Spaltenposition `POS` aus.                                      |
-| `--right|-r <POS> <TXT>`| Richtet den Text `TXT` rechtsbündig an der Spaltenposition `POS` aus.                                     |
-| `--cr [N]`             | Druckt `N` neue Zeilen (Standard: 1).                                                                    |
-| `--no-nl|-n`           | Unterdrückt den automatischen Zeilenumbruch am Ende der Ausgabe.                                         |
-| `<FARBE>`              | Setzt die Farbe für den nachfolgenden Text (z.B. `RD`, `GN`, `BU`). Siehe [Globale Variablen](#farben). |
+```Markdown
+| Option           | Kurzform | Beschreibung                                 |
+|------------------|----------|----------------------------------------------|
+| --success MSG    | –        | Erfolgsmeldung mit grünem Haken              |
+| --error MSG      | –        | Fehlermeldung mit rotem X                    |
+| --warning MSG    | –        | Warnung mit gelbem Warnzeichen               |
+| --info MSG       | –        | Info mit blauem Info-Symbol                  |
+| --header TITLE   | –        | Formatierter Header                          |
+| --line [CHAR]    | –        | Horizontale Linie                            |
+| -l POS           | -l       | Links ausrichten an Position                 |
+| -r POS           | -r       | Rechts ausrichten an Position                |
+| --cr [N]         | –        | N Leerzeilen einfügen                        |
+| --no-nl          | –        | Keine neue Zeile                             |
+|                  |          |                                              |
+| <FARBE>          |          | Setzt die Farbe für den nachfolgenden Text   |
+|                  |          | RD, GN, BU etc. [Variablen](#farben).        |
+
+```
 
 **Beispiele:**
 
@@ -95,6 +133,10 @@ print --no-nl "Prüfe System..."
 sleep 2
 print GN "OK"
 ```
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
 
 ### 4.2 `log` - Protokollierung
 
@@ -138,6 +180,10 @@ log --error "Verbindung fehlgeschlagen!"
 log --tail "/var/log/myapp.log" 50
 ```
 
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
 ### 4.3 `show` - Interaktive Anzeigen
 
 Diese Funktion stellt Elemente zur Interaktion mit dem Benutzer und zur visuellen Darstellung von Prozessen bereit.
@@ -178,6 +224,10 @@ for i in {1..100}; do
 done
 ```
 
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
 ### 4.4 `show_help` - Dynamische Hilfe
 
 Eine leistungsstarke Funktion, die Hilfe-Texte aus Markdown-Dateien (`.md`) parst und formatiert im Terminal anzeigt.
@@ -213,6 +263,10 @@ Folgende Variablen steuern das Verhalten:
 - `LOG_LEVEL`	Minimales Level für Einträge.
 ```
 
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
 ### 4.5 `cmd` - Systemintegration
 
 Diese Funktion dient dazu, Ihr Skript tief in das Betriebssystem zu integrieren, indem es als globaler Befehl verfügbar gemacht wird.
@@ -240,6 +294,10 @@ Diese Funktion dient dazu, Ihr Skript tief in das Betriebssystem zu integrieren,
 # Deinstallation
 ./mytool.sh cmd --remove "mytool"
 ```
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
 
 ### 4.6 `secure` - Berechtigungsverwaltung
 
@@ -269,9 +327,11 @@ secure --check /var/www/html webdev
 secure --wizard /var/www/html webdev
 ```
 
+↑ [zurück](#inhaltsverzeichnis)
+
 ---
 
-## 5. Installation
+## 05. Installation
 
 ### Quick Start
 
@@ -348,30 +408,68 @@ Nach erfolgreicher Installation:
 source ~/.bashrc
 ```
 
+↑ [zurück](#inhaltsverzeichnis)
+
 ---
 
-## 6. Konfiguration
-3.1 Management (`load_config`)
+## 06. Konfiguration
+
+### 6.1 Management (`load_config`)
 
 Diese Funktion wird automatisch beim Start des Skripts (sowohl bei direkter Ausführung als auch beim Sourcing) aufgerufen. Sie ist das Herzstück der Konfiguration und führt folgende Schritte aus:
 
-1.  **Projektverzeichnis finden:** Ermittelt dynamisch das Wurzelverzeichnis des Projekts.
+- 1.  **Projektverzeichnis finden:** Ermittelt dynamisch das Wurzelverzeichnis des Projekts.
 
-2.  **Konfigurationen laden:** Sucht und lädt `project.conf` und alle weiteren `.conf`-Dateien aus dem `configs/`-Verzeichnis.
+- 2.  **Konfigurationen laden:** Sucht und lädt `project.conf` und alle weiteren `.conf`-Dateien aus dem `configs/`-Verzeichnis.
 
-3.  **Skripte einbinden:** Lädt automatisch alle weiteren Hilfsskripte aus den Verzeichnissen `scripts/helper/` und `scripts/`.
+- 3.  **Skripte einbinden:** Lädt automatisch alle weiteren Hilfsskripte aus den Verzeichnissen `scripts/helper/` und `scripts/`.
 
 > **Hinweis:** Skripte, deren Dateiname mit einem Unterstrich (`_`) beginnt, werden ignoriert. Dies erlaubt es, "private" oder unfertige Skripte im Verzeichnis zu belassen, ohne dass sie geladen werden.
 
-3.2 Verzeichnisstruktur
+### 6.2 Verzeichnisstruktur
 
-3.3 Konfigurationsdateien
+#### Dateien & Verzeichnisse
 
-### 5. Globale Variablen & Anpassung
+Nach der Installation wird folgende Struktur angelegt:
+
+```bash
+helper/
+├── backup/              # Backup-Dateien
+├── configs/             # Konfigurationsdateien
+│   ├── project.conf     # Projekt-Konfiguration
+│   └── helper.conf      # Helper-Konfiguration
+├── docs/                # Dokumentation
+│   └── help/            # Hilfe-Dateien
+├── logs/                # Log-Dateien
+├── scripts/             # Skripte- Verzeichnis
+│   ├── helper.sh        # Hauptmodul
+│   └── helper/          # Ausgelagerte Helper Funktionen
+└── utilities/           # Zusätzliche Tools
+```
+
+### 6.3 Konfigurationsdateien
+
+`project.conf`:
+
+```bash
+PROJECT_NAME="myproject"
+PROJECT_VERSION="1.0.0"
+PROJECT_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
+
+# Verzeichnisse
+BACKUP_DIR="$PROJECT_ROOT/backup"
+CONFIGS_DIR="$PROJECT_ROOT/configs"
+DOCS_DIR="$PROJECT_ROOT/docs"
+LOG_DIR="$PROJECT_ROOT/logs"
+SCRIPTS_DIR="$PROJECT_ROOT/scripts"
+UTILITIES_DIR="$PROJECT_ROOT/utilities"
+```
+
+### 6.4 Globale Variablen & Anpassung
 
 Das Verhalten und Aussehen der Helper-Funktionen kann durch globale Variablen angepasst werden, die typischerweise in `project.conf` oder einer anderen `.conf`-Datei im `configs/`-Verzeichnis gesetzt werden.
 
-### Farben
+#### 6.4.1 Farben
 
 Die folgenden Variablen können gesetzt werden, um die Standardfarben zu ändern.
 
@@ -384,7 +482,7 @@ Die folgenden Variablen können gesetzt werden, um die Standardfarben zu ändern
 * `COLOR_WH` (White)
 * `COLOR_MG` (Magenta)
 
-### Symbole
+#### 6.4.2 Symbole
 
 Die Symbole für Statusmeldungen können ebenfalls überschrieben werden.
 
@@ -393,14 +491,16 @@ Die Symbole für Statusmeldungen können ebenfalls überschrieben werden.
 * `SYMBOL_WARNING` (Standard: `⚠`)
 * `SYMBOL_INFO` (Standard: `ℹ`)
 
-### Layout
+#### 6.4.3 Layout
 
 * `POS=(...)`: Ein Array von Zahlen, das die Spaltenpositionen für tabellarische Ausgaben in `show_help` definiert.
     * Beispiel: `POS=(4 25 50)` setzt die erste Spalte auf Position 4, die zweite auf 25 und die dritte auf 50.
 
+↑ [zurück](#inhaltsverzeichnis)
+
 ---
 
-## 7. Optionen
+## 07. Optionen
 
 ```Markdown
 | Option          | Kurzform | Beschreibung                                               |
@@ -415,72 +515,199 @@ Die Symbole für Statusmeldungen können ebenfalls überschrieben werden.
 
 OptionKurzBeschreibung--path PATH-pInstallations-Verzeichnis (Standard: ~/helper)--repo URL-rGit-Repository URL--branch NAME-bGit-Branch (Standard: main)--system-sSystem-weite Installation in /opt/helper--verbose-vAusführliche Ausgabe für Debugging--help-hZeigt Hilfe an
 
+↑ [zurück](#inhaltsverzeichnis)
+
 ---
 
-## 8. Workflow
+## 08. Workflow
 
 Die Installation durchläuft folgende Schritte:
 
-### 01. Interaktive Konfiguration (optional)
+### 8.1 Interaktive Konfiguration (optional)
 
 - Abfrage von Installationspfad, Repository und Branch
 
-### 02. System-Check
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+### 8.2 System-Check
 
 - Prüfung der Debian-Version
 - Kontrolle essentieller Commands (git, curl, wget, sudo)
 - Test der Internetverbindung
 - Prüfung der Benutzerrechte
 
-### 03. Abhängigkeiten installieren
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+### 8.3 Abhängigkeiten installieren
 
 - Automatische Installation fehlender Pakete
 - Fallback zu manueller Installation bei fehlendem sudo
 
-### 04. Framework Download
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+### 8.4 Framework Download
 
 - Git clone als primäre Methode
 - Wget als Fallback-Option
 - Automatisches Setzen der Berechtigungen
 
-### 05. Struktur erstellen
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+### 8.5 Struktur erstellen
 
 - Anlegen der Verzeichnisstruktur
 - Generierung der project.conf
 
-### 06. System-Integration
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+### 8.6 System-Integration
 
 - Installation globaler Commands
 - Bash-Completion Setup
 - Integration in .bashrc
 
-## 9. ToDo Liste
+↑ [zurück](#inhaltsverzeichnis)
 
-Bringe das mit ein, als 2. nach der Einleitung:
+---
 
-Features
+## 09. Erweiterte Nutzung
 
-Modulares Design - Automatisches Laden von Konfigurationen und Helper-Skripten
+Die setup Funktion kann auch einzeln aufgerufen werden:
 
-Umfassende Output-Funktionen - Formatierte Ausgaben mit Farben und Symbolen
+```bash
+# Nur System-Check
+setup --check
 
-Professionelles Logging - Multi-Level-Logging mit Rotation und Suchfunktionen
+# Nur Abhängigkeiten installieren
+setup --dependencies
 
-System-Integration - Globale Commands, Bash-Completion und Aliase
+# Nur Framework downloaden
+setup --download
 
-Permission-Management - ACL, Gruppen und sudo-Konfiguration
+# Nur Verzeichnisstruktur erstellen
+setup --structure
 
-Interaktive Elemente - Menüs, Spinner, Fortschrittsbalken
+# Nur System-Integration
+setup --configure
 
+# Komplette Installation
+setup --complete
+```
 
-Die Kernfunktionen solle als 3. kommen.
+↑ [zurück](#inhaltsverzeichnis)
 
-4. ist dann die grundlegende Nutzung.
+---
 
+## 10. Deinstallation
 
-5. Globale Variablen & Anpassung mit in die Konfiguration
+Zur vollständigen Entfernung:
 
+```bash
+# Helper-Command entfernen
+sudo rm -f /usr/local/bin/helper
 
-Kannst du auch nach jedem Abschnitt einen Link zu Inhaltsverzeichnis setzen.
+# Bash-Completion entfernen
+sudo rm -f /etc/bash_completion.d/helper
 
-Die Ausgabe als formatierte Markdown ausgeben. 
+# Installation entfernen
+rm -rf ~/helper
+
+# .bashrc bereinigen (manuell die Helper-Zeilen entfernen)
+nano ~/.bashrc
+```
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+## 11. Fehlerbehebung
+
+Bei Problemen:
+
+1. Verbose-Modus aktivieren: ./start.sh --verbose
+2. Log-Ausgaben prüfen
+3. Manuelle Installation der Abhängigkeiten:
+
+```bash
+sudo apt-get install git curl wget rsync
+```
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+## 12. Lizenz
+
+MIT License - siehe LICENSE Datei im Repository
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+## 13. Support
+
+Bei Fragen oder Problemen:
+
+- Issues im GitHub-Repository erstellen
+- Dokumentation im docs/ Verzeichnis konsultieren
+- Log-Dateien im logs/ Verzeichnis prüfen
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+## 14. Versionsverlauf
+
+```Markdown
+| Version | Datum       | Änderungen                           |
+|---------|-------------|--------------------------------------|
+| 2.1.0   | 2025-08-31  | Erweiterte `secure()` Funktion       |
+| 2.0.0   | 2025-08-15  | Modularisierung implementiert        |
+| 1.0.0   | 2025-08-01  | Erste stabile Version                |
+```
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+## 15. Beiträge
+
+Contributions sind willkommen! Bitte:
+
+- Fork des Repositories erstellen
+- Feature-Branch anlegen
+- Änderungen committen
+- Pull Request erstellen
+
+↑ [zurück](#inhaltsverzeichnis)
+
+---
+
+### Universal Helper Functions - Making bash scripting easier
+
+---
+
+## 16. ToDo Liste
+
+  1. Ich habe eine Variable hinzugefügt:
+
+  - ### Interactive Dialog Variables ####
+
+  - YES=true    ### Can be used to enable additional Package Installation by default ###
+
+  -Erstelle in der secure.sh eine Abfrage, wenn Pakete fehlen, ob sie installiert werden sollen (. ob alle erforderlichen Pakete für die secure.sh installiert sind. Werte $YES ebenfalls aus
+
+  2. Print() Option --Version hinzufügen 
+---
+
+↑ [zurück](#inhaltsverzeichnis)

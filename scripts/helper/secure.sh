@@ -15,7 +15,7 @@
 readonly header="Security & Permission Management"
 
 readonly version="1.0.0"
-readonly commit="Security and Permission Management Functions for ACL and sudo Configuration"
+readonly commit="Security & Permission Management Functions for ACL and sudo Configuration"
 
 
 ################################################################################
@@ -225,7 +225,6 @@ secure() {
     
     ### Parse Arguments ###
     case "$1" in
-
         --acl)
             _acl "$target_path" "$target_user"
             ;;
