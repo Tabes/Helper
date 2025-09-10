@@ -65,7 +65,7 @@ cmd() {
     ### === INTERNAL CMD FUNCTIONS === ###
     ################################################################################
 
-    ### Check if command is available (internal) ###
+    ### Check if Cmmand is available (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _check() {
         local commands=("$@")
@@ -86,13 +86,12 @@ cmd() {
             print --cr
             print --warning "Missing commands: ${missing_commands[*]}"
             return 1
-        else
-            print --cr
-            print --success "All commands are available"
-            return 0
         fi
+        
+        print --cr
+        print --success "All commands are available"
     }
-    
+
     ### Check and install Dependencies (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _dependencies() {
@@ -142,72 +141,44 @@ cmd() {
         fi
     }
 
-    ### Install missing packages (internal) ###
+    ### Install missing Packages (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _install() {
         local packages=("$@")
         local package_manager=""
         
-        ### Detect package manager ###
-        if command -v apt >/dev/null 2>&1; then
-            package_manager="apt"
-        elif command -v yum >/dev/null 2>&1; then
-            package_manager="yum"
-        elif command -v dnf >/dev/null 2>&1; then
-            package_manager="dnf"
-        elif command -v pacman >/dev/null 2>&1; then
-            package_manager="pacman"
-        elif command -v brew >/dev/null 2>&1; then
-            package_manager="brew"
-        else
-            print --error "No supported package manager found"
-            return 1
-        fi
+        ### Detect Package Manager ###
+        for pm in apt yum dnf pacman brew; do
+            command -v "$pm" >/dev/null 2>&1 && { package_manager="$pm"; break; }
+        done
+        
+        [ -z "$package_manager" ] && { print --error "No supported package manager found"; return 1; }
         
         print --header "Package Installation"
         print --info "Package manager: $package_manager"
         print --info "Packages to install: ${packages[*]}"
         print --cr
         
-        ### Ask for confirmation ###
-        if ! ask --yes-no "Install missing packages?" "yes"; then
-            print --info "Installation cancelled"
-            return 1
-        fi
+        ask --yes-no "Install missing packages?" "yes" || { print --info "Installation cancelled"; return 1; }
         
         ### Install packages ###
         local install_cmd=""
         case "$package_manager" in
-            apt)
-                install_cmd="sudo apt update && sudo apt install -y"
-                ;;
-            yum)
-                install_cmd="sudo yum install -y"
-                ;;
-            dnf)
-                install_cmd="sudo dnf install -y"
-                ;;
-            pacman)
-                install_cmd="sudo pacman -S --noconfirm"
-                ;;
-            brew)
-                install_cmd="brew install"
-                ;;
+            apt) install_cmd="sudo apt update && sudo apt install -y" ;;
+            yum) install_cmd="sudo yum install -y" ;;
+            dnf) install_cmd="sudo dnf install -y" ;;
+            pacman) install_cmd="sudo pacman -S --noconfirm" ;;
+            brew) install_cmd="brew install" ;;
         esac
         
         for package in "${packages[@]}"; do
             print --info "Installing: $package"
-            if eval "$install_cmd $package"; then
-                print --success "Installed: $package"
-            else
-                print --error "Failed to install: $package"
-            fi
+            eval "$install_cmd $package" && print --success "Installed: $package" || print --error "Failed to install: $package"
         done
     }
 
     ### Create Wrapper Script (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-
     _wrapper() {
         local name="${1:-$cmd_name}"
         local script="${2:-${BASH_SOURCE[0]}}"
@@ -215,7 +186,7 @@ cmd() {
         local template_file="${WRAPPER_DIR}/wrapper.md"
         local pattern="${3:-\$}"
         
-        ### Check if running as root for system-wide installation ###
+        ### Check privileges and adjust path ###
         if [ "$EUID" -ne 0 ] && [[ "$install_path" == "/usr/local/bin" ]]; then
             print --warning "Need sudo privileges for system-wide installation"
             print --info "Installing to user directory instead: ~/.local/bin"
@@ -224,67 +195,44 @@ cmd() {
             [ ! -d "$install_path" ] && mkdir -p "$install_path"
         fi
         
-        ### Check if template file exists ###
-        if [ ! -f "$template_file" ]; then
-            print --error "Template file not found: $template_file"
-            return 1
-        fi
+        [ ! -f "$template_file" ] && { print --error "Template file not found: $template_file"; return 1; }
         
-        ### Extract content from markdown code block ###
+        ### Extract template content ###
         local template_content=$(sed -n '/```bash/,/```/p' "$template_file" | sed '1d;$d')
         
-        ### Build regex pattern dynamically for ANY pattern ###
-        local regex_pattern=""
-        local start_delimiter=""
-        local end_delimiter=""
+        ### Build regex pattern ###
+        local regex_pattern start_delimiter end_delimiter
+        case ${#pattern} in
+            1) regex_pattern="${pattern}([^${pattern}]+)${pattern}" ;;
+            2) start_delimiter="${pattern:0:1}"; end_delimiter="${pattern:1:1}"
+            regex_pattern="${start_delimiter}([^${end_delimiter}]+)${end_delimiter}" ;;
+            *) local half_len=$((${#pattern} / 2))
+            start_delimiter="${pattern:0:$half_len}"; end_delimiter="${pattern:$half_len}"
+            regex_pattern="${start_delimiter}([^${end_delimiter}]+)${end_delimiter}" ;;
+        esac
         
-        if [ ${#pattern} -eq 1 ]; then
-            ### Single character delimiter (like @ or %) ###
-            regex_pattern="${pattern}([^${pattern}]+)${pattern}"
-            start_delimiter="$pattern"
-            end_delimiter="$pattern"
-        elif [ ${#pattern} -eq 2 ]; then
-            ### Two characters - treat as start/end pair ###
-            start_delimiter="${pattern:0:1}"
-            end_delimiter="${pattern:1:1}"
-            regex_pattern="${start_delimiter}([^${end_delimiter}]+)${end_delimiter}"
-        else
-            ### Multi-character - split in half ###
-            local half_len=$((${#pattern} / 2))
-            start_delimiter="${pattern:0:$half_len}"
-            end_delimiter="${pattern:$half_len}"
-            regex_pattern="${start_delimiter}([^${end_delimiter}]+)${end_delimiter}"
-        fi
-        
-        ### Replace variables using the constructed pattern ###
+        ### Replace variables ###
         while [[ $template_content =~ $regex_pattern ]]; do
-            local var_name="${BASH_REMATCH[1]}"
-            local full_match="${BASH_REMATCH[0]}"
-            local var_value=""
-            
-            ### Map known variables ###
+            local var_name="${BASH_REMATCH[1]}" full_match="${BASH_REMATCH[0]}" var_value=""
             case "$var_name" in
                 NAME) var_value="$name" ;;
                 SCRIPT_PATH) var_value="$script" ;;
                 VERSION) var_value="${version:-1.0.0}" ;;
                 *) var_value="${!var_name:-}" ;;
             esac
-            
-            ### Replace the matched pattern with the value ###
             template_content="${template_content//$full_match/$var_value}"
         done
         
-        ### Write processed template to target file ###
+        ### Create wrapper ###
         echo "$template_content" > "$target"
         chmod +x "$target"
-        
         print --success "Wrapper created: $target"
         
-        ### Add to PATH if needed ###
-        if [[ ":$PATH:" != *":$install_path:"* ]] && [[ "$install_path" == "$HOME/.local/bin" ]]; then
+        ### PATH advice ###
+        [[ ":$PATH:" != *":$install_path:"* ]] && [[ "$install_path" == "$HOME/.local/bin" ]] && {
             print --info "Add to PATH: export PATH=\"\$PATH:$install_path\""
             print --info "Add this line to ~/.bashrc for permanent effect"
-        fi
+        }
     }
 
     ### Parse Arguments and validate ###
@@ -294,22 +242,22 @@ cmd() {
         return 0
         ;;
     
-    check)
+    --check)
         shift
         _check "$@"
         ;;
         
-    dependencies)
+    --dependencies)
         shift
         _dependencies "$@"
         ;;
         
-    install)
+    --install)
         shift
         _install "$@"
         ;;
         
-    wrapper)
+    --wrapper)
         shift
         _wrapper "$@"
         ;;
