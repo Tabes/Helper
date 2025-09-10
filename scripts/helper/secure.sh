@@ -137,13 +137,13 @@ secure() {
         
         ### Validate target_path ###
         if [ ! -e "$target_path" ]; then
-            print --error "target_path does not exist: $target_path"
+            print --error "path does not exist: $target_path"
             return 1
         fi
         
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then
-            print --error "target_user does not exist: $target_user"
+            print --error "user does not exist: $target_user"
             return 1
         fi
         
@@ -160,7 +160,7 @@ secure() {
         print --info "Setting ACL for target_user '$target_user' on: $target_path"
         
         if sudo $acl_cmd -m "u:${target_user}:rwx" "$target_path" 2>/dev/null; then
-            print --success "target_user ACL set successfully"
+            print --success "user ACL set successfully"
         else
             print --error "Failed to set target_user ACL"
             return 1
@@ -191,13 +191,13 @@ secure() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _check() {
         print --header "Permission Analysis"
-        print "target_user: $target_user"
-        print "target_path: $target_path"
+        print "user: $target_user"
+        print "path: $target_path"
         print --line "-"
         
         ### Check if target_path exists ###
         if [ ! -e "$target_path" ]; then
-            print --error "target_path does not exist: $target_path"
+            print --error "path does not exist: $target_path"
             return 1
         fi
         
@@ -247,18 +247,18 @@ secure() {
         
         ### Check groups ###
         print --line "-"
-        print "target_user groups: $(groups "$target_user" 2>/dev/null || echo "target_user not found")"
+        print "user groups: $(groups "$target_user" 2>/dev/null || echo "user not found")"
         
         ### Check file/directory group ###
         local file_group=$(stat -c %G "$target_path" 2>/dev/null)
         if [ -n "$file_group" ]; then
-            print "target_path group: $file_group"
+            print "path group: $file_group"
             
             ### Check if target_user is in file group ###
             if groups "$target_user" 2>/dev/null | grep -q "\b$file_group\b"; then
-                print --success "target_user is member of target_path group"
+                print --success "user is member of target_path group"
             else
-                print --warning "target_user is NOT member of target_path group"
+                print --warning "user is NOT member of target_path group"
             fi
         fi
         
@@ -349,13 +349,13 @@ secure() {
     _group() {
         ### Validate target_path ###
         if [ ! -e "$target_path" ]; then
-            print --error "target_path does not exist: $target_path"
+            print --error "path does not exist: $target_path"
             return 1
         fi
         
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then
-            print --error "target_user does not exist: $target_user"
+            print --error "user does not exist: $target_user"
             return 1
         fi
         
@@ -411,7 +411,7 @@ secure() {
             fi
         fi
         
-        print --info "target_user needs to re-login for group changes to take effect"
+        print --info "user needs to re-login for group changes to take effect"
         print --info "Check with: groups $target_user"
         return 0
     }
@@ -445,7 +445,7 @@ secure() {
                 ;;
             3)
                 print --warning "Enter commands (comma-separated)"
-                print "Default: /usr/bin/rsync,/usr/bin/cp,/usr/bin/mv"
+                print "Default: $DEFAULT_SUDO_COMMANDS"
                 read -p "Commands: " commands
                 _sudo
                 ;;
@@ -517,12 +517,12 @@ secure() {
     ### Configure sudo Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
      _sudo() {
-        local commands="${2:-$DEFAULT_SUDO_COMMANDS}"
-        local sudoers_file="/etc/sudoers.d/secure-${target_user}"
+        local commands="${DEFAULT_SUDO_COMMANDS}"
+        local sudoers_file="${SUDOERS_PATH}/secure-${target_user}"
         
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then
-            print --error "target_user does not exist: $target_user"
+            print --error "user does not exist: $target_user"
             return 1
         fi
         
@@ -530,15 +530,15 @@ secure() {
         IFS=',' read -ra cmd_array <<< "$commands"
         local validated_commands=()
         
-        for cmd_target_path in "${cmd_array[@]}"; do
-            cmd_target_path=$(echo "$cmd_target_path" | xargs)  ### Trim whitespace ###
+        for cmd_path in "${cmd_array[@]}"; do
+            cmd_path=$(echo "$cmd_path" | xargs)  ### Trim whitespace ###
             
-            if [ -x "$cmd_target_path" ]; then
-                validated_commands+=("$cmd_target_path")
+            if [ -x "$cmd_path" ]; then
+                validated_commands+=("$cmd_path")
             else
-                print --warning "Command not found or not executable: $cmd_target_path"
+                print --warning "Command not found or not executable: $cmd_path"
                 if ask --yes-no "Include anyway?" "no"; then
-                    validated_commands+=("$cmd_target_path")
+                    validated_commands+=("$cmd_path")
                 fi
             fi
         done
