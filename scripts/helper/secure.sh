@@ -114,6 +114,11 @@ secure() {
         esac
     done
 
+
+    ################################################################################
+    ### === INTERNAL SECURITY FUNCTIONS === ###
+    ################################################################################
+
     ### Apply ACL Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within Main Function
     _acl() {
