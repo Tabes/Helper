@@ -117,23 +117,8 @@ secure() {
     ### Apply ACL Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within Main Function
     _acl() {
-        ### Check if ACL commands are available ###
-        if ! command -v setfacl >/dev/null 2>&1 || ! command -v getfacl >/dev/null 2>&1; then
-            print --warning "ACL tools not available"
-            
-            ### Attempt to install ACL package ###
-            if ask --yes-no "Install ACL package (acl)?" "yes"; then
-                if cmd --install acl; then
-                    print --success "ACL package installed successfully"
-                else
-                    print --error "Failed to install ACL package"
-                    return 1
-                fi
-            else
-                print --error "Cannot proceed without ACL tools"
-                return 1
-            fi
-        fi
+        ### Check if ACL Commands are available ###
+        cmd --dependencies "acl" || return 1
         
         ### Validate target_path ###
         if [ ! -e "$target_path" ]; then
@@ -302,51 +287,12 @@ secure() {
         return 0
     }
 
-    ### Check and install Dependencies (internal) ###
-    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-    _dependencies() {
-        local app="$1"
-        local required_packages=()
-        
-        ### Define required packages per Operation ###
-        case "$app" in
-            --acl)
-                required_packages=("acl")
-                ;;
-            --group)
-                ### No additional packages needed - uses system tools ###
-                return 0
-                ;;
-            --sudo)
-                ### No additional packages needed ###
-                return 0
-                ;;
-        esac
-        
-        ### Check if packages are needed ###
-        if [ ${#required_packages[@]} -eq 0 ]; then
-            return 0
-        fi
-        
-        ### Use cmd function to check and install ###
-        if ! cmd --check "${required_packages[@]}" >/dev/null 2>&1; then
-            print --warning "Missing packages required for $app Operation"
-            
-            ### Ask for installation permission ###
-            if ask --yes-no "Install missing packages: ${required_packages[*]}?" "yes"; then
-                cmd --install "${required_packages[@]}"
-            else
-                print --error "Cannot proceed without required packages"
-                return 1
-            fi
-        fi
-        
-        return 0
-    }
-
     ### Apply Group Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _group() {
+        ### Check if necessary Packages are available ###
+        cmd --dependencies "coreutils" "shadow" || return 1
+        
         ### Validate target_path ###
         if [ ! -e "$target_path" ]; then
             print --error "path does not exist: $target_path"
@@ -518,6 +464,9 @@ secure() {
     ### Configure sudo Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
      _sudo() {
+        ### Check if necessary Packages are available ###
+        cmd --dependencies "sudo" || return 1
+
         local commands="${DEFAULT_SUDO_COMMANDS}"
         local sudoers_file="${SUDOERS_PATH}/secure-${target_user}"
         
