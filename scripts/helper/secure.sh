@@ -441,7 +441,7 @@ secure() {
             2)
                 read -p "Group name [$(basename "$target_path")${DEFAULT_GROUP_SUFFIX}]: " group_name
                 group_name="${group_name:-$(basename "$target_path")${DEFAULT_GROUP_SUFFIX}}"
-                _group "$target_path" "$target_user" "$recursive" "$group_name"
+                _group
                 ;;
             3)
                 print --warning "Enter commands (comma-separated)"
