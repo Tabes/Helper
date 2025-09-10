@@ -59,7 +59,53 @@ secure() {
     local target_user="${3:-$USER}"
     
     local recursive=false
-    local operation=""
+    local app=""
+
+
+    ### Parse Arguments ###
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                return 0
+                ;;
+            
+            --recursive|-R)
+                recursive=true
+                shift
+                ;;
+
+            --*|-*)
+                set -- "${1#--}" "${@:2}"
+                set -- "${1#-}" "${@:2}"
+                ;;
+
+            acl|group|sudo|check|wizard|remove)
+                app="$1"
+                shift
+                ;;
+            
+            *)
+
+                if [[ -e "$1" ]]; then
+                    target_path="$1"
+
+                elif id "$1" &>/dev/null; then
+                    target_user="$1"
+
+                else
+                    print --invalid "${FUNCNAME[0]}" "$1"
+                    return 1
+
+                fi
+                shift
+                ;;
+
+        esac
+    done
+
+
+
 
     ### Apply ACL Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within Main Function
@@ -260,11 +306,11 @@ secure() {
     ### Check and install Dependencies (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _dependencies() {
-        local operation="$1"
+        local app="$1"
         local required_packages=()
         
-        ### Define required packages per operation ###
-        case "$operation" in
+        ### Define required packages per Operation ###
+        case "$app" in
             --acl)
                 required_packages=("acl")
                 ;;
@@ -285,7 +331,7 @@ secure() {
         
         ### Use cmd function to check and install ###
         if ! cmd --check "${required_packages[@]}" >/dev/null 2>&1; then
-            print --warning "Missing packages required for $operation operation"
+            print --warning "Missing packages required for $app Operation"
             
             ### Ask for installation permission ###
             if ask --yes-no "Install missing packages: ${required_packages[*]}?" "yes"; then
@@ -532,7 +578,7 @@ secure() {
         if [ $total_count -eq 0 ]; then
             print --info "No enhanced permissions found to remove"
         else
-            print --info "Completed: $success_count/$total_count operations successful"
+            print --info "Completed: $success_count/$total_count Operations successful"
         fi
         
         return 0
