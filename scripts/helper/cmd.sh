@@ -24,6 +24,7 @@ readonly commit="System Integration Functions for Command Wrappers and bash Comp
 
 ### Parse all Command Line Arguments ###
 parse_arguments() {
+    ### Parse Command Line Arguments ###
     while [[ $# -gt 0 ]]; do
         case $1 in
             --help|-h)
@@ -35,14 +36,12 @@ parse_arguments() {
                 print --version "${header}" "${version}" "${commit}"
                 exit 0
                 ;;
-
             *)
-                ### Pass all other arguments to cmd function ###
+                ### Pass all other Arguments to CMD Function ###
                 cmd "$@"
                 exit $?
                 ;;
         esac
-        shift
     done
 }
 
@@ -60,33 +59,6 @@ cmd() {
     local cmd_name="${PROJECT_NAME:-helper}"
     local install_path="/usr/local/bin"
     local completion_path="/etc/bash_completion.d"
-
-
-    ### Parse Arguments and validate ###
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --help|-h)
-                show_help
-                return 0
-                ;;
-            
-            --*|-*)
-                [[ "$1" == --* ]] && set -- "${1#--}" "${@:2}" || [[ "$1" == -* ]] && set -- "${1#-}" "${@:2}"
-                ;;
-
-            check|dependencies|install|wrapper)
-                app="$1"
-                shift
-                ;;
-            
-            *)
-
-                print --invalid "${FUNCNAME[0]}" "$1"
-                return 1
-                ;;
-
-        esac
-    done
 
 
     ################################################################################
@@ -308,8 +280,36 @@ cmd() {
         fi
     }
 
-    ### Call Function by Parameters ###
-    declare -f "_$app" > /dev/null && "_$app" || { print --invalid "${FUNCNAME[0]}" "_$app"; return 1; }
+    ### Parse Arguments and validate ###
+    case $1 in
+        --help|-h)
+            show_help
+            return 0
+            ;;
+        
+        --check)
+
+            ;;
+
+        --dependencies)
+
+            ;;
+
+        --install)
+
+            ;;
+
+        --wrapper)
+
+            ;;
+
+        *)
+
+            print --invalid "${FUNCNAME[0]}" "$1"
+            return 1
+            ;;
+
+    esac
 
 }
 
