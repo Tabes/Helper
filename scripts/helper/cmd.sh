@@ -96,43 +96,50 @@ cmd() {
     ### Check and install Dependencies (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _dependencies() {
-        local app="$1"
-        local required_packages=()
+        local package="$1"
+        local commands=()
+        local package_name=""
         
-        ### Define required packages per Operation ###
-        case "$app" in
-            --acl)
-                required_packages=("acl")
+        ### Map package to commands and package names ###
+        case "$package" in
+            acl) 
+                commands=("setfacl" "getfacl")
+                package_name="acl"
                 ;;
-            --group)
-                ### No additional packages needed - uses system tools ###
-                return 0
+            sudo) 
+                commands=("sudo" "visudo")
+                package_name="sudo"
                 ;;
-            --sudo)
-                ### No additional packages needed ###
-                return 0
+            group)
+                commands=("groupadd" "usermod" "getent")
+                package_name="coreutils shadow"
+                ;;
+            *)
+                commands=("$package")
+                package_name="$package"
                 ;;
         esac
         
-        ### Check if packages are needed ###
-        if [ ${#required_packages[@]} -eq 0 ]; then
-            return 0
-        fi
+        ### Check if all commands are available ###
+        local missing_commands=()
+        for cmd in "${commands[@]}"; do
+            command -v "$cmd" >/dev/null 2>&1 || missing_commands+=("$cmd")
+        done
         
-        ### Use cmd function to check and install ###
-        if ! cmd --check "${required_packages[@]}" >/dev/null 2>&1; then
-            print --warning "Missing packages required for $app Operation"
-            
-            ### Ask for installation permission ###
-            if ask --yes-no "Install missing packages: ${required_packages[*]}?" "yes"; then
-                cmd --install "${required_packages[@]}"
-            else
-                print --error "Cannot proceed without required packages"
+        ### Handle missing commands ###
+        [ ${#missing_commands[@]} -eq 0 ] && return 0
+        
+        print --warning "${package^^} tools not available"
+        
+        if ask --yes-no "Install $package_name package?" "yes"; then
+            _install $package_name && print --success "${package^^} package installed successfully" || {
+                print --error "Failed to install ${package^^} package"
                 return 1
-            fi
+            }
+        else
+            print --error "Cannot proceed without ${package^^} tools"
+            return 1
         fi
-        
-        return 0
     }
 
     ### Install missing packages (internal) ###
@@ -282,33 +289,35 @@ cmd() {
 
     ### Parse Arguments and validate ###
     case $1 in
-        --help|-h)
-            show_help
-            return 0
-            ;;
+    --help|-h)
+        show_help
+        return 0
+        ;;
+    
+    check)
+        shift
+        _check "$@"
+        ;;
         
-        --check)
-
-            ;;
-
-        --dependencies)
-
-            ;;
-
-        --install)
-
-            ;;
-
-        --wrapper)
-
-            ;;
-
-        *)
-
-            print --invalid "${FUNCNAME[0]}" "$1"
-            return 1
-            ;;
-
+    dependencies)
+        shift
+        _dependencies "$@"
+        ;;
+        
+    install)
+        shift
+        _install "$@"
+        ;;
+        
+    wrapper)
+        shift
+        _wrapper "$@"
+        ;;
+        
+    *)
+        print --invalid "${FUNCNAME[0]}" "$1"
+        return 1
+        ;;
     esac
 
 }
