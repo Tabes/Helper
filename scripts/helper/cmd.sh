@@ -201,10 +201,10 @@ cmd() {
         
         ask --yes-no "Install missing packages?" "yes" || { print --info "Installation cancelled"; return 1; }
         
-        ### Install packages ###
+        ### Install Packages ###
         local install_cmd=""
         case "$package_manager" in
-            apt) install_cmd="apt update && sudo apt install -y" ;;
+            apt) install_cmd="apt update && apt install -y" ;;
             yum) install_cmd="yum install -y" ;;
             dnf) install_cmd="dnf install -y" ;;
             pacman) install_cmd="pacman -S --noconfirm" ;;
