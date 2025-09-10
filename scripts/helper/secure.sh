@@ -665,43 +665,10 @@ secure() {
         
         return 0
     }
-   
-    ### Parse Arguments and set Operation ###
-    case "$app" in
-        --acl)
-            _acl "$target_path" "$target_user"
-            ;;
 
-        --check)
-            _permissions "$target_path" "$target_user"
-            ;;
+    ### Call Function by Parameters ###
+    declare -f "_$app" > /dev/null && "_$app" || { print --invalid "${FUNCNAME[0]}" "_$app"; return 1; }
 
-        --group)
-            _group "$target_path" "$target_user" "${4:-}"
-            ;;
-
-        --remove)
-            ### Remove all permission enhancements ###
-            sudo setfacl -R -x u:${target_user} "$target_path" 2>/dev/null
-            sudo rm -f "/etc/sudoers.d/secure-${target_user}"
-            print -cr --success "Removed enhanced permissions for $target_user"
-           ;;
-
-        --sudo)
-            _sudo "$target_user" "${2:-}"
-            ;;
-
-        --wizard)
-            _interactive "$target_path" "$target_user"
-            ;;
-
-        *)
-            print --invalid "${FUNCNAME[0]}" "$1"
-
-            return 1
-            ;;
-
-    esac
 }
 
 
