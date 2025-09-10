@@ -229,13 +229,13 @@ secure() {
         if command -v getfacl >/dev/null 2>&1; then
             print --line "-"
             print "ACL Status:"
-            local acl_output=$(getfacl "$target_path" 2>/dev/null | grep "target_user:$target_user")
+            local acl_output=$(getfacl "$target_path" 2>/dev/null | grep "user:$target_user")
             if [ -n "$acl_output" ]; then
                 print --success "$acl_output"
             else
-                print --info "No specific ACL for target_user $target_user"
+                print --info "No specific ACL for user $target_user"
                 ### Show all ACL entries ###
-                local all_acl=$(getfacl "$target_path" 2>/dev/null | grep "^target_user:" | grep -v "target_user::") 
+                local all_acl=$(getfacl "$target_path" 2>/dev/null | grep "^user:" | grep -v "user::") 
                 if [ -n "$all_acl" ]; then
                     print --info "Other target_user ACL entries:"
                     echo "$all_acl"
