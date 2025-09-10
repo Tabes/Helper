@@ -347,11 +347,6 @@ secure() {
     ### Apply Group Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _group() {
-        ### Check dependencies ###
-        if ! _check_group; then
-            return 1
-        fi
-        
         ### Validate target_path ###
         if [ ! -e "$target_path" ]; then
             print --error "target_path does not exist: $target_path"
@@ -446,7 +441,7 @@ secure() {
             2)
                 read -p "Group name [$(basename "$target_path")-admin]: " group_name
                 group_name="${group_name:-$(basename "$target_path")-admin}"
-                _group "$target_path" "$target_user" "$recursive" "$target_group_name"
+                _group "$target_path" "$target_user" "$recursive" "$group_name"
                 ;;
             3)
                 print --warning "Enter commands (comma-separated)"
@@ -522,14 +517,8 @@ secure() {
     ### Configure sudo Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
      _sudo() {
-        local target_user="$1"
         local commands="${2:-/usr/bin/rsync,/usr/bin/cp,/usr/bin/mv,/usr/bin/mkdir,/usr/bin/rm}"
         local sudoers_file="/etc/sudoers.d/secure-${target_user}"
-        
-        ### Check dependencies ###
-        if ! _check_sudo; then
-            return 1
-        fi
         
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then
