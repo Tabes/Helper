@@ -55,8 +55,9 @@ secure() {
     ### Log Startup Arguments ###
     log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
-    local target_path="${2:-$(pwd)}"
-    local target_user="${3:-$USER}"
+    local target_path=""
+    local target_user=""
+    local target_group=""
     
     local recursive=false
     local app=""
@@ -70,6 +71,11 @@ secure() {
                 return 0
                 ;;
             
+            --group|-g)
+                target_group="$2"
+                shift 2
+                ;;
+
             --recursive|-R)
                 recursive=true
                 shift
@@ -81,8 +87,7 @@ secure() {
                 ;;
 
             --*|-*)
-                set -- "${1#--}" "${@:2}"
-                set -- "${1#-}" "${@:2}"
+                [[ "$1" == --* ]] && set -- "${1#--}" "${@:2}" || [[ "$1" == -* ]] && set -- "${1#-}" "${@:2}"
                 ;;
 
             acl|check|group|remove|sudo|wizard)
@@ -112,10 +117,6 @@ secure() {
     ### Apply ACL Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within Main Function
     _acl() {
-        local path="$1"
-        local user="$2"
-        local recursive_flag="$3"
-        
         ### Check if ACL commands are available ###
         if ! command -v setfacl >/dev/null 2>&1 || ! command -v getfacl >/dev/null 2>&1; then
             print --warning "ACL tools not available"
@@ -134,15 +135,15 @@ secure() {
             fi
         fi
         
-        ### Validate path ###
-        if [ ! -e "$path" ]; then
-            print --error "Path does not exist: $path"
+        ### Validate target_path ###
+        if [ ! -e "$target_path" ]; then
+            print --error "target_path does not exist: $target_path"
             return 1
         fi
         
-        ### Validate user ###
-        if ! id "$user" >/dev/null 2>&1; then
-            print --error "User does not exist: $user"
+        ### Validate target_user ###
+        if ! id "$target_user" >/dev/null 2>&1; then
+            print --error "target_user does not exist: $target_user"
             return 1
         fi
         
@@ -150,24 +151,24 @@ secure() {
         local acl_cmd="setfacl"
         local default_acl_cmd="setfacl -d"
         
-        if [ "$recursive_flag" = "true" ]; then
+        if [ "$recursive" = "true" ]; then
             acl_cmd="$acl_cmd -R"
             default_acl_cmd="$default_acl_cmd -R"
         fi
         
         ### Apply ACL permissions ###
-        print --info "Setting ACL for user '$user' on: $path"
+        print --info "Setting ACL for target_user '$target_user' on: $target_path"
         
-        if sudo $acl_cmd -m "u:${user}:rwx" "$path" 2>/dev/null; then
-            print --success "User ACL set successfully"
+        if sudo $acl_cmd -m "u:${target_user}:rwx" "$target_path" 2>/dev/null; then
+            print --success "target_user ACL set successfully"
         else
-            print --error "Failed to set user ACL"
+            print --error "Failed to set target_user ACL"
             return 1
         fi
         
         ### Apply default ACL for directories ###
-        if [ -d "$path" ]; then
-            if sudo $default_acl_cmd -m "u:${user}:rwx" "$path" 2>/dev/null; then
+        if [ -d "$target_path" ]; then
+            if sudo $default_acl_cmd -m "u:${target_user}:rwx" "$target_path" 2>/dev/null; then
                 print --success "Default ACL set successfully"
             else
                 print --warning "Failed to set default ACL (not critical)"
@@ -175,49 +176,45 @@ secure() {
         fi
         
         ### Verify ACL ###
-        local verification=$(getfacl "$path" 2>/dev/null | grep "user:$user")
+        local verification=$(getfacl "$target_path" 2>/dev/null | grep "target_user:$target_user")
         if [ -n "$verification" ]; then
             print --success "ACL verification: $verification"
         else
             print --warning "Could not verify ACL settings"
         fi
         
-        print --info "Verify manually with: getfacl $path"
+        print --info "Verify manually with: getfacl $target_path"
         return 0
     }
 
     ### Check current Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _check() {
-        local path="${1:-$(pwd)}"
-        local user="${2:-$USER}"
-        local recursive_flag="$3"
-        
         print --header "Permission Analysis"
-        print "User: $user"
-        print "Path: $path"
+        print "target_user: $target_user"
+        print "target_path: $target_path"
         print --line "-"
         
-        ### Check if path exists ###
-        if [ ! -e "$path" ]; then
-            print --error "Path does not exist: $path"
+        ### Check if target_path exists ###
+        if [ ! -e "$target_path" ]; then
+            print --error "target_path does not exist: $target_path"
             return 1
         fi
         
         ### Check basic permissions ###
-        if [ -r "$path" ]; then
+        if [ -r "$target_path" ]; then
             print --success "Read: Yes"
         else
             print --error "Read: No"
         fi
         
-        if [ -w "$path" ]; then
+        if [ -w "$target_path" ]; then
             print --success "Write: Yes"
         else
             print --error "Write: No"
         fi
         
-        if [ -x "$path" ]; then
+        if [ -x "$target_path" ]; then
             print --success "Execute: Yes"
         else
             print --warning "Execute: No"
@@ -226,21 +223,21 @@ secure() {
         ### Show traditional permissions ###
         print --line "-"
         print "Traditional permissions:"
-        ls -ld "$path"
+        ls -ld "$target_path"
         
         ### Check ACL if available ###
         if command -v getfacl >/dev/null 2>&1; then
             print --line "-"
             print "ACL Status:"
-            local acl_output=$(getfacl "$path" 2>/dev/null | grep "user:$user")
+            local acl_output=$(getfacl "$target_path" 2>/dev/null | grep "target_user:$target_user")
             if [ -n "$acl_output" ]; then
                 print --success "$acl_output"
             else
-                print --info "No specific ACL for user $user"
+                print --info "No specific ACL for target_user $target_user"
                 ### Show all ACL entries ###
-                local all_acl=$(getfacl "$path" 2>/dev/null | grep "^user:" | grep -v "user::") 
+                local all_acl=$(getfacl "$target_path" 2>/dev/null | grep "^target_user:" | grep -v "target_user::") 
                 if [ -n "$all_acl" ]; then
-                    print --info "Other user ACL entries:"
+                    print --info "Other target_user ACL entries:"
                     echo "$all_acl"
                 fi
             fi
@@ -250,50 +247,50 @@ secure() {
         
         ### Check groups ###
         print --line "-"
-        print "User groups: $(groups "$user" 2>/dev/null || echo "User not found")"
+        print "target_user groups: $(groups "$target_user" 2>/dev/null || echo "target_user not found")"
         
         ### Check file/directory group ###
-        local file_group=$(stat -c %G "$path" 2>/dev/null)
+        local file_group=$(stat -c %G "$target_path" 2>/dev/null)
         if [ -n "$file_group" ]; then
-            print "Path group: $file_group"
+            print "target_path group: $file_group"
             
-            ### Check if user is in file group ###
-            if groups "$user" 2>/dev/null | grep -q "\b$file_group\b"; then
-                print --success "User is member of path group"
+            ### Check if target_user is in file group ###
+            if groups "$target_user" 2>/dev/null | grep -q "\b$file_group\b"; then
+                print --success "target_user is member of target_path group"
             else
-                print --warning "User is NOT member of path group"
+                print --warning "target_user is NOT member of target_path group"
             fi
         fi
         
         ### Check sudo permissions ###
         print --line "-"
         if command -v sudo >/dev/null 2>&1; then
-            local sudo_entries=$(sudo -l -U "$user" 2>/dev/null | grep "NOPASSWD")
+            local sudo_entries=$(sudo -l -U "$target_user" 2>/dev/null | grep "NOPASSWD")
             if [ -n "$sudo_entries" ]; then
                 print --warning "sudo NOPASSWD entries found:"
                 echo "$sudo_entries"
             else
-                print --info "No sudo NOPASSWD entries for user"
+                print --info "No sudo NOPASSWD entries for target_user"
             fi
         else
             print --info "sudo not available"
         fi
         
         ### Recursive check for directories ###
-        if [ "$recursive_flag" = "true" ] && [ -d "$path" ]; then
+        if [ "$recursive" = "true" ] && [ -d "$target_path" ]; then
             print --line "-"
             print --info "Checking subdirectories recursively..."
             
             local issue_count=0
-            while IFS= read -r -d '' subpath; do
-                if [ ! -r "$subpath" ] || [ ! -w "$subpath" ]; then
+            while IFS= read -r -d '' subtarget_path; do
+                if [ ! -r "$subtarget_path" ] || [ ! -w "$subtarget_path" ]; then
                     if [ $issue_count -eq 0 ]; then
                         print --warning "Permission issues found in subdirectories:"
                     fi
-                    print --error "  $(ls -ld "$subpath")"
+                    print --error "  $(ls -ld "$subtarget_path")"
                     ((issue_count++))
                 fi
-            done < <(find "$path" -type d -print0 2>/dev/null)
+            done < <(find "$target_path" -type d -print0 2>/dev/null)
             
             if [ $issue_count -eq 0 ]; then
                 print --success "All subdirectories accessible"
@@ -350,45 +347,40 @@ secure() {
     ### Apply Group Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _group() {
-        local path="$1"
-        local user="$2"
-        local recursive_flag="$3"
-        local group="${4:-$(basename "$path")-admin}"
-        
         ### Check dependencies ###
         if ! _check_group; then
             return 1
         fi
         
-        ### Validate path ###
-        if [ ! -e "$path" ]; then
-            print --error "Path does not exist: $path"
+        ### Validate target_path ###
+        if [ ! -e "$target_path" ]; then
+            print --error "target_path does not exist: $target_path"
             return 1
         fi
         
-        ### Validate user ###
-        if ! id "$user" >/dev/null 2>&1; then
-            print --error "User does not exist: $user"
+        ### Validate target_user ###
+        if ! id "$target_user" >/dev/null 2>&1; then
+            print --error "target_user does not exist: $target_user"
             return 1
         fi
         
         ### Create group if not exists ###
-        if ! getent group "$group" >/dev/null 2>&1; then
-            if sudo groupadd "$group"; then
-                print --success "Created group: $group"
+        if ! getent group "$target_group" >/dev/null 2>&1; then
+            if sudo groupadd "$target_group"; then
+                print --success "Created group: $target_group"
             else
-                print --error "Failed to create group: $group"
+                print --error "Failed to create group: $target_group"
                 return 1
             fi
         else
-            print --info "Group already exists: $group"
+            print --info "Group already exists: $target_group"
         fi
         
-        ### Add user to group ###
-        if sudo usermod -a -G "$group" "$user"; then
-            print --success "Added user '$user' to group '$group'"
+        ### Add target_user to group ###
+        if sudo target_usermod -a -G "$target_group" "$target_user"; then
+            print --success "Added target_user '$target_user' to group '$target_group'"
         else
-            print --error "Failed to add user to group"
+            print --error "Failed to add target_user to group"
             return 1
         fi
         
@@ -396,19 +388,19 @@ secure() {
         local chown_cmd="chown"
         local chmod_cmd="chmod"
         
-        if [ "$recursive_flag" = "true" ]; then
+        if [ "$recursive" = "true" ]; then
             chown_cmd="$chown_cmd -R"
             chmod_cmd="$chmod_cmd -R"
         fi
         
-        if sudo $chown_cmd "root:$group" "$path"; then
-            print --success "Ownership set to root:$group"
+        if sudo $chown_cmd "root:$target_group" "$target_path"; then
+            print --success "Ownership set to root:$target_group"
         else
             print --error "Failed to set ownership"
             return 1
         fi
         
-        if sudo $chmod_cmd 775 "$path"; then
+        if sudo $chmod_cmd 775 "$target_path"; then
             print --success "Permissions set to 775"
         else
             print --error "Failed to set permissions"
@@ -416,30 +408,26 @@ secure() {
         fi
         
         ### Set SGID bit for directories ###
-        if [ -d "$path" ]; then
-            if sudo chmod g+s "$path"; then
+        if [ -d "$target_path" ]; then
+            if sudo chmod g+s "$target_path"; then
                 print --success "SGID bit set on directory"
             else
                 print --warning "Failed to set SGID bit"
             fi
         fi
         
-        print --info "User needs to re-login for group changes to take effect"
-        print --info "Check with: groups $user"
+        print --info "target_user needs to re-login for group changes to take effect"
+        print --info "Check with: groups $target_user"
         return 0
     }
     
     ### Interactive Wizard (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _interactive() {
-        local path="$1"
-        local user="$2"
-        local recursive_flag="$3"
-        
         print --header "Permission Setup Wizard"
-        print "Target Path: $path"
-        print "Target User: $user"
-        print "Recursive: $recursive_flag"
+        print "Target target_path: $target_path"
+        print "Target target_user: $target_user"
+        print "Recursive: $recursive"
         print --line "-"
         print "Select method:"
         print "  1) ACL - File Access Control Lists (recommended)"
@@ -453,21 +441,21 @@ secure() {
         
         case "$choice" in
             1)
-                _acl "$path" "$user" "$recursive_flag"
+                _acl "$target_path" "$target_user" "$recursive"
                 ;;
             2)
-                read -p "Group name [$(basename "$path")-admin]: " group_name
-                group_name="${group_name:-$(basename "$path")-admin}"
-                _group "$path" "$user" "$recursive_flag" "$group_name"
+                read -p "Group name [$(basename "$target_path")-admin]: " group_name
+                group_name="${group_name:-$(basename "$target_path")-admin}"
+                _group "$target_path" "$target_user" "$recursive" "$target_group_name"
                 ;;
             3)
                 print --warning "Enter commands (comma-separated)"
                 print "Default: /usr/bin/rsync,/usr/bin/cp,/usr/bin/mv"
                 read -p "Commands: " commands
-                _sudo "$user" "${commands:-/usr/bin/rsync,/usr/bin/cp,/usr/bin/mv}"
+                _sudo "$target_user" "${commands:-/usr/bin/rsync,/usr/bin/cp,/usr/bin/mv}"
                 ;;
             4)
-                _check "$path" "$user" "$recursive_flag"
+                _check "$target_path" "$target_user" "$recursive"
                 ;;
             0)
                 print --info "Cancelled"
@@ -483,14 +471,10 @@ secure() {
     ### Remove Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _remove() {
-        local path="$1"
-        local user="$2"
-        local recursive_flag="$3"
-        
         print --header "Removing Enhanced Permissions"
-        print --warning "This will remove ACL and sudo entries for user: $user"
+        print --warning "This will remove ACL and sudo entries for target_user: $target_user"
         
-        if ! ask --confirm "remove all enhanced permissions for $user" "true"; then
+        if ! ask --confirm "remove all enhanced permissions for $target_user" "true"; then
             print --info "Cancelled"
             return 1
         fi
@@ -499,14 +483,14 @@ secure() {
         local total_count=0
         
         ### Remove ACL if available ###
-        if command -v setfacl >/dev/null 2>&1 && [ -e "$path" ]; then
+        if command -v setfacl >/dev/null 2>&1 && [ -e "$target_path" ]; then
             ((total_count++))
             local setfacl_cmd="setfacl"
-            if [ "$recursive_flag" = "true" ]; then
+            if [ "$recursive" = "true" ]; then
                 setfacl_cmd="$setfacl_cmd -R"
             fi
             
-            if sudo $setfacl_cmd -x "u:${user}" "$path" 2>/dev/null; then
+            if sudo $setfacl_cmd -x "u:${target_user}" "$target_path" 2>/dev/null; then
                 print --success "ACL entries removed"
                 ((success_count++))
             else
@@ -515,7 +499,7 @@ secure() {
         fi
         
         ### Remove sudoers file ###
-        local sudoers_file="/etc/sudoers.d/secure-${user}"
+        local sudoers_file="/etc/sudoers.d/secure-${target_user}"
         if [ -f "$sudoers_file" ]; then
             ((total_count++))
             if sudo rm -f "$sudoers_file"; then
@@ -538,18 +522,18 @@ secure() {
     ### Configure sudo Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
      _sudo() {
-        local user="$1"
+        local target_user="$1"
         local commands="${2:-/usr/bin/rsync,/usr/bin/cp,/usr/bin/mv,/usr/bin/mkdir,/usr/bin/rm}"
-        local sudoers_file="/etc/sudoers.d/secure-${user}"
+        local sudoers_file="/etc/sudoers.d/secure-${target_user}"
         
         ### Check dependencies ###
         if ! _check_sudo; then
             return 1
         fi
         
-        ### Validate user ###
-        if ! id "$user" >/dev/null 2>&1; then
-            print --error "User does not exist: $user"
+        ### Validate target_user ###
+        if ! id "$target_user" >/dev/null 2>&1; then
+            print --error "target_user does not exist: $target_user"
             return 1
         fi
         
@@ -557,15 +541,15 @@ secure() {
         IFS=',' read -ra cmd_array <<< "$commands"
         local validated_commands=()
         
-        for cmd_path in "${cmd_array[@]}"; do
-            cmd_path=$(echo "$cmd_path" | xargs)  ### Trim whitespace ###
+        for cmd_target_path in "${cmd_array[@]}"; do
+            cmd_target_path=$(echo "$cmd_target_path" | xargs)  ### Trim whitespace ###
             
-            if [ -x "$cmd_path" ]; then
-                validated_commands+=("$cmd_path")
+            if [ -x "$cmd_target_path" ]; then
+                validated_commands+=("$cmd_target_path")
             else
-                print --warning "Command not found or not executable: $cmd_path"
+                print --warning "Command not found or not executable: $cmd_target_path"
                 if ask --yes-no "Include anyway?" "no"; then
-                    validated_commands+=("$cmd_path")
+                    validated_commands+=("$cmd_target_path")
                 fi
             fi
         done
@@ -576,10 +560,10 @@ secure() {
         fi
         
         ### Build sudoers line ###
-        local sudo_line="$user ALL=(ALL) NOPASSWD: $(IFS=','; echo "${validated_commands[*]}")"
+        local sudo_line="$target_user ALL=(ALL) NOPASSWD: $(IFS=','; echo "${validated_commands[*]}")"
         
         ### Create sudoers file ###
-        print --info "Creating sudoers configuration for user: $user"
+        print --info "Creating sudoers configuration for target_user: $target_user"
         
         if echo "$sudo_line" | sudo tee "$sudoers_file" > /dev/null; then
             print --success "Sudoers file created: $sudoers_file"
@@ -606,7 +590,7 @@ secure() {
         fi
         
         ### Test sudo access ###
-        if sudo -l -U "$user" 2>/dev/null | grep -q "NOPASSWD"; then
+        if sudo -l -U "$target_user" 2>/dev/null | grep -q "NOPASSWD"; then
             print --success "sudo configuration verified"
         else
             print --warning "Could not verify sudo configuration"
