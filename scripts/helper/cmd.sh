@@ -204,10 +204,10 @@ cmd() {
         ### Install packages ###
         local install_cmd=""
         case "$package_manager" in
-            apt) install_cmd="sudo apt update && sudo apt install -y" ;;
-            yum) install_cmd="sudo yum install -y" ;;
-            dnf) install_cmd="sudo dnf install -y" ;;
-            pacman) install_cmd="sudo pacman -S --noconfirm" ;;
+            apt) install_cmd="apt update && sudo apt install -y" ;;
+            yum) install_cmd="yum install -y" ;;
+            dnf) install_cmd="dnf install -y" ;;
+            pacman) install_cmd="pacman -S --noconfirm" ;;
             brew) install_cmd="brew install" ;;
         esac
 
