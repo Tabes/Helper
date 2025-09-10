@@ -61,6 +61,34 @@ cmd() {
     local install_path="/usr/local/bin"
     local completion_path="/etc/bash_completion.d"
 
+
+    ### Parse Arguments and validate ###
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                return 0
+                ;;
+            
+            --*|-*)
+                [[ "$1" == --* ]] && set -- "${1#--}" "${@:2}" || [[ "$1" == -* ]] && set -- "${1#-}" "${@:2}"
+                ;;
+
+            check|dependencies|install|wrapper)
+                app="$1"
+                shift
+                ;;
+            
+            *)
+
+                print --invalid "${FUNCNAME[0]}" "$1"
+                return 1
+                ;;
+
+        esac
+    done
+
+
     ################################################################################
     ### === INTERNAL CMD FUNCTIONS === ###
     ################################################################################
@@ -93,6 +121,48 @@ cmd() {
         fi
     }
     
+    ### Check and install Dependencies (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _dependencies() {
+        local app="$1"
+        local required_packages=()
+        
+        ### Define required packages per Operation ###
+        case "$app" in
+            --acl)
+                required_packages=("acl")
+                ;;
+            --group)
+                ### No additional packages needed - uses system tools ###
+                return 0
+                ;;
+            --sudo)
+                ### No additional packages needed ###
+                return 0
+                ;;
+        esac
+        
+        ### Check if packages are needed ###
+        if [ ${#required_packages[@]} -eq 0 ]; then
+            return 0
+        fi
+        
+        ### Use cmd function to check and install ###
+        if ! cmd --check "${required_packages[@]}" >/dev/null 2>&1; then
+            print --warning "Missing packages required for $app Operation"
+            
+            ### Ask for installation permission ###
+            if ask --yes-no "Install missing packages: ${required_packages[*]}?" "yes"; then
+                cmd --install "${required_packages[@]}"
+            else
+                print --error "Cannot proceed without required packages"
+                return 1
+            fi
+        fi
+        
+        return 0
+    }
+
     ### Install missing packages (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _install() {
@@ -237,6 +307,10 @@ cmd() {
             print --info "Add this line to ~/.bashrc for permanent effect"
         fi
     }
+
+    ### Call Function by Parameters ###
+    declare -f "_$app" > /dev/null && "_$app" || { print --invalid "${FUNCNAME[0]}" "_$app"; return 1; }
+
 }
 
 
