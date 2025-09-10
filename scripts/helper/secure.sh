@@ -62,7 +62,7 @@ secure() {
     local app=""
 
 
-    ### Parse Arguments ###
+    ### Parse Arguments and validate ###
     while [[ $# -gt 0 ]]; do
         case $1 in
             --help|-h)
@@ -73,6 +73,11 @@ secure() {
             --recursive|-R)
                 recursive=true
                 shift
+                ;;
+
+            --user|-u)
+                target_user="$2"
+                shift 2
                 ;;
 
             --*|-*)
@@ -103,9 +108,6 @@ secure() {
 
         esac
     done
-
-
-
 
     ### Apply ACL Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within Main Function
@@ -664,8 +666,8 @@ secure() {
         return 0
     }
    
-    ### Parse Arguments ###
-    case "$1" in
+    ### Parse Arguments and set Operation ###
+    case "$app" in
         --acl)
             _acl "$target_path" "$target_user"
             ;;
@@ -691,11 +693,6 @@ secure() {
 
         --wizard)
             _interactive "$target_path" "$target_user"
-            ;;
-
-        --help|-h)
-            show_help
-            return 0
             ;;
 
         *)
