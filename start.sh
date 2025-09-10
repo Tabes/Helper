@@ -12,8 +12,11 @@
 ### Usage:   bash start.sh [OPTIONS]
 ################################################################################
 
-SCRIPT_VERSION="1.0.0"
-COMMIT="Bootstrap Installation Script for Helper Framework"
+readonly header="Initial Setup and Installation for fresh Debian Systems"
+
+readonly version="1.0.0"
+readonly commit="Bootstrap Installation Script for Helper Framework"
+
 
 ################################################################################
 ### === CONFIGURATION === ###
