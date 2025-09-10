@@ -85,7 +85,7 @@ secure() {
                 set -- "${1#-}" "${@:2}"
                 ;;
 
-            acl|group|sudo|check|wizard|remove)
+            acl|check|group|remove|sudo|wizard)
                 app="$1"
                 shift
                 ;;
@@ -478,57 +478,6 @@ secure() {
                 return 1
                 ;;
         esac
-    }
-    
-    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-    _permissions() {
-        local path="${1:-$(pwd)}"
-        local user="${2:-$USER}"
-        
-        print --header "Permission Analysis"
-        print "User: $user"
-        print "Path: $path"
-        print --line "-"
-        
-        ### Check basic permissions ###
-        if [ -r "$path" ]; then
-            print -cr --success "Read: Yes"
-        else
-            print --error "Read: No"
-        fi
-        
-        if [ -w "$path" ]; then
-            print -cr --success "Write: Yes"
-        else
-            print --error "Write: No"
-        fi
-        
-        if [ -x "$path" ]; then
-            print -cr --success "Execute: Yes"
-        else
-            print --warning "Execute: No"
-        fi
-        
-        ### Check ACL if available ###
-        if command -v getfacl >/dev/null 2>&1; then
-            print --line "-"
-            print "ACL Status:"
-            local acl_output=$(getfacl "$path" 2>/dev/null | grep "user:$user")
-            if [ -n "$acl_output" ]; then
-                print -cr --success "$acl_output"
-            else
-                print --info "No ACL for user $user"
-            fi
-        fi
-        
-        ### Check groups ###
-        print --line "-"
-        print "Groups: $(groups $user)"
-        
-        ### Check sudo permissions ###
-        if sudo -l -U "$user" 2>/dev/null | grep -q NOPASSWD; then
-            print --warning "sudo NOPASSWD entries found"
-        fi
     }
     
     ### Remove Permissions (internal) ###
