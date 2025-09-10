@@ -65,14 +65,43 @@ cmd() {
     ### === INTERNAL CMD FUNCTIONS === ###
     ################################################################################
 
-    ### Check if Cmmand is available (internal) ###
+    ### Check if Command is available (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _check() {
         local commands=("$@")
+        local check_admin=false
+        local check_sudo=false
         local missing_commands=()
+        
+        ### Parse special flags ###
+        local filtered_commands=()
+        for arg in "${commands[@]}"; do
+            case "$arg" in
+                --admin) check_admin=true ;;
+                --sudo) check_sudo=true ;;
+                *) filtered_commands+=("$arg") ;;
+            esac
+        done
+        commands=("${filtered_commands[@]}")
         
         print --header "Command Availability Check"
         
+        ### Check admin status ###
+        if [ "$check_admin" = true ]; then
+            [ "$EUID" -eq 0 ] && print --success "Running as admin (root)" || print --warning "Not running as admin"
+        fi
+        
+        ### Check sudo availability ###
+        if [ "$check_sudo" = true ]; then
+            if command -v sudo >/dev/null 2>&1; then
+                sudo -n true 2>/dev/null && print --success "sudo available (no password)" || print --warning "sudo available (requires password)"
+            else
+                print --error "sudo not available"
+                missing_commands+=("sudo")
+            fi
+        fi
+        
+        ### Check regular commands ###
         for cmd_check in "${commands[@]}"; do
             if command -v "$cmd_check" >/dev/null 2>&1; then
                 print --success "$cmd_check is available: $(which "$cmd_check")"
@@ -141,6 +170,17 @@ cmd() {
         fi
     }
 
+    ### Execute Command with or without sudo (internal) ###
+    # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+    _execute() {
+        [ "$EUID" -eq 0 ] && eval "$*" || { 
+            command -v sudo >/dev/null 2>&1 && sudo bash -c "$*" || {
+                print --error "Cannot execute: sudo not available"
+                return 1
+            }
+        }
+    }
+
     ### Install missing Packages (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _install() {
@@ -170,10 +210,15 @@ cmd() {
             pacman) install_cmd="sudo pacman -S --noconfirm" ;;
             brew) install_cmd="brew install" ;;
         esac
-        
+
+        ### Install Packages Section ###
         for package in "${packages[@]}"; do
             print --info "Installing: $package"
-            eval "$install_cmd $package" && print --success "Installed: $package" || print --error "Failed to install: $package"
+            if [ "$package_manager" = "brew" ]; then
+                eval "$install_cmd $package" && print --success "Installed: $package" || print --error "Failed to install: $package"
+            else
+                _execute "$install_cmd $package" && print --success "Installed: $package" || print --error "Failed to install: $package"
+            fi
         done
     }
 
@@ -188,11 +233,14 @@ cmd() {
         
         ### Check privileges and adjust path ###
         if [ "$EUID" -ne 0 ] && [[ "$install_path" == "/usr/local/bin" ]]; then
-            print --warning "Need sudo privileges for system-wide installation"
-            print --info "Installing to user directory instead: ~/.local/bin"
-            install_path="$HOME/.local/bin"
-            target="$install_path/$name"
-            [ ! -d "$install_path" ] && mkdir -p "$install_path"
+            if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+                print --info "Using sudo for system-wide installation"
+            else
+                print --warning "Cannot access /usr/local/bin - installing to user directory"
+                install_path="$HOME/.local/bin"
+                target="$install_path/$name"
+                [ ! -d "$install_path" ] && mkdir -p "$install_path"
+            fi
         fi
         
         [ ! -f "$template_file" ] && { print --error "Template file not found: $template_file"; return 1; }
@@ -224,8 +272,13 @@ cmd() {
         done
         
         ### Create wrapper ###
-        echo "$template_content" > "$target"
-        chmod +x "$target"
+        if [ "$EUID" -eq 0 ] || [[ "$install_path" == "$HOME/.local/bin" ]]; then
+            echo "$template_content" > "$target"
+            chmod +x "$target"
+        else
+            _execute "echo '$template_content' > '$target' && chmod +x '$target'"
+        fi
+        
         print --success "Wrapper created: $target"
         
         ### PATH advice ###
