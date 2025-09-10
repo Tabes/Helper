@@ -725,4 +725,8 @@ Contributions sind willkommen! Bitte:
 
 ---
 
+- ### Kurze Schreibweise, wenn es möglich ist
+
+---
+
 ↑ [zurück](#inhaltsverzeichnis)
