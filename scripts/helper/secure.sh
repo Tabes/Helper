@@ -162,7 +162,7 @@ secure() {
         if sudo $acl_cmd -m "u:${target_user}:rwx" "$target_path" 2>/dev/null; then
             print --success "user ACL set successfully"
         else
-            print --error "Failed to set target_user ACL"
+            print --error "Failed to set user ACL"
             return 1
         fi
         
@@ -237,7 +237,7 @@ secure() {
                 ### Show all ACL entries ###
                 local all_acl=$(getfacl "$target_path" 2>/dev/null | grep "^user:" | grep -v "user::") 
                 if [ -n "$all_acl" ]; then
-                    print --info "Other target_user ACL entries:"
+                    print --info "Other user ACL entries:"
                     echo "$all_acl"
                 fi
             fi
@@ -256,9 +256,9 @@ secure() {
             
             ### Check if target_user is in file group ###
             if groups "$target_user" 2>/dev/null | grep -q "\b$file_group\b"; then
-                print --success "user is member of target_path group"
+                print --success "user is member of path group"
             else
-                print --warning "user is NOT member of target_path group"
+                print --warning "user is NOT member of path group"
             fi
         fi
         
@@ -373,7 +373,7 @@ secure() {
         
         ### Add target_user to group ###
         if sudo usermod -a -G "$target_group" "$target_user"; then
-            print --success "Added target_user '$target_user' to group '$target_group'"
+            print --success "Added user '$target_user' to group '$target_group'"
         else
             print --error "Failed to add target_user to group"
             return 1
