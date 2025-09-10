@@ -420,8 +420,8 @@ secure() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _interactive() {
         print --header "Permission Setup Wizard"
-        print "Target target_path: $target_path"
-        print "Target target_user: $target_user"
+        print "Target path: $target_path"
+        print "Target user: $target_user"
         print "Recursive: $recursive"
         print --line "-"
         print "Select method:"
@@ -441,6 +441,7 @@ secure() {
             2)
                 read -p "Group name [$(basename "$target_path")${DEFAULT_GROUP_SUFFIX}]: " group_name
                 group_name="${group_name:-$(basename "$target_path")${DEFAULT_GROUP_SUFFIX}}"
+                target_group="$group_name"
                 _group
                 ;;
             3)
@@ -467,7 +468,7 @@ secure() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _remove() {
         print --header "Removing Enhanced Permissions"
-        print --warning "This will remove ACL and sudo entries for target_user: $target_user"
+        print --warning "This will remove ACL and sudo entries for user: $target_user"
         
         if ! ask --confirm "remove all enhanced permissions for $target_user" "true"; then
             print --info "Cancelled"
