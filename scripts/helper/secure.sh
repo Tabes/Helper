@@ -176,7 +176,7 @@ secure() {
         fi
         
         ### Verify ACL ###
-        local verification=$(getfacl "$target_path" 2>/dev/null | grep "target_user:$target_user")
+        local verification=$(getfacl "$target_path" 2>/dev/null | grep "user:$target_user")
         if [ -n "$verification" ]; then
             print --success "ACL verification: $verification"
         else
@@ -372,7 +372,7 @@ secure() {
         fi
         
         ### Add target_user to group ###
-        if sudo target_usermod -a -G "$target_group" "$target_user"; then
+        if sudo usermod -a -G "$target_group" "$target_user"; then
             print --success "Added target_user '$target_user' to group '$target_group'"
         else
             print --error "Failed to add target_user to group"
@@ -436,21 +436,21 @@ secure() {
         
         case "$choice" in
             1)
-                _acl "$target_path" "$target_user" "$recursive"
+                _acl
                 ;;
             2)
-                read -p "Group name [$(basename "$target_path")-admin]: " group_name
-                group_name="${group_name:-$(basename "$target_path")-admin}"
+                read -p "Group name [$(basename "$target_path")${DEFAULT_GROUP_SUFFIX}]: " group_name
+                group_name="${group_name:-$(basename "$target_path")${DEFAULT_GROUP_SUFFIX}}"
                 _group "$target_path" "$target_user" "$recursive" "$group_name"
                 ;;
             3)
                 print --warning "Enter commands (comma-separated)"
                 print "Default: /usr/bin/rsync,/usr/bin/cp,/usr/bin/mv"
                 read -p "Commands: " commands
-                _sudo "$target_user" "${commands:-/usr/bin/rsync,/usr/bin/cp,/usr/bin/mv}"
+                _sudo
                 ;;
             4)
-                _check "$target_path" "$target_user" "$recursive"
+                _check
                 ;;
             0)
                 print --info "Cancelled"
@@ -494,7 +494,7 @@ secure() {
         fi
         
         ### Remove sudoers file ###
-        local sudoers_file="/etc/sudoers.d/secure-${target_user}"
+        local sudoers_file="${SUDOERS_PATH}/secure-${target_user}"
         if [ -f "$sudoers_file" ]; then
             ((total_count++))
             if sudo rm -f "$sudoers_file"; then
@@ -517,7 +517,7 @@ secure() {
     ### Configure sudo Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
      _sudo() {
-        local commands="${2:-/usr/bin/rsync,/usr/bin/cp,/usr/bin/mv,/usr/bin/mkdir,/usr/bin/rm}"
+        local commands="${2:-$DEFAULT_SUDO_COMMANDS}"
         local sudoers_file="/etc/sudoers.d/secure-${target_user}"
         
         ### Validate target_user ###
