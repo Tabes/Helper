@@ -2,18 +2,20 @@
 ################################################################################
 ### Git Workflow Manager - Complete Git Repository Management System
 ### Manages version control, branching, releases, and automated workflows
-### Integrates with project configuration and helper functions
+### Integrates with Project Configuration and Helper Functions
 ################################################################################
 ### Project: Git Workflow Manager
 ### Version: 1.0.0
-### Author:  Mawage (Workflow Team)
-### Date:    2025-08-23
+### Author:  Mawage (Development Team)
+### Date:    2025-09-12
 ### License: MIT
-### Usage:   ./git.sh [OPTIONS] or source for functions
+### Usage:   ./gitclone.sh [OPTIONS] or Source for Functions
 ################################################################################
 
-SCRIPT_VERSION="1.0.0"
-COMMIT="Complete Git Workflow and Version Management System"
+readonly header="Git Workflow Manager"
+
+readonly version="1.0.0"
+readonly commit="Complete Git Repository Management System"
 
 
 ################################################################################
@@ -45,721 +47,395 @@ parse_arguments() {
 
 
 ################################################################################
-### === GIT REPOSITORY SETUP === ###
+### === GIT CLONE AND MANAGEMENT FUNCTION === ###
 ################################################################################
 
-### Initialize git repository if needed ###
-init_git_repo() {
-    local repo_dir="${1:-$PROJECT_ROOT}"
-    
-    if [ ! -d "$repo_dir/.git" ]; then
-        print_info "Initializing git repository in $repo_dir"
-        
-        cd "$repo_dir" || error_exit "Cannot access directory: $repo_dir"
-        
-        ### Initialize repository ###
-        git init || error_exit "Failed to initialize git repository"
-        
-        ### Configure git user if from project config ###
-        if [ -n "$GIT_USER_NAME" ] && [ -n "$GIT_USER_EMAIL" ]; then
-            git config user.name "$GIT_USER_NAME"
-            git config user.email "$GIT_USER_EMAIL"
-            print_success "Configured git user: $GIT_USER_NAME <$GIT_USER_EMAIL>"
-        fi
-        
-        ### Add remote if configured ###
-        if [ -n "$REPO_URL" ]; then
-            git remote add "$REPO_REMOTE_NAME" "$REPO_URL" 2>/dev/null || true
-            print_info "Added remote: $REPO_URL"
-        fi
-        
-        ### Create initial commit ###
-        git add .
-        git commit -m "Initial commit" || print_warning "No files to commit"
-        
-        print_success "Git repository initialized"
-    else
-        print_info "Git repository already exists"
-    fi
-}
+### Complete Git Repository Management with Enhanced Logging ###
+gitclone() {
 
-### Professional Git version checking ###
-check_git_version() {
-    local repo_dir="${1:-$PROJECT_ROOT}"
-    local branch="${2:-$REPO_BRANCH}"
-    local check_type="${3:-commits}"
-    
-    validate_directory "$repo_dir" false
-    
-    if [ ! -d "$repo_dir/.git" ]; then
-        print_error "Not a git repository: $repo_dir"
-        return 3
-    fi
-    
-    cd "$repo_dir"
-    
-    ### Quick network check ###
-    if ! git ls-remote origin >/dev/null 2>&1; then
-        print_warning "Cannot reach remote repository"
-        return 3
-    fi
-    
-    ### Fetch latest changes ###
-    git fetch origin "$branch" >/dev/null 2>&1 || {
-        print_warning "Cannot fetch branch $branch"
-        return 3
-    }
-    
-    ### Compare local and remote ###
-    local local_hash=$(git rev-parse HEAD 2>/dev/null)
-    local remote_hash=$(git rev-parse "origin/$branch" 2>/dev/null)
-    
-    if [ -z "$local_hash" ] || [ -z "$remote_hash" ]; then
-        print_error "Cannot determine commit hashes"
-        return 3
-    fi
-    
-    if [ "$local_hash" != "$remote_hash" ]; then
-        local commits_behind=$(git rev-list --count HEAD..origin/$branch 2>/dev/null || echo "unknown")
-        print_info "Updates available: $commits_behind commits behind"
-        print_info "Local:  ${local_hash:0:8}"
-        print_info "Remote: ${remote_hash:0:8}"
-        return 0
-    else
-        print_success "Repository is up to date"
-        print_info "Hash: ${local_hash:0:8}"
-        return 1
-    fi
-}
+	### Log Startup Arguments ###
+	log --info "${FUNCNAME[0]}" "called with Arguments:" "($*)" "" ""
 
-### Clone repository with enhanced features ###
-clone_repository() {
-    local repo_url="${1:-$REPO_URL}"
-    local target_dir="${2:-$PROJECT_ROOT}"
-    local branch="${3:-$REPO_BRANCH}"
-    
-    if [ -z "$repo_url" ]; then
-        error_exit "Repository URL not provided"
-    fi
-    
-    print_header "Cloning Repository"
-    print_info "URL: $repo_url"
-    print_info "Target: $target_dir"
-    print_info "Branch: $branch"
-    
-    ### Check target directory status ###
-    local dir_status=$(check_target_directory "$target_dir")
-    
-    case "$dir_status" in
-        INVALID|WRONG_REPO)
-            if ! ask_yes_no "Remove existing directory and continue?" "no"; then
-                error_exit "Cannot clone to existing directory"
-            fi
-            safe_delete "$target_dir" true
-            ;;
-        VALID)
-            print_info "Valid repository exists, updating instead..."
-            cd "$target_dir"
-            git fetch origin "$branch"
-            git reset --hard "origin/$branch"
-            print_success "Repository updated successfully"
-            return 0
-            ;;
-    esac
-    
-    ### Create parent directory ###
-    mkdir -p "$(dirname "$target_dir")"
-    
-    ### Clone with progress ###
-    if git clone --progress --branch "$branch" "$repo_url" "$target_dir"; then
-        cd "$target_dir"
-        print_success "Repository cloned successfully"
-        
-        ### Configure git user ###
-        if [ -n "$GIT_USER_NAME" ] && [ -n "$GIT_USER_EMAIL" ]; then
-            git config user.name "$GIT_USER_NAME"
-            git config user.email "$GIT_USER_EMAIL"
-            print_info "Configured git user"
-        fi
-        
-        ### Set permissions if we have root access ###
-        if is_root; then
-            set_repository_permissions "$target_dir"
-        fi
-        
-        return 0
-    else
-        print_error "Failed to clone repository"
-        
-        ### Cleanup failed attempt ###
-        if [ -d "$target_dir" ]; then
-            print_info "Cleaning up failed installation..."
-            safe_delete "$target_dir" true
-        fi
-        
-        error_exit "Git clone failed - installation aborted"
-    fi
-}
+	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
+	_check() {
+		### Check git version against remote ###
+		local repo_dir="${1:-$PROJECT_ROOT}"
+		local branch="${2:-$REPO_BRANCH}"
+		
+		log --info "${FUNCNAME[0]}" "_check" "($repo_dir $branch)" "Checking repository status" ""
+		
+		validate_directory "$repo_dir" false
+		
+		if [ ! -d "$repo_dir/.git" ]; then
+			print --error "Not a git repository: $repo_dir"
+			log --error "${FUNCNAME[0]}" "_check" "($repo_dir)" "Not a git repository" ""
+			return 3
+		fi
+		
+		cd "$repo_dir" || return 3
+		
+		### Quick network check ###
+		if ! git ls-remote origin >/dev/null 2>&1; then
+			print --warning "Cannot reach remote repository"
+			log --warning "${FUNCNAME[0]}" "_check" "($repo_dir)" "Remote unreachable" ""
+			return 3
+		fi
+		
+		### Fetch latest changes ###
+		log --info "${FUNCNAME[0]}" "_check" "($repo_dir)" "Fetching remote changes" ""
+		git fetch origin "$branch" >/dev/null 2>&1 || {
+			print --warning "Cannot fetch branch $branch"
+			log --warning "${FUNCNAME[0]}" "_check" "($branch)" "Fetch failed" ""
+			return 3
+		}
+		
+		### Compare local and remote ###
+		local local_hash=$(git rev-parse HEAD 2>/dev/null)
+		local remote_hash=$(git rev-parse "origin/$branch" 2>/dev/null)
+		
+		if [ -z "$local_hash" ] || [ -z "$remote_hash" ]; then
+			print --error "Cannot determine commit hashes"
+			log --error "${FUNCNAME[0]}" "_check" "($repo_dir)" "Hash comparison failed" ""
+			return 3
+		fi
+		
+		if [ "$local_hash" != "$remote_hash" ]; then
+			local commits_behind=$(git rev-list --count HEAD..origin/$branch 2>/dev/null || echo "unknown")
+			print --info "Updates available: $commits_behind commits behind"
+			print --info "Local:  ${local_hash:0:8}"
+			print --info "Remote: ${remote_hash:0:8}"
+			log --info "${FUNCNAME[0]}" "_check" "($commits_behind)" "Updates available" "Local: ${local_hash:0:8} Remote: ${remote_hash:0:8}"
+			return 0
+		else
+			print --success "Repository is up to date"
+			print --info "Hash: ${local_hash:0:8}"
+			log --info "${FUNCNAME[0]}" "_check" "(up-to-date)" "Repository current" "Hash: ${local_hash:0:8}"
+			return 1
+		fi
+	}
 
-### Set repository permissions ###
-set_repository_permissions() {
-    local repo_dir="${1:-$PROJECT_ROOT}"
-    
-    print_info "Setting repository permissions..."
-    
-    ### Set ownership to current user or root ###
-    local owner=$(whoami)
-    if is_root && [ -n "$SUDO_USER" ]; then
-        owner="$SUDO_USER"
-    fi
-    
-    chown -R "$owner:$owner" "$repo_dir" 2>/dev/null || true
-    print_success "Set ownership to $owner"
-    
-    ### Set directory permissions ###
-    find "$repo_dir" -type d -exec chmod 755 {} \; 2>/dev/null
-    print_success "Set directory permissions (755)"
-    
-    ### Set file permissions ###
-    find "$repo_dir" -type f -exec chmod 644 {} \; 2>/dev/null
-    print_success "Set file permissions (644)"
-    
-    ### Make scripts executable ###
-    find "$repo_dir" -name "*.sh" -exec chmod +x {} \; 2>/dev/null
-    print_success "Made shell scripts executable"
-}
+	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
+	_clone() {
+		### Clone repository with enhanced features ###
+		local repo_url="${1:-$REPO_URL}"
+		local target_dir="${2:-$PROJECT_ROOT}"
+		local branch="${3:-$REPO_BRANCH}"
+		
+		log --info "${FUNCNAME[0]}" "_clone" "($repo_url)" "Starting clone operation" "Target: $target_dir Branch: $branch"
+		
+		if [ -z "$repo_url" ]; then
+			print --error "Repository URL not provided"
+			log --error "${FUNCNAME[0]}" "_clone" "(empty)" "No repository URL" ""
+			return 1
+		fi
+		
+		print --header "Cloning Repository"
+		print --info "URL: $repo_url"
+		print --info "Target: $target_dir"
+		print --info "Branch: $branch"
+		
+		### Check target directory status ###
+		local dir_status=$(check_target_directory "$target_dir")
+		log --info "${FUNCNAME[0]}" "_clone" "($target_dir)" "Directory status" "$dir_status"
+		
+		case "$dir_status" in
+			INVALID|WRONG_REPO)
+				if ! ask_yes_no "Remove existing directory and continue?" "no"; then
+					print --error "Cannot clone to existing directory"
+					log --error "${FUNCNAME[0]}" "_clone" "(cancelled)" "User cancelled removal" ""
+					return 1
+				fi
+				safe_delete "$target_dir" true
+				log --info "${FUNCNAME[0]}" "_clone" "($target_dir)" "Directory removed" ""
+				;;
+			VALID)
+				print --info "Valid repository exists, updating instead..."
+				log --info "${FUNCNAME[0]}" "_clone" "($target_dir)" "Updating existing repo" ""
+				cd "$target_dir"
+				git fetch origin "$branch"
+				git reset --hard "origin/$branch"
+				print --success "Repository updated successfully"
+				log --success "${FUNCNAME[0]}" "_clone" "($target_dir)" "Repository updated" ""
+				return 0
+				;;
+		esac
+		
+		### Create parent directory ###
+		mkdir -p "$(dirname "$target_dir")"
+		
+		### Clone with progress ###
+		log --info "${FUNCNAME[0]}" "_clone" "($repo_url)" "Starting git clone" ""
+		if git clone --progress --branch "$branch" "$repo_url" "$target_dir"; then
+			cd "$target_dir"
+			print --success "Repository cloned successfully"
+			log --success "${FUNCNAME[0]}" "_clone" "($repo_url)" "Clone successful" "Target: $target_dir"
+			
+			### Configure git user ###
+			if [ -n "$GIT_USER_NAME" ] && [ -n "$GIT_USER_EMAIL" ]; then
+				git config user.name "$GIT_USER_NAME"
+				git config user.email "$GIT_USER_EMAIL"
+				print --info "Configured git user"
+				log --info "${FUNCNAME[0]}" "_clone" "($GIT_USER_NAME)" "Git user configured" "$GIT_USER_EMAIL"
+			fi
+			
+			return 0
+		else
+			print --error "Failed to clone repository"
+			log --error "${FUNCNAME[0]}" "_clone" "($repo_url)" "Clone failed" ""
+			
+			### Cleanup failed attempt ###
+			if [ -d "$target_dir" ]; then
+				print --info "Cleaning up failed installation..."
+				safe_delete "$target_dir" true
+				log --info "${FUNCNAME[0]}" "_clone" "($target_dir)" "Cleanup completed" ""
+			fi
+			
+			return 1
+		fi
+	}
 
-### Validate repository installation ###
-validate_installation() {
-    local repo_dir="${1:-$PROJECT_ROOT}"
-    
-    print_header "Validating Installation"
-    
-    ### Check if directory exists ###
-    validate_directory "$repo_dir" true
-    
-    ### Check if it's a git repository ###
-    if [ ! -d "$repo_dir/.git" ]; then
-        print_error "Not a git repository"
-        return 1
-    fi
-    print_check "Valid git repository"
-    
-    ### Check remote configuration ###
-    cd "$repo_dir"
-    local remote_url=$(git remote get-url origin 2>/dev/null || echo "")
-    if [ -n "$remote_url" ]; then
-        print_check "Remote configured: $remote_url"
-    else
-        print_cross "No remote configured"
-    fi
-    
-    ### Check current branch ###
-    local current_branch=$(git branch --show-current 2>/dev/null || echo "")
-    if [ -n "$current_branch" ]; then
-        print_check "Current branch: $current_branch"
-    else
-        print_cross "No current branch"
-    fi
-    
-    ### Check for required files from project.conf ###
-    if [ -n "${REQUIRED_FILES[*]}" ]; then
-        print_info "Checking required files..."
-        for file in "${REQUIRED_FILES[@]}"; do
-            if validate_file "$repo_dir/$file" false; then
-                print_check "$(basename "$file")"
-            else
-                print_cross "Missing: $(basename "$file")"
-                return 1
-            fi
-        done
-    fi
-    
-    ### Check for required directories ###
-    if [ -n "${REQUIRED_DIRS[*]}" ]; then
-        print_info "Checking required directories..."
-        for dir in "${REQUIRED_DIRS[@]}"; do
-            if [ -d "$repo_dir/$dir" ]; then
-                print_check "$(basename "$dir")"
-            else
-                print_cross "Missing: $(basename "$dir")"
-                return 1
-            fi
-        done
-    fi
-    
-    print_success "Installation validation passed"
-    return 0
-}
+	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
+	_init() {
+		### Initialize git repository if needed ###
+		local repo_dir="${1:-$PROJECT_ROOT}"
+		
+		log --info "${FUNCNAME[0]}" "_init" "($repo_dir)" "Initializing repository" ""
+		
+		if [ ! -d "$repo_dir/.git" ]; then
+			print --info "Initializing git repository in $repo_dir"
+			
+			cd "$repo_dir" || {
+				print --error "Cannot access directory: $repo_dir"
+				log --error "${FUNCNAME[0]}" "_init" "($repo_dir)" "Access denied" ""
+				return 1
+			}
+			
+			### Initialize repository ###
+			if git init; then
+				log --success "${FUNCNAME[0]}" "_init" "($repo_dir)" "Git init successful" ""
+			else
+				print --error "Failed to initialize git repository"
+				log --error "${FUNCNAME[0]}" "_init" "($repo_dir)" "Git init failed" ""
+				return 1
+			fi
+			
+			### Configure git user if from project config ###
+			if [ -n "$GIT_USER_NAME" ] && [ -n "$GIT_USER_EMAIL" ]; then
+				git config user.name "$GIT_USER_NAME"
+				git config user.email "$GIT_USER_EMAIL"
+				print --success "Configured git user: $GIT_USER_NAME <$GIT_USER_EMAIL>"
+				log --info "${FUNCNAME[0]}" "_init" "($GIT_USER_NAME)" "Git user set" "$GIT_USER_EMAIL"
+			fi
+			
+			### Add remote if configured ###
+			if [ -n "$REPO_URL" ]; then
+				git remote add "$REPO_REMOTE_NAME" "$REPO_URL" 2>/dev/null || true
+				print --info "Added remote: $REPO_URL"
+				log --info "${FUNCNAME[0]}" "_init" "($REPO_REMOTE_NAME)" "Remote added" "$REPO_URL"
+			fi
+			
+			### Create initial commit ###
+			git add .
+			if git commit -m "Initial commit"; then
+				log --success "${FUNCNAME[0]}" "_init" "(initial)" "Initial commit created" ""
+			else
+				print --warning "No files to commit"
+				log --warning "${FUNCNAME[0]}" "_init" "(empty)" "No files for initial commit" ""
+			fi
+			
+			print --success "Git repository initialized"
+			log --success "${FUNCNAME[0]}" "_init" "($repo_dir)" "Repository initialized" ""
+		else
+			print --info "Git repository already exists"
+			log --info "${FUNCNAME[0]}" "_init" "($repo_dir)" "Repository exists" ""
+		fi
+	}
 
-### Show installation summary ###
-show_installation_summary() {
-    local repo_dir="${1:-$PROJECT_ROOT}"
-    
-    print_header "Installation Summary"
-    
-    ### Project information ###
-    print_section "Project Details"
-    echo "  Repository: ${REPO_URL:-Unknown}"
-    echo "  Branch:     ${REPO_BRANCH:-Unknown}"
-    echo "  Location:   $repo_dir"
-    echo ""
-    
-    ### Git information ###
-    if [ -d "$repo_dir/.git" ]; then
-        cd "$repo_dir"
-        local commit_hash=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-        local commit_date=$(git log -1 --format="%cd" --date=short 2>/dev/null || echo "unknown")
-        local commit_msg=$(git log -1 --format="%s" 2>/dev/null || echo "unknown")
-        
-        print_section "Git Information"
-        echo "  Commit:  $commit_hash"
-        echo "  Date:    $commit_date"
-        echo "  Message: $commit_msg"
-        echo ""
-    fi
-    
-    ### Repository status ###
-    print_section "Repository Status"
-    local status_output=$(cd "$repo_dir" && git status --porcelain 2>/dev/null)
-    if [ -z "$status_output" ]; then
-        print_success "Working tree is clean"
-    else
-        local modified=$(echo "$status_output" | grep -c "^ M" || echo "0")
-        local untracked=$(echo "$status_output" | grep -c "^??" || echo "0")
-        echo "  Modified files:  $modified"
-        echo "  Untracked files: $untracked"
-    fi
-    
-    print_success "Repository installation completed successfully!"
-}
+	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
+	_push() {
+		### Push changes to remote ###
+		local push_tags="${1:-false}"
+		local branch=$(git branch --show-current)
+		
+		log --info "${FUNCNAME[0]}" "_push" "($branch)" "Starting push operation" "Tags: $push_tags"
+		
+		print --header "Pushing to Remote Repository"
+		
+		### Check if remote exists ###
+		if ! git remote get-url origin >/dev/null 2>&1; then
+			print --warning "No remote repository configured"
+			log --warning "${FUNCNAME[0]}" "_push" "(no-remote)" "No remote configured" ""
+			return 1
+		fi
+		
+		### Push current branch ###
+		print --info "Pushing $branch branch..."
+		
+		if git push origin "$branch" 2>/dev/null; then
+			print --success "Pushed $branch branch"
+			log --success "${FUNCNAME[0]}" "_push" "($branch)" "Branch pushed" ""
+		else
+			print --warning "Failed to push $branch branch"
+			log --warning "${FUNCNAME[0]}" "_push" "($branch)" "Push failed" ""
+			return 1
+		fi
+		
+		### Push tags if requested ###
+		if [ "$push_tags" = "true" ] || [ "$push_tags" = "yes" ]; then
+			print --info "Pushing tags..."
+			
+			if git push origin --tags 2>/dev/null; then
+				print --success "Pushed tags"
+				log --success "${FUNCNAME[0]}" "_push" "(tags)" "Tags pushed" ""
+			else
+				print --warning "Failed to push tags"
+				log --warning "${FUNCNAME[0]}" "_push" "(tags)" "Tag push failed" ""
+			fi
+		fi
+		
+		return 0
+	}
 
+	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
+	_pull() {
+		### Pull changes from remote ###
+		local branch="${1:-$(git branch --show-current)}"
+		
+		log --info "${FUNCNAME[0]}" "_pull" "($branch)" "Starting pull operation" ""
+		
+		print --header "Pulling from Remote Repository"
+		
+		### Check if remote exists ###
+		if ! git remote get-url origin >/dev/null 2>&1; then
+			print --warning "No remote repository configured"
+			log --warning "${FUNCNAME[0]}" "_pull" "(no-remote)" "No remote configured" ""
+			return 1
+		fi
+		
+		### Fetch latest changes ###
+		print --info "Fetching latest changes..."
+		
+		if git fetch origin 2>/dev/null; then
+			print --success "Fetched latest changes"
+			log --success "${FUNCNAME[0]}" "_pull" "(fetch)" "Fetch successful" ""
+		else
+			print --warning "Failed to fetch changes"
+			log --warning "${FUNCNAME[0]}" "_pull" "(fetch)" "Fetch failed" ""
+			return 1
+		fi
+		
+		### Pull changes ###
+		print --info "Pulling $branch branch..."
+		
+		if git pull origin "$branch" 2>/dev/null; then
+			print --success "Pulled latest changes for $branch"
+			log --success "${FUNCNAME[0]}" "_pull" "($branch)" "Pull successful" ""
+			return 0
+		else
+			print --warning "Failed to pull changes"
+			log --warning "${FUNCNAME[0]}" "_pull" "($branch)" "Pull failed" ""
+			return 1
+		fi
+	}
 
-################################################################################
-### === GIT COMMIT OPERATIONS === ###
-################################################################################
+	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
+	_sync() {
+		### Full synchronization ###
+		local push_after_pull="${1:-true}"
+		
+		log --info "${FUNCNAME[0]}" "_sync" "(full)" "Starting synchronization" "Push after: $push_after_pull"
+		
+		print --header "Synchronizing with Remote Repository"
+		
+		### Pull latest changes ###
+		if _pull; then
+			print --info "Pull completed successfully"
+			log --success "${FUNCNAME[0]}" "_sync" "(pull)" "Pull phase completed" ""
+		else
+			print --warning "Pull failed, continuing..."
+			log --warning "${FUNCNAME[0]}" "_sync" "(pull)" "Pull phase failed" ""
+		fi
+		
+		### Push local changes if requested ###
+		if [ "$push_after_pull" = "true" ]; then
+			echo ""
+			if _push; then
+				print --info "Push completed successfully"
+				log --success "${FUNCNAME[0]}" "_sync" "(push)" "Push phase completed" ""
+			else
+				print --warning "Push failed"
+				log --warning "${FUNCNAME[0]}" "_sync" "(push)" "Push phase failed" ""
+			fi
+		fi
+		
+		print --success "Synchronization completed"
+		log --success "${FUNCNAME[0]}" "_sync" "(complete)" "Synchronization finished" ""
+	}
 
-### Commit File with updated Header ###
-commit_with_update() {
-    local file="$1"
-    local commit_message="$2"
-    local increment_type="${3:-patch}"
-    
-    if [ -z "$file" ] || [ -z "$commit_message" ]; then
-        print_error "Usage: commit_with_update <file> <commit_message> [increment_type]"
-        print_info "increment_type: major, minor, patch (default: patch)"
-        return 1
-    fi
-    
-    print_header "Commit with Header Update"
-    
-    ### Update header using helper function ###
-    if ! header --update "$file" "$commit_message" "$increment_type" >/dev/null; then
-        error_exit "Header update failed"
-    fi
-    
-    ### Get actual commit message from file ###
-    local actual_commit_message
-    if grep -q "^COMMIT=" "$file"; then
-        actual_commit_message=$(grep "^COMMIT=" "$file" | cut -d'"' -f2)
-    else
-        actual_commit_message="$commit_message"
-    fi
-    
-    ### Stage and commit ###
-    git add "$file" || error_exit "Failed to stage file"
-    
-    if git commit -m "$actual_commit_message"; then
-        local new_version=$(header --get-version "$file")
-        print_success "Committed $(basename "$file") v$new_version"
-        print_info "Message: $actual_commit_message"
-        return 0
-    else
-        error_exit "Git commit failed"
-    fi
-}
+	### Parse Arguments ###
+	while [[ $# -gt 0 ]]; do
 
-### Batch commit multiple files ###
-batch_commit() {
-    local commit_message="$1"
-    local increment_type="${2:-patch}"
-    shift 2
-    local files=("$@")
-    
-    if [ ${#files[@]} -eq 0 ]; then
-        print_error "No files specified for batch commit"
-        return 1
-    fi
-    
-    print_header "Batch Commit: ${#files[@]} files"
-    
-    ### Update all files using helper function ###
-    if ! header --batch-update "$commit_message" "$increment_type" "${files[@]}"; then
-        print_warning "Some files failed to update"
-    fi
-    
-    ### Get successfully updated files ###
-    local updated_files=()
-    for file in "${files[@]}"; do
-        if git diff --name-only "$file" 2>/dev/null | grep -q "$file"; then
-            updated_files+=("$file")
-        fi
-    done
-    
-    if [ ${#updated_files[@]} -eq 0 ]; then
-        print_warning "No files were updated"
-        return 1
-    fi
-    
-    ### Stage all updated files ###
-    git add "${updated_files[@]}" || error_exit "Failed to stage files"
-    
-    ### Commit all files ###
-    if git commit -m "$commit_message"; then
-        print_success "Batch commit successful: ${#updated_files[@]} files"
-        
-        for file in "${updated_files[@]}"; do
-            local version=$(header --get-version "$file")
-            print_check "$(basename "$file") v$version"
-        done
-        
-        return 0
-    else
-        error_exit "Batch commit failed"
-    fi
-}
+		case $1 in
+			--check|-c)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--check)" "Check operation requested" ""
+				_check "$2" "$3"
+				return $?
+				;;
 
-################################################################################
-### === BRANCH MANAGEMENT === ###
-################################################################################
+			--clone)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--clone)" "Clone operation requested" ""
+				_clone "$2" "$3" "$4"
+				return $?
+				;;
 
-### Setup standard branch structure ###
-setup_branch_structure() {
-    print_header "Setting up Branch Structure"
-    
-    local main_branch="${REPO_BRANCH:-main}"
-    local develop_branch="${REPO_DEVELOP_BRANCH:-develop}"
-    
-    ### Ensure we're in a git repository ###
-    if ! git rev-parse --git-dir >/dev/null 2>&1; then
-        error_exit "Not in a git repository"
-    fi
-    
-    ### Create or switch to main branch ###
-    if ! git show-ref --verify --quiet "refs/heads/$main_branch"; then
-        git checkout -b "$main_branch" || error_exit "Failed to create $main_branch branch"
-        print_success "Created $main_branch branch"
-    else
-        git checkout "$main_branch" || error_exit "Failed to switch to $main_branch"
-        print_info "Switched to $main_branch branch"
-    fi
-    
-    ### Create develop branch if needed ###
-    if ! git show-ref --verify --quiet "refs/heads/$develop_branch"; then
-        git checkout -b "$develop_branch" || error_exit "Failed to create $develop_branch branch"
-        print_success "Created $develop_branch branch"
-    else
-        print_info "$develop_branch branch already exists"
-    fi
-    
-    ### Set upstream tracking if remote exists ###
-    if git remote get-url origin >/dev/null 2>&1; then
-        git branch --set-upstream-to="origin/$main_branch" "$main_branch" 2>/dev/null || true
-        git branch --set-upstream-to="origin/$develop_branch" "$develop_branch" 2>/dev/null || true
-        print_info "Set upstream tracking"
-    fi
-    
-    ### Switch back to develop ###
-    git checkout "$develop_branch"
-    print_success "Branch structure setup complete"
-}
+			--help|-h)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--help)" "Help requested" ""
+				show --help "gitclone"
+				return 0
+				;;
 
-### Create feature branch ###
-create_feature_branch() {
-    local feature_name="$1"
-    
-    if [ -z "$feature_name" ]; then
-        print_error "Usage: create_feature_branch <feature_name>"
-        print_info "Example: create_feature_branch user-authentication"
-        return 1
-    fi
-    
-    local develop_branch="${REPO_DEVELOP_BRANCH:-develop}"
-    local feature_prefix="${FEATURE_BRANCH_PREFIX:-feature/}"
-    local branch_name="${feature_prefix}${feature_name}"
-    
-    print_header "Creating Feature Branch: $branch_name"
-    
-    ### Ensure develop branch exists ###
-    if ! git show-ref --verify --quiet "refs/heads/$develop_branch"; then
-        print_warning "$develop_branch branch not found, creating it"
-        git checkout -b "$develop_branch"
-    else
-        git checkout "$develop_branch"
-        
-        ### Update develop if remote exists ###
-        if git remote get-url origin >/dev/null 2>&1; then
-            print_info "Updating $develop_branch branch"
-            git pull origin "$develop_branch" 2>/dev/null || print_warning "Could not pull latest changes"
-        fi
-    fi
-    
-    ### Create feature branch ###
-    git checkout -b "$branch_name" || error_exit "Failed to create feature branch"
-    
-    print_success "Created and switched to feature branch: $branch_name"
-    print_info "Work on your feature, then run: finish_feature_branch $feature_name"
-}
+			--init|-i)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--init)" "Init operation requested" ""
+				_init "$2"
+				return $?
+				;;
 
-### Merge feature branch back ###
-finish_feature_branch() {
-    local feature_name="$1"
-    
-    if [ -z "$feature_name" ]; then
-        print_error "Usage: finish_feature_branch <feature_name>"
-        return 1
-    fi
-    
-    local develop_branch="${REPO_DEVELOP_BRANCH:-develop}"
-    local feature_prefix="${FEATURE_BRANCH_PREFIX:-feature/}"
-    local branch_name="${feature_prefix}${feature_name}"
-    local current_branch=$(git branch --show-current)
-    
-    print_header "Finishing Feature Branch: $branch_name"
-    
-    ### Ensure we're on the feature branch or switch to it ###
-    if [ "$current_branch" != "$branch_name" ]; then
-        if ! git show-ref --verify --quiet "refs/heads/$branch_name"; then
-            error_exit "Feature branch $branch_name not found"
-        fi
-        git checkout "$branch_name" || error_exit "Failed to switch to feature branch"
-    fi
-    
-    ### Switch to develop ###
-    git checkout "$develop_branch" || error_exit "Failed to switch to $develop_branch"
-    
-    ### Merge feature branch ###
-    if git merge "$branch_name" --no-ff -m "Merge feature: $feature_name"; then
-        print_success "Feature $feature_name merged into $develop_branch"
-        
-        ### Delete feature branch ###
-        if ask_yes_no "Delete feature branch $branch_name?" "yes"; then
-            git branch -d "$branch_name"
-            print_success "Deleted feature branch: $branch_name"
-        fi
-        
-        return 0
-    else
-        error_exit "Failed to merge feature branch"
-    fi
-}
+			--pull)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--pull)" "Pull operation requested" ""
+				_pull "$2"
+				return $?
+				;;
 
+			--push)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--push)" "Push operation requested" ""
+				_push "$2"
+				return $?
+				;;
 
-################################################################################
-### === RELEASE MANAGEMENT === ###
-################################################################################
+			--sync|-s)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--sync)" "Sync operation requested" ""
+				_sync "$2"
+				return $?
+				;;
 
-### Create version tag ###
-create_version_tag() {
-    local version="$1"
-    local message="$2"
-    
-    if [ -z "$version" ]; then
-        print_error "Usage: create_version_tag <version> [message]"
-        print_info "Example: create_version_tag v1.2.3 'Release with new features'"
-        return 1
-    fi
-    
-    ### Add version prefix if needed ###
-    local version_prefix="${VERSION_PREFIX:-v}"
-    if [[ ! "$version" =~ ^$version_prefix[0-9] ]]; then
-        version="${version_prefix}$version"
-    fi
-    
-    ### Validate version format ###
-    if [[ ! "$version" =~ ^$version_prefix[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        print_error "Invalid version format. Use ${version_prefix}X.Y.Z (e.g., ${version_prefix}1.2.3)"
-        return 1
-    fi
-    
-    ### Check if tag exists ###
-    if git tag -l | grep -q "^$version$"; then
-        print_error "Tag $version already exists"
-        return 1
-    fi
-    
-    ### Create annotated tag ###
-    local tag_message="${message:-Release $version}"
-    
-    if git tag -a "$version" -m "$tag_message"; then
-        print_success "Created tag: $version"
-        print_info "Message: $tag_message"
-        return 0
-    else
-        error_exit "Failed to create tag"
-    fi
-}
+			--version|-V)
+				log --info "${FUNCNAME[0]}" "parse_arguments" "(--version)" "Version requested" ""
+				print --version "$header" "$version" "$commit"
+				return 0
+				;;
 
-### Create full release ###
-create_release() {
-    local version="$1"
-    local message="$2"
-    
-    if [ -z "$version" ]; then
-        print_error "Usage: create_release <version> [message]"
-        print_info "Example: create_release 1.2.3 'Major feature release'"
-        return 1
-    fi
-    
-    local main_branch="${REPO_BRANCH:-main}"
-    local develop_branch="${REPO_DEVELOP_BRANCH:-develop}"
-    
-    print_header "Creating Release: $version"
-    
-    ### Ensure branches exist ###
-    if ! git show-ref --verify --quiet "refs/heads/$develop_branch"; then
-        error_exit "$develop_branch branch not found"
-    fi
-    
-    if ! git show-ref --verify --quiet "refs/heads/$main_branch"; then
-        git checkout -b "$main_branch"
-        print_info "Created $main_branch branch"
-    fi
-    
-    ### Switch to develop and ensure it's clean ###
-    git checkout "$develop_branch"
-    
-    if ! git diff --quiet; then
-        print_warning "Uncommitted changes in $develop_branch"
-        if ! ask_yes_no "Continue with release anyway?" "no"; then
-            print_info "Release cancelled"
-            return 1
-        fi
-    fi
-    
-    ### Merge develop to main ###
-    git checkout "$main_branch"
-    
-    if git merge "$develop_branch" --no-ff -m "Release $version"; then
-        print_success "Merged $develop_branch to $main_branch"
-    else
-        error_exit "Failed to merge for release"
-    fi
-    
-    ### Create version tag ###
-    create_version_tag "$version" "$message"
-    
-    ### Switch back to develop ###
-    git checkout "$develop_branch"
-    
-    print_success "Release $version created successfully!"
-    
-    ### Ask to push ###
-    if ask_yes_no "Push release to remote repository?" "yes"; then
-        push_to_remote true
-    fi
-}
+			*)
+				log --warning "${FUNCNAME[0]}" "parse_arguments" "($1)" "Unknown parameter" ""
+				print --error "Unknown option: $1"
+				show --help "gitclone"
+				return 1
+				;;
 
+		esac
+		shift
 
-################################################################################
-### === REMOTE SYNCHRONIZATION === ###
-################################################################################
+	done
 
-### Push changes to remote ###
-push_to_remote() {
-    local push_tags="${1:-false}"
-    local branch=$(git branch --show-current)
-    
-    print_header "Pushing to Remote Repository"
-    
-    ### Check if remote exists ###
-    if ! git remote get-url origin >/dev/null 2>&1; then
-        print_warning "No remote repository configured"
-        return 1
-    fi
-    
-    ### Push current branch ###
-    print_info "Pushing $branch branch..."
-    
-    if git push origin "$branch" 2>/dev/null; then
-        print_success "Pushed $branch branch"
-    else
-        print_warning "Failed to push $branch branch"
-        return 1
-    fi
-    
-    ### Push tags if requested ###
-    if [ "$push_tags" = "true" ] || [ "$push_tags" = "yes" ]; then
-        print_info "Pushing tags..."
-        
-        if git push origin --tags 2>/dev/null; then
-            print_success "Pushed tags"
-        else
-            print_warning "Failed to push tags"
-        fi
-    fi
-    
-    return 0
-}
-
-### Pull changes from remote ###
-pull_from_remote() {
-    local branch="${1:-$(git branch --show-current)}"
-    
-    print_header "Pulling from Remote Repository"
-    
-    ### Check if remote exists ###
-    if ! git remote get-url origin >/dev/null 2>&1; then
-        print_warning "No remote repository configured"
-        return 1
-    fi
-    
-    ### Fetch latest changes ###
-    print_info "Fetching latest changes..."
-    
-    if git fetch origin 2>/dev/null; then
-        print_success "Fetched latest changes"
-    else
-        print_warning "Failed to fetch changes"
-        return 1
-    fi
-    
-    ### Pull changes ###
-    print_info "Pulling $branch branch..."
-    
-    if git pull origin "$branch" 2>/dev/null; then
-        print_success "Pulled latest changes for $branch"
-        return 0
-    else
-        print_warning "Failed to pull changes"
-        return 1
-    fi
-}
-
-### Full synchronization ###
-sync_with_remote() {
-    local push_after_pull="${1:-true}"
-    
-    print_header "Synchronizing with Remote Repository"
-    
-    ### Pull latest changes ###
-    if pull_from_remote; then
-        print_info "Pull completed successfully"
-    else
-        print_warning "Pull failed, continuing..."
-    fi
-    
-    ### Push local changes if requested ###
-    if [ "$push_after_pull" = "true" ]; then
-        echo ""
-        if push_to_remote; then
-            print_info "Push completed successfully"
-        else
-            print_warning "Push failed"
-        fi
-    fi
-    
-    print_success "Synchronization completed"
 }
 
 
