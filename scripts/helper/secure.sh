@@ -53,7 +53,7 @@ parse_arguments() {
 ### Universal Permission Management Function ###
 secure() {
     ### Log Startup Arguments ###
-    log --info "${FUNCNAME[0]} called with Arguments: ($*)"
+    log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
 
     local target_path=""
     local target_user=""
@@ -122,6 +122,9 @@ secure() {
     ### Apply ACL Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within Main Function
     _acl() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         ### Check if ACL Commands are available ###
         cmd --dependencies "acl" || return 1
         
@@ -180,6 +183,9 @@ secure() {
     ### Check current Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _check() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         print --header "Permission Analysis"
         print "user: $target_user"
         print "path: $target_path"
@@ -295,6 +301,9 @@ secure() {
     ### Apply Group Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _group() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         ### Check if necessary Packages are available ###
         cmd --dependencies "coreutils" "shadow" || return 1
         
@@ -370,6 +379,9 @@ secure() {
     ### Interactive Wizard (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _interactive() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         print --header "Permission Setup Wizard"
         print "Target path: $target_path"
         print "Target user: $target_user"
@@ -418,6 +430,9 @@ secure() {
     ### Remove Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _remove() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         print --header "Removing Enhanced Permissions"
         print --warning "This will remove ACL and sudo entries for user: $target_user"
         
@@ -469,6 +484,9 @@ secure() {
     ### Configure sudo Permissions (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
      _sudo() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         ### Check if necessary Packages are available ###
         cmd --dependencies "sudo" || return 1
 
