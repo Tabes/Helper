@@ -61,8 +61,11 @@ log() {
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _log_write() {
         local level="$1"
-        local msg="$2"
-        local file="${3:-$log_file}"
+        local function_name="$2"
+        local parameters="$3"
+        local comment="${4:-}"
+        local additional="${5:-}"
+        local file="${6:-$log_file}"
         
         ### Create log directory if needed ###
         local log_dir=$(dirname "$file")
@@ -89,31 +92,81 @@ log() {
             _log_rotate "$file"
         fi
         
+        ### Format log entry with tabs if enabled ###
+        local log_entry=""
+        
+        if [ "${LOG_USE_TABS:-true}" = "true" ]; then
+            ### Tab positions from config ###
+            local tab1="${LOG_TAB1:-1}"                            ### Position Timestamp ###
+            local tab2="${LOG_TAB2:-25}"                           ### Position Script name ###
+            local tab3="${LOG_TAB3:-40}"                           ### Position log level ###
+            local tab4="${LOG_TAB4:-50}"                           ### Position Parameters ###
+            local tab5="${LOG_TAB5:-62}"                           ### Position Comments ###
+            local tab6="${LOG_TAB6:-75}"                           ### Position Additional ###
+            
+            ### Calculate column widths ###
+            local col1=$((tab2 - tab1 - 2))                        ### Timestamp width ###
+            local col2=$((tab3 - tab2 - 2))                        ### Script width ###
+            local col3=$((tab4 - tab3 - 2))                        ### Level width ###
+            local col4=$((tab5 - tab4))                            ### Parameters width ###
+            local col5=$((tab6 - tab5))                            ### Comments width ###
+            
+            ### Build formatted entry ###
+            if [ -n "$additional" ]; then
+                ### Full format with all columns ###
+                log_entry=$(printf "[%-*s] [%-*s] [%-*s] %-*s %-*s %s" \
+                    "$col1" "$timestamp" \
+                    "$col2" "${script_name:-$function_name}" \
+                    "$col3" "$level" \
+                    "$col4" "$parameters" \
+                    "$col5" "$comment" \
+                    "$additional")
+            elif [ -n "$comment" ]; then
+                ### Format without additional column ###
+                log_entry=$(printf "[%-*s] [%-*s] [%-*s] %-*s %s" \
+                    "$col1" "$timestamp" \
+                    "$col2" "${script_name:-$function_name}" \
+                    "$col3" "$level" \
+                    "$col4" "$parameters" \
+                    "$comment")
+            else
+                ### Minimal format ###
+                log_entry=$(printf "[%-*s] [%-*s] [%-*s] %s" \
+                    "$col1" "$timestamp" \
+                    "$col2" "${script_name:-$function_name}" \
+                    "$col3" "$level" \
+                    "$parameters")
+            fi
+        else
+            ### Classic format without tabs ###
+            log_entry="[$timestamp] [${script_name:-$function_name}] [$level] $parameters $comment $additional"
+        fi
+        
         ### Write to script-specific log file ###
-        echo "[$timestamp] [$level] $msg" >> "$file"
+        echo "$log_entry" >> "$file"
         
         ### Also write to central log if configured ###
         if [ -n "$CENTRAL_LOG" ] && [ "$CENTRAL_LOG" != "$file" ]; then
-            echo "[$timestamp] [${script_name}] [$level] $msg" >> "$CENTRAL_LOG"
+            echo "$log_entry" >> "$CENTRAL_LOG"
         fi
         
         ### Console output based on level ###
         case "$level" in
             ERROR)
-                [ "${VERBOSE:-false}" = "true" ] && print --error "$msg"
+                [ "${VERBOSE:-false}" = "true" ] && print --error "$function_name $parameters $comment"
                 ;;
             WARNING)
-                [ "${VERBOSE:-false}" = "true" ] && print --warning "$msg"
+                [ "${VERBOSE:-false}" = "true" ] && print --warning "$function_name $parameters $comment"
                 ;;
             INFO)
-                [ "${VERBOSE:-false}" = "true" ] && print --info "$msg"
+                [ "${VERBOSE:-false}" = "true" ] && print --info "$function_name $parameters $comment"
                 ;;
             DEBUG)
-                [ "${DEBUG:-false}" = "true" ] && print CY "[DEBUG] $msg"
+                [ "${DEBUG:-false}" = "true" ] && print CY "[DEBUG] $function_name $parameters $comment"
                 ;;
         esac
     }
-    
+
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _log_init() {
         local file="${1:-$log_file}"
@@ -325,51 +378,65 @@ log() {
                 _log_init "${2:-$log_file}" "${3:-INFO}"
                 [ $# -ge 3 ] && shift 3 || shift $#
                 ;;
+
             --info)
-                _log_write "INFO" "$2"
-                shift 2
+                ### Extended format: --info function_name parameters comment additional ###
+                _log_write "INFO" "$2" "$3" "${4:-}" "${5:-}"
+                shift $#
                 ;;
+
             --error)
-                _log_write "ERROR" "$2"
-                shift 2
+                _log_write "ERROR" "$2" "$3" "${4:-}" "${5:-}"
+                shift $#
                 ;;
+
             --warning)
-                _log_write "WARNING" "$2"
-                shift 2
+                _log_write "WARNING" "$2" "$3" "${4:-}" "${5:-}"
+                shift $#
                 ;;
+
             --debug)
-                _log_write "DEBUG" "$2"
-                shift 2
+                _log_write "DEBUG" "$2" "$3" "${4:-}" "${5:-}"
+                shift $#
                 ;;
+
             --rotate)
                 _log_rotate "${2:-$log_file}"
                 shift $#
                 ;;
+
             --tail)
                 _log_tail "${2:-$log_file}" "${3:-20}"
                 shift $#
                 ;;
+
             --search)
                 _log_search "$2" "${3:-$log_file}"
                 shift $#
                 ;;
+
             --clear)
                 local file="${2:-$log_file}"
                 > "$file"
-                _log_write "INFO" "Log file cleared by user"
+                _log_write "INFO" "log" "" "Log file cleared by user"
                 shift $#
                 ;;
+
             --help|-h)
-                show_help
+                _log_help
                 return 0
                 ;;
+
             *)
                 print --error "Unknown log operation: $1"
                 _log_help
                 return 1
                 ;;
+
         esac
+
     done
+
 }
 
 
