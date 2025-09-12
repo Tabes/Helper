@@ -573,6 +573,12 @@ secure() {
 
 ### Main Function ###
 main() {
+    ### Log Startup Arguments ###
+    log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+    log --info "${FUNCNAME[1]}" "($*)" "Called with Arguments: 1"
+    log --info "${FUNCNAME[2]}" "($*)" "Called with Arguments: 2"
+
+
     ### Check if no Arguments provided ###
     if [ $# -eq 0 ]; then
         show_help
