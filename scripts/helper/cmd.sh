@@ -52,8 +52,8 @@ parse_arguments() {
 
 ### Universal Command Integration Function ###
 cmd() {
-    ### Log startup arguments ###
-    log --info "${FUNCNAME[0]} called with Arguments: ($*)"
+    ### Log Startup Arguments ###
+    log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
 
     ### Local variables ###
     local cmd_name="${PROJECT_NAME:-helper}"
@@ -68,6 +68,9 @@ cmd() {
     ### Check if Command is available (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _check() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         local commands=("$@")
         local check_admin=false
         local check_sudo=false
@@ -124,6 +127,9 @@ cmd() {
     ### Check and install Dependencies (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _dependencies() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         local package="$1"
         local commands=()
         local package_name=""
@@ -173,6 +179,9 @@ cmd() {
     ### Execute Command with or without sudo (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _execute() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         [ "$EUID" -eq 0 ] && eval "$*" || { 
             command -v sudo >/dev/null 2>&1 && sudo bash -c "$*" || {
                 print --error "Cannot execute: sudo not available"
@@ -184,6 +193,9 @@ cmd() {
     ### Install missing Packages (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _install() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         local packages=("$@")
         local package_manager=""
         
@@ -225,6 +237,9 @@ cmd() {
     ### Create Wrapper Script (internal) ###
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _wrapper() {
+        ### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
         local name="${1:-$cmd_name}"
         local script="${2:-${BASH_SOURCE[0]}}"
         local target="$install_path/$name"
