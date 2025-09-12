@@ -17,6 +17,34 @@ COMMIT="Logging functions for structured file and console output"
 
 
 ################################################################################
+### Parse Command Line Arguments ###
+################################################################################
+
+### Parse all Command Line Arguments ###
+parse_arguments() {
+    ### Parse Command Line Arguments ###
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+
+            --version|-V)
+                print --version "${header}" "${version}" "${commit}"
+                exit 0
+                ;;
+            *)
+                ### Pass all other Arguments to Secure Function ###
+                log "$@"
+                exit $?
+                ;;
+        esac
+    done
+}
+
+
+################################################################################
 ### === STATUS & NOTIFICATION FUNCTIONS, LOGGING === ###
 ################################################################################
 
@@ -343,3 +371,30 @@ log() {
         esac
     done
 }
+
+
+################################################################################
+### === MAIN EXECUTION === ###
+################################################################################
+
+### Main Function ###
+main() {
+    ### Check if no arguments provided ###
+    if [ $# -eq 0 ]; then
+        show_help
+        exit 0
+    else
+        ### Parse and execute arguments ###
+        parse_arguments "$@"
+    fi
+}
+
+### Initialize when run directly ###
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    ### Running directly as script ###
+    main "$@"
+else
+    ### Being sourced as library ###
+    ### Functions loaded and ready for use ###
+    :
+fi
