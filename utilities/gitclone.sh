@@ -24,6 +24,9 @@ readonly commit="Complete Git Repository Management System"
 
 ### Parse all Command Line Arguments ###
 parse_arguments() {
+    ### Log Startup Arguments ###
+    log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
+
     ### Parse Command Line Arguments ###
     while [[ $# -gt 0 ]]; do
         case $1 in
