@@ -58,7 +58,10 @@ gitclone() {
 
 	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
 	_check() {
-		### Check git version against remote ###
+        ### Check if git is available ###
+        cmd --dependencies "git" || return 1
+
+        ### Check git version against remote ###
 		local repo_dir="${1:-$PROJECT_ROOT}"
 		local branch="${2:-$REPO_BRANCH}"
 		
@@ -116,7 +119,10 @@ gitclone() {
 
 	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
 	_clone() {
-		### Clone repository with enhanced features ###
+        ### Check if git is available ###
+        cmd --dependencies "git" || return 1
+
+		### Clone Repository with enhanced Features ###
 		local repo_url="${1:-$REPO_URL}"
 		local target_dir="${2:-$PROJECT_ROOT}"
 		local branch="${3:-$REPO_BRANCH}"
@@ -196,7 +202,10 @@ gitclone() {
 
 	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
 	_init() {
-		### Initialize git repository if needed ###
+        ### Check if git is available ###
+        cmd --dependencies "git" || return 1
+
+		### Initialize git Repository if needed ###
 		local repo_dir="${1:-$PROJECT_ROOT}"
 		
 		log --info "${FUNCNAME[0]}" "_init" "($repo_dir)" "Initializing repository" ""
@@ -253,7 +262,10 @@ gitclone() {
 
 	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
 	_push() {
-		### Push changes to remote ###
+        ### Check if git is available ###
+        cmd --dependencies "git" || return 1
+
+		### Push Changes to remote ###
 		local push_tags="${1:-false}"
 		local branch=$(git branch --show-current)
 		
@@ -298,7 +310,10 @@ gitclone() {
 
 	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
 	_pull() {
-		### Pull changes from remote ###
+        ### Check if git is available ###
+        cmd --dependencies "git" || return 1
+
+		### Pull Changes from remote ###
 		local branch="${1:-$(git branch --show-current)}"
 		
 		log --info "${FUNCNAME[0]}" "_pull" "($branch)" "Starting pull operation" ""
@@ -340,7 +355,10 @@ gitclone() {
 
 	# shellcheck disable=SC2317,SC2329 # Function called conditionally within main function
 	_sync() {
-		### Full synchronization ###
+        ### Check if git is available ###
+        cmd --dependencies "git" || return 1
+
+		### Full Synchronization ###
 		local push_after_pull="${1:-true}"
 		
 		log --info "${FUNCNAME[0]}" "_sync" "(full)" "Starting synchronization" "Push after: $push_after_pull"
