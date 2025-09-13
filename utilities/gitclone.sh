@@ -366,10 +366,7 @@ gitclone() {
         ### Log Startup Arguments ###
         log --info "${FUNCNAME[0]}" "($*)" "Called with Arguments:"
         
-        ### Check if git is available ###
-        cmd --dependencies "git" || return 1
-
-        ### Full synchronization ###
+        ### Full Synchronization ###
         local push_after_pull="${1:-true}"
         
         print --header "Synchronizing with Remote Repository"
@@ -403,37 +400,37 @@ gitclone() {
     while [[ $# -gt 0 ]]; do
         case $1 in
             --check|-c)
-                _check "${2:-$PROJECT_ROOT}" "${3:-$REPO_BRANCH}"
+                _check "$2" "$3"
                 return $?
                 ;;
 
             --clone)
-                _clone "${2:-$REPO_URL}" "${3:-$PROJECT_ROOT}" "${4:-$REPO_BRANCH}"
+                _clone "$2" "$3" "$4"
                 return $?
                 ;;
 
             --help|-h)
-                show_help
+                show_help "gitclone"
                 return 0
                 ;;
 
             --init|-i)
-                _init "${2:-$PROJECT_ROOT}"
+                _init "$2"
                 return $?
                 ;;
 
             --pull)
-                _pull "${2:-$(git branch --show-current 2>/dev/null)}"
+                _pull "$2"
                 return $?
                 ;;
 
             --push)
-                _push "${2:-false}"
+                _push "$2"
                 return $?
                 ;;
 
             --sync|-s)
-                _sync "${2:-true}"
+                _sync "$2"
                 return $?
                 ;;
 
@@ -441,10 +438,12 @@ gitclone() {
                 print --version "$header" "$version" "$commit"
                 return 0
                 ;;
+
             *)
                 print --invalid "${FUNCNAME[0]}" "$1"
                 return 1
                 ;;
+
         esac
 
         shift
