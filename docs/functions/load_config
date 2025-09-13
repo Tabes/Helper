@@ -1,0 +1,315 @@
+# load_config() Funktions-Dokumentation
+
+## Überblick
+
+Die `load_config()` Funktion ist das zentrale Konfigurationslademodul des Universal Helper Framework. Sie lädt systematisch alle Projektkonfigurationen mit integriertem Dependency Management und verhindert zirkuläre Abhängigkeiten sowie Mehrfach-Laden von Dateien.
+
+## Syntax
+
+```bash
+load_config [project_root] [debug_mode]
+```
+
+### Parameter
+
+| Parameter | Typ | Standard | Beschreibung |
+|-----------|-----|----------|--------------|
+| `project_root` | String | auto-detect | Optionaler Projektpfad. Wenn nicht angegeben, wird automatisch erkannt |
+| `debug_mode` | Boolean | false | Aktiviert detaillierte Debug-Ausgaben (`true`/`false`) |
+
+## Funktionsweise
+
+### 1. Projekt-Root Ermittlung
+
+```bash
+# Automatische Erkennung (Standard)
+load_config
+
+# Explizite Pfadangabe
+load_config "/opt/helper"
+
+# Mit Debug-Modus
+load_config "" true
+load_config "/opt/helper" true
+```
+
+**Suchlogik für project_root:**
+1. Parameter vorhanden → Validierung und Verwendung
+2. Kein Parameter → Automatische Erkennung aus Script-Pfad:
+   - Script-Pfad: `/opt/helper/scripts/helper.sh`
+   - Erkannter Root: `/opt/helper`
+
+### 2. Konfigurationsdatei-Suche
+
+Die Funktion sucht `project.conf` in folgender Reihenfolge:
+
+```
+1. $project_root/configs/project.conf    (Standard)
+2. $project_root/project.conf            (Fallback)
+3. $project_root/config/project.conf     (Alternative)
+```
+
+### 3. Dependency Management System
+
+#### Tracking-Mechanismus
+
+```bash
+declare -A loaded_files    # Hash: Dateipfad → Status
+local load_order=()       # Array: Reihenfolge der geladenen Dateien
+```
+
+#### Status-Zustände
+
+| Status | Bedeutung | Aktion |
+|--------|-----------|--------|
+| `"loading"` | Datei wird gerade geladen | Zirkuläre Abhängigkeit erkannt → Skip |
+| `"loaded"` | Datei bereits geladen | Mehrfach-Laden verhindert → Skip |
+| nicht gesetzt | Datei noch nicht verarbeitet | Normal laden |
+
+#### Zirkuläre Abhängigkeits-Erkennung
+
+```
+configs/a.conf sources configs/b.conf
+configs/b.conf sources configs/a.conf
+
+Ablauf:
+1. _load_file a.conf → Status: "loading"
+2. → _load_file b.conf → Status: "loading"  
+3. → → _load_file a.conf → Status bereits "loading" → SKIP!
+4. → b.conf fertig → Status: "loaded"
+5. a.conf fertig → Status: "loaded"
+```
+
+### 4. Konfigurationsvariablen-Verarbeitung
+
+Die Funktion nutzt Arrays aus der `project.conf`:
+
+#### LOAD_CONFIG_DIRS
+```bash
+LOAD_CONFIG_DIRS=(
+    "$PROJECT_ROOT/configs"
+    "$SCRIPTS_DIR"
+    "$HELPER_SCRIPTS_DIR"
+    "$UTILITIES_DIR"
+)
+```
+
+#### LOAD_CONFIG_PATTERN
+```bash
+LOAD_CONFIG_PATTERN=(
+    "*.conf"        # Konfigurationsdateien
+    "*.sh"          # Shell-Scripts
+)
+```
+
+#### LOAD_CONFIG_EXCLUSION
+```bash
+LOAD_CONFIG_EXCLUSION=(
+    "_*"            # Dateien mit Unterstrich-Präfix
+    "*.tmp"         # Temporäre Dateien
+)
+```
+
+### 5. Lade-Algorithmus
+
+```
+1. project.conf laden
+2. HELPER_CONFIG laden (falls definiert)
+3. Für jedes Verzeichnis in LOAD_CONFIG_DIRS:
+   a. Für jedes Pattern in LOAD_CONFIG_PATTERN:
+      - Dateien finden
+      - Exclusions prüfen
+      - Self-Reference vermeiden
+      - Bereits geladene Dateien überspringen
+      - Mit _load_file() laden
+4. Required-Validierung durchführen
+5. Status exportieren
+```
+
+## Interne Funktionen
+
+### _load_file()
+
+Lädt eine einzelne Datei mit Dependency-Tracking:
+
+```bash
+_load_file "/path/to/file.conf"
+```
+
+**Ablauf:**
+1. Realpath ermitteln
+2. Load-Status prüfen
+3. Als "loading" markieren
+4. Datei sourcen
+5. Als "loaded" markieren + zu load_order hinzufügen
+
+### _validate_dirs()
+
+Prüft `REQUIRED_DIRS` auf Existenz:
+
+```bash
+REQUIRED_DIRS=(
+    "$PROJECT_ROOT"
+    "$SCRIPTS_DIR"
+    "$LOG_DIR"
+)
+```
+
+### _validate_files()
+
+Prüft `REQUIRED_FILES` auf Existenz:
+
+```bash
+REQUIRED_FILES=(
+    "$HELPER_SCRIPT"
+    "$PROJECT_CONFIG"
+)
+```
+
+## Debug-Modus
+
+### Aktivierung
+
+```bash
+load_config "" true              # Auto-detect mit Debug
+load_config "/opt/helper" true   # Expliziter Pfad mit Debug
+```
+
+### Debug-Ausgaben
+
+```
+DEBUG: Auto-detected project_root: /opt/helper
+DEBUG: Found config at: /opt/helper/configs/project.conf
+DEBUG: Set PROJECT_ROOT=/opt/helper
+DEBUG: Processing LOAD_CONFIG_DIRS: /opt/helper/configs /opt/helper/scripts
+DEBUG: Loading: /opt/helper/configs/helper.conf
+DEBUG: Successfully loaded: /opt/helper/configs/helper.conf
+DEBUG: Total additional files loaded: 3
+DEBUG: ==========================================
+DEBUG: Configuration loading completed
+DEBUG: Project Root: /opt/helper
+DEBUG: Total files loaded: 4
+DEBUG: Load order:
+DEBUG:   1. /opt/helper/configs/project.conf
+DEBUG:   2. /opt/helper/configs/helper.conf
+DEBUG:   3. /opt/helper/scripts/functions.sh
+DEBUG:   4. /opt/helper/utilities/network.sh
+DEBUG: ==========================================
+```
+
+## Exportierte Variablen
+
+Nach erfolgreichem Laden werden folgende Variablen exportiert:
+
+```bash
+PROJECT_CONFIG_LOADED="true"                    # Laden erfolgreich
+PROJECT_CONFIG_VERSION="2.1.0"                 # Projekt-Version
+LOAD_CONFIG_FILES_COUNT="4"                    # Anzahl geladene Dateien
+PROJECT_ROOT="/opt/helper"                     # Projekt-Root-Pfad
+```
+
+## Fehlerbehandlung
+
+### Häufige Fehler
+
+| Fehler | Ursache | Lösung |
+|--------|---------|--------|
+| "Provided path is not a directory" | Ungültiger Projektpfad | Pfad prüfen oder auto-detect verwenden |
+| "Project configuration not found" | Keine project.conf gefunden | project.conf in Standard-Verzeichnissen erstellen |
+| "Failed to source project configuration" | Syntax-Fehler in project.conf | Konfigurationsdatei auf Syntax prüfen |
+| "Failed to load: /path/file" | Datei nicht ladbar | Datei-Berechtigungen und Syntax prüfen |
+
+### Warnungen
+
+```
+Warning: Missing required directories: /opt/helper/missing_dir
+Warning: Missing required files: /opt/helper/missing_file.conf
+Warning: Failed to load: /opt/helper/configs/broken.conf
+```
+
+## Anwendungsbeispiele
+
+### Standard-Nutzung
+
+```bash
+# In helper.sh oder anderen Scripts
+load_config
+
+# Prüfung ob erfolgreich geladen
+if [[ "$PROJECT_CONFIG_LOADED" == "true" ]]; then
+    echo "Konfiguration erfolgreich geladen"
+    echo "Projekt-Version: $PROJECT_CONFIG_VERSION"
+    echo "Geladene Dateien: $LOAD_CONFIG_FILES_COUNT"
+fi
+```
+
+### Entwicklung/Debugging
+
+```bash
+# Ausführliche Debug-Informationen
+load_config "" true
+
+# Spezifisches Projektverzeichnis testen
+load_config "/tmp/test-project" true
+```
+
+### Integration in Scripts
+
+```bash
+#!/bin/bash
+
+# Am Anfang des Scripts
+if ! load_config; then
+    echo "Fehler: Konfiguration konnte nicht geladen werden"
+    exit 1
+fi
+
+# Nun sind alle Helper-Funktionen verfügbar
+print --success "Script gestartet"
+log --info "Configuration loaded successfully"
+```
+
+## Performance-Optimierungen
+
+1. **Realpath-Caching:** Verhindert mehrfache Pfad-Auflösung
+2. **Load-Status-Tracking:** Überspringt bereits verarbeitete Dateien
+3. **Nullglob-Handling:** Effiziente Verarbeitung leerer Glob-Ergebnisse
+4. **Variable Expansion:** Nur einmalige Expansion pro Pfad
+
+## Kompatibilität
+
+- **Rückwärtskompatibel:** Funktioniert als Drop-in-Replacement
+- **Shell-Kompatibilität:** Bash 4.0+
+- **System-Anforderungen:** realpath, standard POSIX-Tools
+- **Framework-Integration:** Vollständig kompatibel mit Universal Helper Framework
+
+## Wartung und Erweiterung
+
+### Neue Verzeichnisse hinzufügen
+
+```bash
+# In project.conf
+LOAD_CONFIG_DIRS+=(
+    "$PROJECT_ROOT/new_directory"
+)
+```
+
+### Neue Patterns definieren
+
+```bash
+# In project.conf  
+LOAD_CONFIG_PATTERN+=(
+    "*.cfg"
+    "*.properties"
+)
+```
+
+### Erweiterte Ausschlüsse
+
+```bash
+# In project.conf
+LOAD_CONFIG_EXCLUSION+=(
+    "test_*"
+    "*.backup"
+)
+```

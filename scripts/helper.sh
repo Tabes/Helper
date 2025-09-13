@@ -1,371 +1,406 @@
 #!/bin/bash
 ################################################################################
-### Universal Helper Functions - Complete Utility Library
-### Comprehensive Collection of Helper Functions for bash Scripts
-### Provides Output, Logging, Validation, System, Network and Utility Functions
+### Load Configuration with Dependency Management — Complete Utility Function
+### Loads Project Configuration Files with circular dependency Detection
+### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.0
+### Version: 3.0.0
 ### Author:  Mawage (Development Team)
-### Date:    2025-08-31
+### Date:    2025-09-13
 ### License: MIT
-### Usage:   Source this File to Load Helper Functions
+### Usage:   Source this Function to load Project Configurations with Dependencies
 ################################################################################
 
-readonly header="Universal Helper Functions"
+readonly header="Configuration Loader with Dependency Management"
 
-readonly version="2.1.0"
-readonly commit="Initial Helper Functions Library Structure"
-
-
-################################################################################
-### Parse Command Line Arguments ###
-################################################################################
-
-### Parse Command Line Arguments ###
-parse_arguments() {
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --help|-h)
-                show_help
-                exit 0
-                ;;
-
-            --version|-V)
-                print --version "${header}" "${version}" "${commit}"
-                exit 0
-                ;;
-
-            *)
-                ### Pass all other arguments to main processing ###
-                break
-                ;;
-        esac
-        shift
-    done
-}
+readonly version="3.0.0"
+readonly commit="Complete Configuration Loader with Dependency Tracking and Project Compliance"
 
 
 ################################################################################
-### === INITIALIZATION === ###
+### === CONFIGURATION LOADING WITH DEPENDENCY MANAGEMENT === ###
 ################################################################################
 
-### Load Configuration and Dependencies ###
-# shellcheck disable=SC2120,SC2155,SC1090,SC2153,SC2015,SC2068 
-#!/bin/bash
-
-################################################################################
-### Load Configuration and Dependencies - Improved Version ###
-################################################################################
-
-# shellcheck disable=SC2120,SC2155,SC1090,SC2153,SC2015,SC2068 
+### Load Configuration Files with Dependency Tracking ###
 load_config() {
-    local project_root_arg="$1"
-    local debug="${2:-false}"
 
-    ### Enable debug output if requested ###
-    [[ "$debug" == "true" ]] && set -x
+	### Log startup arguments ###
+	log --info "${FUNCNAME[0]} called with arguments: ($*)"
 
-    ### Determine Project root Path ###
-    local project_root
-    if [[ -n "$project_root_arg" ]]; then
-        project_root="$project_root_arg"
-        if [[ ! -d "$project_root" ]]; then
-            print --error "Error: Provided path '$project_root' is not a directory."
-            return 1
+	################################################################################
+	### === INTERNAL LOAD_CONFIG FUNCTIONS === ###
+	################################################################################
+
+	### Load file with dependency tracking (internal) ###
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_load_file() {
+		local file="$1"
+		local real_file
+
+		real_file=$(realpath "$file" 2>/dev/null) || return 1
+
+		### Skip if already loaded ###
+		if [[ -n "${loaded_files[$real_file]}" ]]; then				### Check load status ###
+
+			case "${loaded_files[$real_file]}" in
+
+				"loading")
+					[[ "$debug" == "true" ]] && echo "DEBUG: Circular dependency detected: $file"
+					return 0
+					;;
+
+				"loaded")
+					[[ "$debug" == "true" ]] && echo "DEBUG: Already loaded, skipping: $file"
+					return 0
+					;;
+
+			esac
+
+		fi
+
+		### Mark as loading ###
+		loaded_files["$real_file"]="loading"
+		[[ "$debug" == "true" ]] && echo "DEBUG: Loading: $file"
+
+		### Source the file ###
+		# shellcheck source=/dev/null
+		if source "$file"; then							### Load successful ###
+
+			loaded_files["$real_file"]="loaded"
+			load_order+=("$file")
+			[[ "$debug" == "true" ]] && echo "DEBUG: Successfully loaded: $file"
+			return 0
+
+		else									### Load failed ###
+
+			unset loaded_files["$real_file"]
+			print --error "Failed to load: $file"
+			return 1
+
+		fi
+
+	}
+
+	### Validate directory existence (internal) ###
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_validate_dirs() {
+		local missing_dirs=()
+
+		if [[ -n "${REQUIRED_DIRS[*]}" ]]; then				### Check required directories ###
+
+			[[ "$debug" == "true" ]] && echo "DEBUG: Validating required directories: ${REQUIRED_DIRS[*]}"
+
+			for dir in "${REQUIRED_DIRS[@]}"; do
+
+				eval "dir=\"$dir\""					### Expand variables ###
+
+				if [[ ! -d "$dir" ]]; then				### Directory missing ###
+
+					missing_dirs+=("$dir")
+					[[ "$debug" == "true" ]] && echo "DEBUG: Missing required directory: $dir"
+
+				fi
+
+			done
+
+			if [[ ${#missing_dirs[@]} -gt 0 ]]; then			### Report missing directories ###
+
+				print --warning "Warning: Missing required directories: ${missing_dirs[*]}"
+
+			fi
+
+		fi
+
+	}
+
+	### Validate file existence (internal) ###
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_validate_files() {
+		local missing_files=()
+
+		if [[ -n "${REQUIRED_FILES[*]}" ]]; then			### Check required files ###
+
+			[[ "$debug" == "true" ]] && echo "DEBUG: Validating required files: ${REQUIRED_FILES[*]}"
+
+			for file in "${REQUIRED_FILES[@]}"; do
+
+				eval "file=\"$file\""					### Expand variables ###
+
+				if [[ ! -f "$file" ]]; then				### File missing ###
+
+					missing_files+=("$file")
+					[[ "$debug" == "true" ]] && echo "DEBUG: Missing required file: $file"
+
+				fi
+
+			done
+
+			if [[ ${#missing_files[@]} -gt 0 ]]; then		### Report missing files ###
+
+				print --warning "Warning: Missing required files: ${missing_files[*]}"
+
+			fi
+
+		fi
+
+	}
+
+	################################################################################
+	### === MAIN LOAD_CONFIG LOGIC === ###
+	################################################################################
+
+    ### Parse Parameters with intelligent Detection ###
+    local project_root_arg=""
+    local debug="false"
+
+    ### Intelligent parameter parsing ###
+    if [[ $# -eq 1 ]]; then						### Single parameter ###
+
+        if [[ "$1" == "true" || "$1" == "false" ]]; then		### Boolean parameter ###
+
+            debug="$1"
+            project_root_arg=""					### Use auto-detection ###
+
+        else								### Path parameter ###
+
+            project_root_arg="$1"
+            debug="false"
+
         fi
-    else
-        # Dynamically find project root
-        local script_path
-        script_path="$(realpath "${BASH_SOURCE[0]}")"
-        local script_dir
-        script_dir="$(dirname "$script_path")"
-        project_root="$(dirname "$script_dir")"
-        
-        [[ "$debug" == "true" ]] && echo "DEBUG: Auto-detected project_root: $project_root"
-    fi
 
-    ### Search for project.conf in standard locations ###
-    local project_conf_path
-    local config_found=false
-    
-    # Try multiple locations
-    for conf_location in \
-        "$project_root/configs/project.conf" \
-        "$project_root/project.conf" \
-        "$project_root/config/project.conf"; do
-        
-        if [[ -f "$conf_location" ]]; then
-            project_conf_path="$conf_location"
-            config_found=true
-            [[ "$debug" == "true" ]] && echo "DEBUG: Found config at: $conf_location"
-            break
-        fi
-    done
+    elif [[ $# -eq 2 ]]; then						### Two parameters ###
 
-    ### Exit if no configuration found ###
-    if [[ "$config_found" != "true" ]]; then
-        print --error "Error: Project configuration not found in any standard location."
-        return 1
-    fi
-
-    ### Source project.conf ###
-    # shellcheck source=/dev/null
-    source "$project_conf_path" || {
-        print --error "Error: Failed to source project configuration."
-        return 1
-    }
-
-    ### Set PROJECT_ROOT to match discovered path ###
-    PROJECT_ROOT="$project_root"
-    export PROJECT_ROOT
-    
-    [[ "$debug" == "true" ]] && echo "DEBUG: Set PROJECT_ROOT=$PROJECT_ROOT"
-
-    ### Source HELPER_CONFIG if it exists ###
-    if [[ -n "$HELPER_CONFIG" && -f "$HELPER_CONFIG" ]]; then
-        # shellcheck source=/dev/null
-        source "$HELPER_CONFIG" || {
-            print --warning "Warning: Failed to source helper configuration: $HELPER_CONFIG"
-        }
-        [[ "$debug" == "true" ]] && echo "DEBUG: Sourced HELPER_CONFIG: $HELPER_CONFIG"
-    fi
-
-    ### Load files from configured directories ###
-    if [[ -n "${LOAD_CONFIG_DIRS[*]}" ]]; then
-        local dir file pattern basename exclude exclusion
-        local files_loaded=0
-        
-        for dir in "${LOAD_CONFIG_DIRS[@]}"; do
-            [[ -d "$dir" ]] || {
-                [[ "$debug" == "true" ]] && echo "DEBUG: Skipping non-existent directory: $dir"
-                continue
-            }
-            
-            [[ "$debug" == "true" ]] && echo "DEBUG: Processing directory: $dir"
-            
-            ### Process each pattern ###
-            for pattern in "${LOAD_CONFIG_PATTERN[@]}"; do
-                # Use nullglob to handle cases where no files match
-                shopt -s nullglob
-                
-                for file in "$dir"/$pattern; do
-                    [[ -f "$file" ]] || continue
-                    
-                    basename=$(basename "$file")
-                    exclude=0
-                    
-                    ### Check exclusion patterns ###
-                    for exclusion in "${LOAD_CONFIG_EXCLUSION[@]}"; do
-                        case "$basename" in
-                            $exclusion)
-                                exclude=1
-                                [[ "$debug" == "true" ]] && echo "DEBUG: Excluding $file (matches $exclusion)"
-                                break
-                                ;;
-                        esac
-                    done
-                    
-                    ### Skip excluded files ###
-                    [[ "$exclude" -eq 1 ]] && continue
-                    
-                    ### Skip self-referencing ###
-                    [[ "$file" -ef "${BASH_SOURCE[0]}" ]] && {
-                        [[ "$debug" == "true" ]] && echo "DEBUG: Skipping self-reference: $file"
-                        continue
-                    }
-                    
-                    ### Source the file ###
-                    [[ "$debug" == "true" ]] && echo "DEBUG: Sourcing: $file"
-                    # shellcheck source=/dev/null
-                    source "$file" || {
-                        print --warning "Warning: Failed to source: $file"
-                        continue
-                    }
-                    
-                    ((files_loaded++))
-                done
-                
-                shopt -u nullglob
-            done
-        done
-        
-        [[ "$debug" == "true" ]] && echo "DEBUG: Total files loaded: $files_loaded"
-    fi
-
-    ### Validate required directories (if defined) ###
-    if [[ -n "${REQUIRED_DIRS[*]}" ]]; then
-        local missing_dirs=()
-        
-        for dir in "${REQUIRED_DIRS[@]}"; do
-            [[ -d "$dir" ]] || missing_dirs+=("$dir")
-        done
-        
-        if [[ ${#missing_dirs[@]} -gt 0 ]]; then
-            print --warning "Warning: Missing required directories: ${missing_dirs[*]}"
-        fi
-    fi
-
-    ### Disable debug output ###
-    [[ "$debug" == "true" ]] && set +x
-
-    return 0
-}
-
-################################################################################
-### Enhanced Configuration Loader with Dependency Management ###
-################################################################################
-
-load_config_with_deps() {
-    local project_root="$1"
-    local debug="${2:-false}"
-    
-    ### Track loaded files to prevent circular dependencies ###
-    declare -A loaded_files
-    local load_order=()
-    
-    _load_file() {
-        local file="$1"
-        local real_file
-        real_file=$(realpath "$file" 2>/dev/null) || return 1
-        
-        ### Skip if already loaded ###
-        [[ -n "${loaded_files[$real_file]}" ]] && return 0
-        
-        ### Mark as loading to detect circular deps ###
-        loaded_files["$real_file"]="loading"
-        
-        ### Source the file ###
-        # shellcheck source=/dev/null
-        source "$file" || {
-            print --error "Failed to load: $file"
-            return 1
-        }
-        
-        ### Mark as loaded ###
-        loaded_files["$real_file"]="loaded"
-        load_order+=("$file")
-        
-        [[ "$debug" == "true" ]] && echo "DEBUG: Successfully loaded: $file"
-        return 0
-    }
-    
-    ### Load configuration using the enhanced loader ###
-    load_config "$project_root" "$debug" || return 1
-    
-    ### Export load information for debugging ###
-    if [[ "$debug" == "true" ]]; then
-        echo "DEBUG: Load order:"
-        printf "  %s\n" "${load_order[@]}"
-    fi
-    
-    return 0
-}
-
-
-_load_config() {
-   ### Determine Project root dynamically ###
-   local script_path="$(realpath "${BASH_SOURCE[0]}")"
-   local script_dir="$(dirname "$script_path")"
-   local project_root="$(dirname "$script_dir")"
-   
-   ### Look for project.conf in Standard Locations ###
-   local config_file=""
-   if [ -f "$project_root/configs/project.conf" ]; then
-
-       config_file="$project_root/configs/project.conf"
-
-   elif [ -f "$project_root/project.conf" ]; then
-
-       config_file="$project_root/project.conf"
-
-   else
-
-       print --error "Project configuration not found"
-       return 1
-
-   fi
-   
-   ### Source main configuration if found ###
-   if [ -f "$config_file" ]; then
-
-       source "$config_file"
-
-   fi
-   
-   ### Load additional configuration files from configs/ ###
-   if [ -d "$project_root/configs" ]; then
-
-       for conf in "$project_root/configs"/*.conf; do
-
-           ### Skip files starting with underscore and project.conf (already loaded) ###
-           local basename=$(basename "$conf")
-
-           if [[ ! "$basename" =~ ^_ ]] && [ "$conf" != "$config_file" ] && [ -f "$conf" ]; then
-
-               source "$conf"
-
-           fi
-
-       done
-
-   fi
-   
-   ### Load helper scripts from scripts/helper/ ###
-   if [ -d "$project_root/scripts/helper" ]; then
-
-       for script in "$project_root/scripts/helper"/*.sh; do
-
-           ### Skip files starting with underscore ###
-           local basename=$(basename "$script")
-
-           if [[ ! "$basename" =~ ^_ ]] && [ -f "$script" ]; then
-
-               source "$script"
-
-           fi
-
-       done
-
-   fi
-   
-   ### Load additional scripts from scripts/ ###
-   if [ -d "$project_root/scripts" ]; then
-
-       for script in "$project_root/scripts"/*.sh; do
-
-           ### Skip files starting with underscore and helper.sh (avoid self-sourcing) ###
-           local basename=$(basename "$script")
-
-           if [[ ! "$basename" =~ ^_ ]] && [ "$script" != "$script_path" ] && [ -f "$script" ]; then
-
-               source "$script"
-
-           fi
-
-       done
-
-   fi
-
-    ### Load utility Scripts from utilities/ ###
-    if [ -d "$project_root/utilities" ]; then
-
-        for util in "$project_root/utilities"/*.sh; do
-
-            ### Skip files starting with underscore ###
-            local basename=$(basename "$util")
-
-            if [[ ! "$basename" =~ ^_ ]] && [ -f "$util" ]; then
-
-                source "$util"
-
-            fi
-
-        done
+        project_root_arg="$1"
+        debug="$2"
 
     fi
 
-   return 0
+	### Enable debug output ###
+	[[ "$debug" == "true" ]] && set -x
+
+	### Initialize dependency tracking ###
+	declare -A loaded_files
+	local load_order=()
+
+	### Determine project root path ###
+	local project_root
+
+	if [[ -n "$project_root_arg" ]]; then					### Use provided path ###
+
+		project_root="$project_root_arg"
+
+		if [[ ! -d "$project_root" ]]; then				### Validate provided path ###
+
+			print --error "Error: Provided path '$project_root' is not a directory."
+			return 1
+
+		fi
+
+		[[ "$debug" == "true" ]] && echo "DEBUG: Using provided project_root: $project_root"
+
+	else									### Auto-detect project root ###
+
+		local script_path script_dir
+
+		script_path="$(realpath "${BASH_SOURCE[0]}")"
+		script_dir="$(dirname "$script_path")"
+		project_root="$(dirname "$script_dir")"
+
+		[[ "$debug" == "true" ]] && echo "DEBUG: Auto-detected project_root: $project_root"
+
+	fi
+
+	### Search for project.conf ###
+	local project_conf_path
+	local config_found=false
+
+	for conf_location in \							### Try multiple locations ###
+		"$project_root/configs/project.conf" \
+		"$project_root/project.conf" \
+		"$project_root/config/project.conf"; do
+
+		if [[ -f "$conf_location" ]]; then				### Config found ###
+
+			project_conf_path="$conf_location"
+			config_found=true
+			[[ "$debug" == "true" ]] && echo "DEBUG: Found config at: $conf_location"
+			break
+
+		fi
+
+	done
+
+	### Exit if no configuration found ###
+	if [[ "$config_found" != "true" ]]; then				### No config found ###
+
+		print --error "Error: Project configuration not found in any standard location."
+		return 1
+
+	fi
+
+	### Load project.conf with dependency tracking ###
+	_load_file "$project_conf_path" || {					### Load main config ###
+
+		print --error "Error: Failed to source project configuration."
+		return 1
+
+	}
+
+	### Set PROJECT_ROOT ###
+	PROJECT_ROOT="$project_root"
+	export PROJECT_ROOT
+
+	[[ "$debug" == "true" ]] && echo "DEBUG: Set PROJECT_ROOT=$PROJECT_ROOT"
+
+	### Load HELPER_CONFIG if exists ###
+	if [[ -n "$HELPER_CONFIG" && -f "$HELPER_CONFIG" ]]; then		### Load helper config ###
+
+		_load_file "$HELPER_CONFIG" || {
+			print --warning "Warning: Failed to source helper configuration: $HELPER_CONFIG"
+		}
+
+		[[ "$debug" == "true" ]] && echo "DEBUG: Processed HELPER_CONFIG: $HELPER_CONFIG"
+
+	fi
+
+	### Load files from configured directories ###
+	if [[ -n "${LOAD_CONFIG_DIRS[*]}" ]]; then				### Process configured directories ###
+
+		local dir file pattern basename exclude exclusion
+		local files_loaded=0
+
+		[[ "$debug" == "true" ]] && echo "DEBUG: Processing LOAD_CONFIG_DIRS: ${LOAD_CONFIG_DIRS[*]}"
+		[[ "$debug" == "true" ]] && echo "DEBUG: Using patterns: ${LOAD_CONFIG_PATTERN[*]}"
+		[[ "$debug" == "true" ]] && echo "DEBUG: Exclusion patterns: ${LOAD_CONFIG_EXCLUSION[*]}"
+
+		for dir in "${LOAD_CONFIG_DIRS[@]}"; do
+
+			eval "dir=\"$dir\""					### Expand variables ###
+
+			if [[ ! -d "$dir" ]]; then				### Skip non-existent directories ###
+
+				[[ "$debug" == "true" ]] && echo "DEBUG: Skipping non-existent directory: $dir"
+				continue
+
+			fi
+
+			[[ "$debug" == "true" ]] && echo "DEBUG: Processing directory: $dir"
+
+			for pattern in "${LOAD_CONFIG_PATTERN[@]}"; do		### Process each pattern ###
+
+				[[ "$debug" == "true" ]] && echo "DEBUG: Searching for pattern: $pattern in $dir"
+
+				shopt -s nullglob					### Handle no matches ###
+
+				for file in "$dir"/$pattern; do
+
+					[[ -f "$file" ]] || continue			### Skip non-files ###
+
+					basename=$(basename "$file")
+					exclude=0
+
+					if [[ -n "${LOAD_CONFIG_EXCLUSION[*]}" ]]; then	### Check exclusions ###
+
+						for exclusion in "${LOAD_CONFIG_EXCLUSION[@]}"; do
+
+							case "$basename" in
+
+								$exclusion)
+									exclude=1
+									[[ "$debug" == "true" ]] && echo "DEBUG: Excluding $file (matches $exclusion)"
+									break
+									;;
+
+							esac
+
+						done
+
+					fi
+
+					[[ "$exclude" -eq 1 ]] && continue		### Skip excluded ###
+
+					if [[ "$file" -ef "${BASH_SOURCE[0]}" ]]; then	### Skip self-reference ###
+
+						[[ "$debug" == "true" ]] && echo "DEBUG: Skipping self-reference: $file"
+						continue
+
+					fi
+
+					### Skip already loaded files ###
+					real_file_path=$(realpath "$file" 2>/dev/null)
+
+					if [[ -n "${loaded_files[$real_file_path]}" ]]; then	### Already processed ###
+
+						[[ "$debug" == "true" ]] && echo "DEBUG: Skipping already loaded: $file"
+						continue
+
+					fi
+
+					### Load file with dependency tracking ###
+					if _load_file "$file"; then			### Load successful ###
+
+						((files_loaded++))
+						[[ "$debug" == "true" ]] && echo "DEBUG: Loaded file #$files_loaded: $file"
+
+					else						### Load failed ###
+
+						print --warning "Warning: Failed to load: $file"
+
+					fi
+
+				done
+
+				shopt -u nullglob					### Restore glob behavior ###
+
+			done
+
+		done
+
+		[[ "$debug" == "true" ]] && echo "DEBUG: Total additional files loaded: $files_loaded"
+
+	else									### No directories configured ###
+
+		[[ "$debug" == "true" ]] && echo "DEBUG: No LOAD_CONFIG_DIRS defined, skipping pattern-based loading"
+
+	fi
+
+	### Validate required resources ###
+	_validate_dirs								### Check directories ###
+	_validate_files								### Check files ###
+
+	### Export configuration status ###
+	export PROJECT_CONFIG_LOADED="true"
+	export PROJECT_CONFIG_VERSION="${PROJECT_VERSION:-unknown}"
+	export LOAD_CONFIG_FILES_COUNT="${#load_order[@]}"
+
+	### Disable debug output ###
+	[[ "$debug" == "true" ]] && set +x
+
+	### Final debug report ###
+	if [[ "$debug" == "true" ]]; then					### Debug summary ###
+
+		echo "DEBUG: =========================================="
+		echo "DEBUG: Configuration loading completed"
+		echo "DEBUG: Project Root: $PROJECT_ROOT"
+		echo "DEBUG: Total files loaded: ${#load_order[@]}"
+		echo "DEBUG: Load order:"
+
+		local i=1
+
+		for file in "${load_order[@]}"; do
+
+			printf "DEBUG:   %2d. %s\n" "$i" "$file"
+			((i++))
+
+		done
+
+		echo "DEBUG: =========================================="
+
+	fi
+
+	return 0
+
 }
 
 
@@ -686,41 +721,41 @@ utility() {
 ### === MAIN EXECUTION === ###
 ################################################################################
 
-### Cleanup Function ###
-cleanup() {
-    log --info "Helper Functions cleanup"
-}
-
 ### Main Function ###
 main() {
-    clear
 
-    ### Load configuration and dependencies ###
-    load_config
-    
-    ### Initialize logging ###
-    log --init "${LOG_DIR}/${PROJECT_NAME:-helper}.log" "${LOG_LEVEL:-INFO}"
-    
-    ### Log startup ###
-    log --info "${header} v${version} startup: $*"
-    
-    ### Check if no arguments provided ###
-    if [ $# -eq 0 ]; then
-        show --header "${header} v${version}"
-        show --doc --help
-        exit 0
-    else
-        ### Parse and execute arguments ###
+	### Load configuration and dependencies ###
+	load_config
+
+	### Initialize logging ###
+	log --init "${LOG_DIR}/${PROJECT_NAME:-helper}.log" "${LOG_LEVEL:-INFO}"
+
+	### Log startup ###
+	log --info "${header} v${version} startup: $*"
+
+	### Check if no Arguments provided ###
+	if [ $# -eq 0 ]; then
+
+		show --header "${header} v${version}"
+		show --doc --help
+		exit 0
+
+	else
+
+        ### Parse Arguments ###
         parse_arguments "$@"
-    fi
+
+	fi
+
 }
+
 
 ### Initialize when run directly ###
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
-   ### Running directly ###
-   main "$@"
+	### Running directly as Script ###
+	main "$@"
 else
-   ### Being sourced ###
-   load_config
-   print --success "Helper functions loaded. Type 'show --menu' for an interactive Menu."
+	### Being sourced as library ###
+	### Functions loaded and ready for use ###
+	:
 fi
