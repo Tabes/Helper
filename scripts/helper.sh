@@ -60,52 +60,99 @@ load_config() {
    ### Look for project.conf in standard Locations ###
    local config_file=""
    if [ -f "$project_root/configs/project.conf" ]; then
+
        config_file="$project_root/configs/project.conf"
+
    elif [ -f "$project_root/project.conf" ]; then
+
        config_file="$project_root/project.conf"
+
    else
+
        print --error "Project configuration not found"
        return 1
+
    fi
    
    ### Source main configuration if found ###
    if [ -f "$config_file" ]; then
+
        source "$config_file"
+
    fi
    
    ### Load additional configuration files from configs/ ###
    if [ -d "$project_root/configs" ]; then
+
        for conf in "$project_root/configs"/*.conf; do
+
            ### Skip files starting with underscore and project.conf (already loaded) ###
            local basename=$(basename "$conf")
+
            if [[ ! "$basename" =~ ^_ ]] && [ "$conf" != "$config_file" ] && [ -f "$conf" ]; then
+
                source "$conf"
+
            fi
+
        done
+
    fi
    
    ### Load helper scripts from scripts/helper/ ###
    if [ -d "$project_root/scripts/helper" ]; then
+
        for script in "$project_root/scripts/helper"/*.sh; do
+
            ### Skip files starting with underscore ###
            local basename=$(basename "$script")
+
            if [[ ! "$basename" =~ ^_ ]] && [ -f "$script" ]; then
+
                source "$script"
+
            fi
+
        done
+
    fi
    
    ### Load additional scripts from scripts/ ###
    if [ -d "$project_root/scripts" ]; then
+
        for script in "$project_root/scripts"/*.sh; do
+
            ### Skip files starting with underscore and helper.sh (avoid self-sourcing) ###
            local basename=$(basename "$script")
+
            if [[ ! "$basename" =~ ^_ ]] && [ "$script" != "$script_path" ] && [ -f "$script" ]; then
+
                source "$script"
+
            fi
+
        done
+
    fi
-   
+
+    ### Load utility Scripts from utilities/ ###
+    if [ -d "$project_root/utilities" ]; then
+
+        for util in "$project_root/utilities"/*.sh; do
+
+            ### Skip files starting with underscore ###
+            local basename=$(basename "$util")
+
+            if [[ ! "$basename" =~ ^_ ]] && [ -f "$util" ]; then
+
+                source "$util"
+
+            fi
+
+        done
+
+    fi
+
    return 0
 }
 
