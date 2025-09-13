@@ -51,7 +51,61 @@ parse_arguments() {
 ################################################################################
 
 ### Load Configuration and Dependencies ###
+# shellcheck disable=SC2120,SC2155,SC1090,SC2153,SC2015
 load_config() {
+    local project_root_arg="$1"
+
+    # Determine project root path; use provided argument or find dynamically.
+    local project_root
+    if [[ -n "$project_root_arg" ]]; then
+        project_root="$project_root_arg"
+        [[ -d "$project_root" ]] || { print --error "Error: Provided path '$project_root' is not a directory."; return 1; }
+    else
+        local script_path="$(realpath "${BASH_SOURCE[0]}")"
+        local script_dir="$(dirname "$script_path")"
+        project_root="$(dirname "$script_dir")"
+    fi
+
+    # Search for project.conf in standard locations.
+    local project_conf_path="$project_root/configs/project.conf"
+    [[ -f "$project_conf_path" ]] || project_conf_path="$project_root/project.conf"
+
+    # Source project.conf or exit if not found.
+    [[ -f "$project_conf_path" ]] && source "$project_conf_path" || { print --error "Error: Project configuration not found."; return 1; }
+
+    # Verify that PROJECT_ROOT variable matches the actual path.
+    [[ "$PROJECT_ROOT" == "$project_root" ]] || { print --error "Error: PROJECT_ROOT in config ('$PROJECT_ROOT') does not match path ('$project_root')."; return 1; }
+
+    # Load additional scripts and configurations in specified order.
+    # Source HELPER_CONFIG if it exists.
+    [[ -n "$HELPER_CONFIG" && -f "$HELPER_CONFIG" ]] && source "$HELPER_CONFIG"
+
+    # Load files from directories defined in LOAD_CONFIG_DIRS.
+    local dir file
+    for dir in "${LOAD_CONFIG_DIRS[@]}"; do
+        [[ -d "$dir" ]] || continue
+        
+        # Iterate over files matching the LOAD_CONFIG_PATTERN.
+        for file in "$dir"/${LOAD_CONFIG_PATTERN[@]}; do
+            [[ -f "$file" ]] || continue
+
+            # Check for exclusion patterns.
+            local exclude=0
+            local exclusion
+            for exclusion in "${LOAD_CONFIG_EXCLUSION[@]}"; do
+                [[ "$file" =~ $exclusion ]] && { exclude=1; break; }
+            done
+            [[ "$exclude" -eq 1 ]] && continue
+            
+            # Source the found file.
+            source "$file"
+        done
+    done
+
+    return 0
+}
+
+_load_config() {
    ### Determine Project root dynamically ###
    local script_path="$(realpath "${BASH_SOURCE[0]}")"
    local script_dir="$(dirname "$script_path")"
