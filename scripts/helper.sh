@@ -57,7 +57,7 @@ load_config() {
    local script_dir="$(dirname "$script_path")"
    local project_root="$(dirname "$script_dir")"
    
-   ### Look for project.conf in standard Locations ###
+   ### Look for project.conf in Standard Locations ###
    local config_file=""
    if [ -f "$project_root/configs/project.conf" ]; then
 
