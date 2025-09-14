@@ -2,7 +2,7 @@
 ################################################################################
 ### Standalone Update System - Complete Update Management
 ### Downloads and validates individual Files from Repository without Git
-### Provides Checksums validation, Rollback mechanism and version Migration
+### Provides Checksums validation, Rollback Mechanism and Version Migration
 ################################################################################
 ### Project: Universal Helper Library
 ### Version: 1.0.1
@@ -13,6 +13,18 @@
 ### Commit:  Initial Update System with rollback and validation Support
 ################################################################################
 
+
+################################################################################
+### === LOAD UPDATE CONFIGURATION === ###
+################################################################################
+
+### Load update configuration ###
+if [ -f "${CONFIGS_DIR}/update.conf" ]; then
+	# shellcheck source=/dev/null
+	source "${CONFIGS_DIR}/update.conf"
+else
+	print --warning "Update configuration not found, using defaults"
+fi
 
 ################################################################################
 ### === PARSE COMMAND LINE ARGUMENTS === ###
