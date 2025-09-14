@@ -5,15 +5,13 @@
 ### Provides unified log function for all logging operations with rotation
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-08
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   Source this File to load Logging Functions
+### Commit:  Logging functions for structured file and console output
 ################################################################################
-
-SCRIPT_VERSION="1.0.0"
-COMMIT="Logging functions for structured file and console output"
 
 
 ################################################################################
