@@ -5,15 +5,13 @@
 ### Provides unified show Functions for interactive Displays and Help System
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-08
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   Source this File to load Interactive Display Functions
+### Commit:  Interactive Display Functions for Menus, Help, and User Interaction
 ################################################################################
-
-SCRIPT_VERSION="1.0.0"
-COMMIT="Interactive Display Functions for Menus, Help, and User Interaction"
 
 
 ################################################################################
