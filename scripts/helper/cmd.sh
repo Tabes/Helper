@@ -5,17 +5,13 @@
 ### Provides unified cmd Function for system-wide Command Installation and Management
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-08
 ### License: MIT
 ### Usage:   Source this File to load System Integration Functions
+### Commit:  System Integration Functions for Command Wrappers and bash Completion
 ################################################################################
-
-local readonly header="System Integration Library"
-
-readonly version="1.0.0"
-readonly commit="System Integration Functions for Command Wrappers and bash Completion"
 
 
 ################################################################################
