@@ -4,16 +4,13 @@
 ### Orchestrates CRLF Conversion and Permission fixing for Entire Projects
 ################################################################################
 ### Project: Universal Project Fix Manager
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Workflow Team)
-### Date:    2025-08-23
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   ./fix-project.sh [--help]
+### Commit:  Complete Project fixing: CRLF Conversion + Permission Management
 ################################################################################
-
-SCRIPT_VERSION="1.0.0"
-COMMIT="Complete project fixing: CRLF conversion + permission management"
-clear
 
 
 ################################################################################

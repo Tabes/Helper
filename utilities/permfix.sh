@@ -4,17 +4,13 @@
 ### Sets correct Unix Permissions for all Project Files and Directories
 ################################################################################
 ### Project: PermFix - Permission Management Tool
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Workflow Team)
-### Date:    2025-08-23
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   ./permfix.sh [--help]
+### Commit:  PermFix - Smart Unix Permission Management for Project Files
 ################################################################################
-
-SCRIPT_VERSION="1.0.0"
-COMMIT="PermFix - Smart Unix Permission Management for Project Files
-"
-clear
 
 
 ################################################################################

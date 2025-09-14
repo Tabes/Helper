@@ -4,16 +4,13 @@
 ### Convert Windows CRLF to Unix LF and set correct Unix Permissions
 ################################################################################
 ### Project: DOS2Linux Line Ending Converter
-### Version: 1.0.0
-### Author:  Mawage (Workflow Team)
-### Date:    2025-08-23
+### Version: 1.0.1
+### Author:  Mawage (Development Team)
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   ./dos2linux.sh [--help]
+### Commit:  DOS2Linux - Convert Windows CRLF to Unix LF Line Endings
 ################################################################################
-
-SCRIPT_VERSION="1.0.0"
-COMMIT="DOS2Linux - Convert Windows CRLF to Unix LF Line Endings"
-clear
 
 
 ################################################################################

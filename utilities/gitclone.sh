@@ -5,17 +5,13 @@
 ### Integrates with Project Configuration and Helper Functions
 ################################################################################
 ### Project: Git Workflow Manager
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-12
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   ./gitclone.sh [OPTIONS] or Source for Functions
+### Commit:  Complete Git Repository Management System
 ################################################################################
-
-local readonly header="Git Workflow Manager"
-
-readonly version="1.0.0"
-readonly commit="Complete Git Repository Management System"
 
 
 ################################################################################

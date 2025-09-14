@@ -5,17 +5,13 @@
 ### Downloads and Configures the Helper Framework from Git Repository
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-06
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   bash start.sh [OPTIONS]
+### Commit:  Bootstrap Installation Script for Helper Framework
 ################################################################################
-
-local readonly header="Initial Setup and Installation for fresh Debian Systems"
-
-readonly version="1.0.0"
-readonly commit="Bootstrap Installation Script for Helper Framework"
 
 
 ################################################################################
