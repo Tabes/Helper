@@ -5,7 +5,7 @@
 ### Provides unified cmd Function for system-wide Command Installation and Management
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.1
+### Version: 1.0.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -20,7 +20,6 @@
 
 ### Parse all Command Line Arguments ###
 parse_arguments() {
-    ### Parse Command Line Arguments ###
     while [[ $# -gt 0 ]]; do
         case $1 in
             --help|-h)
