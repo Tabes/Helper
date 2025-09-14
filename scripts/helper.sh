@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.0
+### Version: 3.0.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-13
 ### License: MIT
