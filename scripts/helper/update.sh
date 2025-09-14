@@ -5,7 +5,7 @@
 ### Provides Checksums validation, Rollback Mechanism and Version Migration
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.4
+### Version: 1.0.5
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -662,13 +662,7 @@ update() {
 ### Main Function ###
 main() {
 	
-	### Initialize logging ###
-	log --init "${LOG_DIR}/${PROJECT_NAME:-update}.log" "${LOG_LEVEL:-INFO}"
-	
-	### Log startup ###
-	log --info "${header} v${version} startup: $*"
-	
-	### Check if no arguments provided ###
+	### Check if no Arguments provided ###
 	if [ $# -eq 0 ]; then
 		
 		show --header "${header} v${version}"
