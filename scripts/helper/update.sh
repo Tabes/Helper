@@ -5,7 +5,7 @@
 ### Provides Checksums validation, Rollback Mechanism and Version Migration
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.5
+### Version: 1.0.6
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -20,7 +20,6 @@
 
 ### Parse all Command Line Arguments ###
 parse_arguments() {
-    ### Parse Command Line Arguments ###
     while [[ $# -gt 0 ]]; do
         case $1 in
             --help|-h)
@@ -32,13 +31,11 @@ parse_arguments() {
                 print --version "${header}" "${version}" "${commit}"
                 exit 0
                 ;;
-
             *)
                 ### Pass all other Arguments to UPDATE Function ###
                 update "$@"
                 exit $?
                 ;;
-
         esac
     done
 }
