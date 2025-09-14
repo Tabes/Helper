@@ -14,7 +14,7 @@
 
 readonly header="Configuration Loader with Dependency Management"
 
-readonly version="3.0.0"
+readonly version="3.0.1"
 readonly commit="Complete Configuration Loader with Dependency Tracking and Project Compliance"
 
 
