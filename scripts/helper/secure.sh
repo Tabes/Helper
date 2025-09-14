@@ -5,17 +5,13 @@
 ### Provides unified Secure Function for Permission Setup and Security Configuration
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-08
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   Source this File to load Security and Permission Management Functions
+### Commit:  Security & Permission Management Functions for ACL and sudo Configuration
 ################################################################################
-
-local readonly header="Security & Permission Management"
-
-readonly version="1.0.0"
-readonly commit="Security & Permission Management Functions for ACL and sudo Configuration"
 
 
 ################################################################################
