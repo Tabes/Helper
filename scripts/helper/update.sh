@@ -5,7 +5,7 @@
 ### Provides Checksums validation, Rollback Mechanism and Version Migration
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.2
+### Version: 1.0.3
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -18,47 +18,27 @@
 ### === PARSE COMMAND LINE ARGUMENTS === ###
 ################################################################################
 
-### Parse Command Line Arguments ###
+### Parse all Command Line Arguments ###
 parse_arguments() {
-	
-	while [[ $# -gt 0 ]]; do
-		case $1 in
-			--check|-c)
-				check_updates
-				exit $?
-				;;
-			
-			--download|-d)
-				download_updates_only="true"
-				;;
-			
-			--force|-f)
-				force_update="true"
-				;;
-			
-			--help|-h)
-				show_help
-				exit 0
-				;;
-			
-			--rollback|-r)
-				shift
-				rollback_update "$1"
-				exit $?
-				;;
-			
-			--version|-V)
-				print --version "${header}" "${version}" "${commit}"
-				exit 0
-				;;
-			
-			*)
-				### Pass all other arguments to main processing ###
-				break
-				;;
-		esac
-		shift
-	done
+    ### Parse Command Line Arguments ###
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+
+            --version|-V)
+                print --version "${header}" "${version}" "${commit}"
+                exit 0
+                ;;
+            *)
+                ### Pass all other Arguments to CMD Function ###
+                update "$@"
+                exit $?
+                ;;
+        esac
+    done
 }
 
 
@@ -696,11 +676,11 @@ main() {
 		
 	else
 		
-		### Parse and execute arguments ###
+		### Parse and execute Arguments ###
 		parse_arguments "$@"
 		
-		### Run update system ###
-		update_system "$@"
+		### Run Update System ###
+		update "$@"
 		
 	fi
 }
