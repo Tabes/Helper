@@ -215,21 +215,21 @@ load_config() {
 	local project_conf_path
 	local config_found=false
 
-	for conf_location in \							### Try multiple locations ###
-		"$project_root/configs/project.conf" \
-		"$project_root/project.conf" \
-		"$project_root/config/project.conf"; do
+    ### Try multiple locations ###
+    local config_locations=(
+        "$project_root/configs/project.conf"
+        "$project_root/project.conf" 
+        "$project_root/config/project.conf"
+    )
 
-		if [[ -f "$conf_location" ]]; then				### Config found ###
-
-			project_conf_path="$conf_location"
-			config_found=true
-			[[ "$debug" == "true" ]] && echo "DEBUG: Found config at: $conf_location"
-			break
-
-		fi
-
-	done
+    for conf_location in "${config_locations[@]}"; do
+        if [[ -f "$conf_location" ]]; then
+            project_conf_path="$conf_location"
+            config_found=true
+            [[ "$debug" == "true" ]] && echo "DEBUG: Found config at: $conf_location"
+            break
+        fi
+    done
 
 	### Exit if no configuration found ###
 	if [[ "$config_found" != "true" ]]; then				### No config found ###
