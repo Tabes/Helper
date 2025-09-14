@@ -40,7 +40,7 @@ parse_arguments() {
 				exit $?
 				;;
 			
-			--download-only|-d)
+			--download|-d)
 				download_updates_only="true"
 				;;
 			
@@ -73,12 +73,13 @@ parse_arguments() {
 	done
 }
 
+
 ################################################################################
 ### === UPDATE SYSTEM FUNCTIONS === ###
 ################################################################################
 
-### Main Update Function ###
-update_system() {
+### Universal Update Function with multiple Operation Modes ###
+update() {
 	
 	### Log Startup Arguments ###
 	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
@@ -399,243 +400,290 @@ update_system() {
 		log --info "Old backup cleanup completed"
 	}
 	
+	### Check for available updates (internal) ###
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_check_updates() {
+		
+		print --info "Checking for available updates..."
+		
+		### Create temporary directory ###
+		mkdir -p "$UPDATE_TMP_DIR" || {
+			print --error "Failed to create temporary directory"
+			return 1
+		}
+		
+		### Download manifest ###
+		local manifest_url="${UPDATE_BASE_URL}/${UPDATE_MANIFEST}"
+		local manifest_file="${UPDATE_TMP_DIR}/${UPDATE_MANIFEST}"
+		
+		if ! _download_file "$manifest_url" "$manifest_file"; then	### Download failed ###
+			print --error "Failed to check for updates"
+			rm -rf "$UPDATE_TMP_DIR"
+			return 1
+		fi
+		
+		### Compare versions ###
+		local updates_available=0
+		local current_version="${PROJECT_VERSION:-unknown}"
+		
+		print --info "Current version: $current_version"
+		print --cr
+		
+		while IFS='|' read -r file_path version checksum description; do
+			
+			### Skip comments and empty lines ###
+			[[ "$file_path" =~ ^#.*$ ]] && continue
+			[[ -z "$file_path" ]] && continue
+			
+			local local_file="${PROJECT_ROOT}/${file_path}"
+			
+			if [[ ! -f "$local_file" ]]; then			### New file ###
+				
+				print --info "New file available: $file_path (v$version)"
+				[[ -n "$description" ]] && print "  Description: $description"
+				((updates_available++))
+				
+			elif [[ "$version" != "$current_version" ]]; then	### Version mismatch ###
+				
+				print --info "Update available: $file_path (v$version)"
+				[[ -n "$description" ]] && print "  Description: $description"
+				((updates_available++))
+				
+			fi
+			
+		done < "$manifest_file"
+		
+		### Cleanup ###
+		rm -rf "$UPDATE_TMP_DIR"
+		
+		if [[ $updates_available -gt 0 ]]; then			### Updates available ###
+			
+			print --cr
+			print --info "Found $updates_available available updates"
+			print --info "Run 'update --install' to install updates"
+			return 0
+			
+		else							### No updates ###
+			
+			print --success "System is up to date"
+			return 1
+			
+		fi
+	}
+	
+	### Rollback to previous version (internal) ###
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_rollback_update() {
+		local backup_name="$1"
+		
+		if [[ -z "$backup_name" ]]; then				### No backup specified ###
+			
+			print --info "Available backups:"
+			
+			if [[ -d "$BACKUP_DIR" ]]; then
+				
+				find "$BACKUP_DIR" -maxdepth 1 -type d -name "update-*" \
+					-printf "%f\n" | sort -r | head -10
+					
+			fi
+			
+			print --cr
+			print --info "Usage: update --rollback <backup-name>"
+			return 1
+			
+		fi
+		
+		local backup_path="${BACKUP_DIR}/${backup_name}"
+		
+		if [[ ! -d "$backup_path" ]]; then				### Backup not found ###
+			print --error "Backup not found: $backup_name"
+			return 1
+		fi
+		
+		print --warning "Rolling back to backup: $backup_name"
+		
+		### Confirm rollback ###
+		if ! ask --confirm "rollback to backup $backup_name" "true"; then ### User cancelled ###
+			print --info "Rollback cancelled"
+			return 1
+		fi
+		
+		### Restore files ###
+		local restored_files=0
+		local failed_restores=0
+		
+		find "$backup_path" -type f -name "*.sh" -o -name "*.conf" | while read -r backup_file; do
+			
+			local relative_path="${backup_file#${backup_path}/}"
+			local target_file="${PROJECT_ROOT}/${relative_path}"
+			local target_dir
+			target_dir="$(dirname "$target_file")"
+			
+			### Create target directory ###
+			mkdir -p "$target_dir" || {
+				print --error "Failed to create directory: $target_dir"
+				continue
+			}
+			
+			### Restore file ###
+			if cp "$backup_file" "$target_file"; then		### Restore successful ###
+				
+				### Set executable permissions for scripts ###
+				[[ "$relative_path" =~ \.sh$ ]] && chmod +x "$target_file"
+				
+				print --info "Restored: $relative_path"
+				((restored_files++))
+				
+			else						### Restore failed ###
+				
+				print --error "Failed to restore: $relative_path"
+				((failed_restores++))
+				
+			fi
+			
+		done
+		
+		if [[ $failed_restores -eq 0 ]]; then				### Rollback successful ###
+			
+			print --success "Rollback completed successfully"
+			print --info "Restored $restored_files files"
+			log --info "Rollback completed: $backup_name"
+			return 0
+			
+		else							### Rollback failed ###
+			
+			print --error "Rollback completed with $failed_restores errors"
+			return 1
+			
+		fi
+	}
+	
+	### Full update installation (internal) ###
+	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
+	_install_update() {
+		
+		### Initialize update process ###
+		print --header "Starting system update..."
+		log --info "Update process started"
+		
+		### Create temporary directory ###
+		if ! mkdir -p "$UPDATE_TMP_DIR"; then				### Temp dir creation failed ###
+			print --error "Failed to create temporary directory"
+			return 1
+		fi
+		
+		### Create backup ###
+		if ! _create_backup; then					### Backup failed ###
+			print --error "Backup creation failed - aborting update"
+			_cleanup
+			return 1
+		fi
+		
+		### Download manifest ###
+		if ! _download_manifest; then					### Manifest download failed ###
+			print --error "Failed to download update manifest"
+			_cleanup
+			return 1
+		fi
+		
+		### Download checksums (optional) ###
+		_download_checksums  # Non-critical
+		
+		### Process manifest and download files ###
+		if ! _process_manifest; then					### Download failed ###
+			
+			if [[ "${force_update:-false}" == "true" ]]; then	### Force update ###
+				print --warning "Some downloads failed, but continuing due to --force"
+			else
+				print --error "Download failures detected - aborting update"
+				_cleanup
+				return 1
+			fi
+			
+		fi
+		
+		### Install files if not download ###
+		if [[ "${download_updates_only:-false}" != "true" ]]; then	### Install files ###
+			
+			if ! _install_files; then				### Installation failed ###
+				
+				print --error "Installation failed - attempting rollback"
+				_rollback_update "$(basename "$UPDATE_BACKUP_DIR")"
+				_cleanup
+				return 1
+				
+			fi
+			
+			print --success "Update completed successfully"
+			print --info "Backup created at: $UPDATE_BACKUP_DIR"
+			
+		else							### Download only ###
+			
+			print --info "Download completed - files ready in: $UPDATE_TMP_DIR"
+			print --info "Run 'update --install' to install"
+			
+		fi
+		
+		### Cleanup ###
+		if [[ "${download_updates_only:-false}" != "true" ]]; then
+			_cleanup
+			_cleanup_old_backups
+		fi
+		
+		log --info "Update process completed successfully"
+		return 0
+	}
+	
 	################################################################################
 	### === MAIN UPDATE LOGIC === ###
 	################################################################################
 	
-	### Initialize update process ###
-	print --header "Starting system update..."
-	log --info "Update process started"
-	
-	### Create temporary directory ###
-	if ! mkdir -p "$UPDATE_TMP_DIR"; then					### Temp dir creation failed ###
-		print --error "Failed to create temporary directory"
-		return 1
-	fi
-	
-	### Create backup ###
-	if ! _create_backup; then						### Backup failed ###
-		print --error "Backup creation failed - aborting update"
-		_cleanup
-		return 1
-	fi
-	
-	### Download manifest ###
-	if ! _download_manifest; then						### Manifest download failed ###
-		print --error "Failed to download update manifest"
-		_cleanup
-		return 1
-	fi
-	
-	### Download checksums (optional) ###
-	_download_checksums  # Non-critical
-	
-	### Process manifest and download files ###
-	if ! _process_manifest; then						### Download failed ###
-		
-		if [[ "${force_update:-false}" == "true" ]]; then		### Force update ###
-			print --warning "Some downloads failed, but continuing due to --force"
-		else
-			print --error "Download failures detected - aborting update"
-			_cleanup
-			return 1
-		fi
-		
-	fi
-	
-	### Install files if not download-only ###
-	if [[ "${download_updates_only:-false}" != "true" ]]; then		### Install files ###
-		
-		if ! _install_files; then					### Installation failed ###
+	### Parse Arguments ###
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			--check|-c)
+				_check_updates
+				return $?
+				;;
 			
-			print --error "Installation failed - attempting rollback"
-			rollback_update "$(basename "$UPDATE_BACKUP_DIR")"
-			_cleanup
-			return 1
+			--download|-d)
+				download_updates_only="true"
+				_install_update
+				return $?
+				;;
 			
-		fi
-		
-		print --success "Update completed successfully"
-		print --info "Backup created at: $UPDATE_BACKUP_DIR"
-		
-	else								### Download only ###
-		
-		print --info "Download completed - files ready in: $UPDATE_TMP_DIR"
-		print --info "Run without --download-only to install"
-		
-	fi
-	
-	### Cleanup ###
-	if [[ "${download_updates_only:-false}" != "true" ]]; then
-		_cleanup
-		_cleanup_old_backups
-	fi
-	
-	log --info "Update process completed successfully"
-	return 0
-}
-
-### Check for available updates ###
-check_updates() {
-	
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
-	
-	print --info "Checking for available updates..."
-	
-	### Create temporary directory ###
-	mkdir -p "$UPDATE_TMP_DIR" || {
-		print --error "Failed to create temporary directory"
-		return 1
-	}
-	
-	### Download manifest ###
-	local manifest_url="${UPDATE_BASE_URL}/${UPDATE_MANIFEST}"
-	local manifest_file="${UPDATE_TMP_DIR}/${UPDATE_MANIFEST}"
-	
-	if ! _download_file "$manifest_url" "$manifest_file"; then		### Download failed ###
-		print --error "Failed to check for updates"
-		rm -rf "$UPDATE_TMP_DIR"
-		return 1
-	fi
-	
-	### Compare versions ###
-	local updates_available=0
-	local current_version="${PROJECT_VERSION:-unknown}"
-	
-	print --info "Current version: $current_version"
-	print --cr
-	
-	while IFS='|' read -r file_path version checksum description; do
-		
-		### Skip comments and empty lines ###
-		[[ "$file_path" =~ ^#.*$ ]] && continue
-		[[ -z "$file_path" ]] && continue
-		
-		local local_file="${PROJECT_ROOT}/${file_path}"
-		
-		if [[ ! -f "$local_file" ]]; then				### New file ###
+			--force|-f)
+				force_update="true"
+				;;
 			
-			print --info "New file available: $file_path (v$version)"
-			[[ -n "$description" ]] && print "  Description: $description"
-			((updates_available++))
+			--install|-i)
+				_install_update
+				return $?
+				;;
 			
-		elif [[ "$version" != "$current_version" ]]; then		### Version mismatch ###
+			--rollback|-r)
+				shift
+				_rollback_update "$1"
+				return $?
+				;;
 			
-			print --info "Update available: $file_path (v$version)"
-			[[ -n "$description" ]] && print "  Description: $description"
-			((updates_available++))
-			
-		fi
-		
-	done < "$manifest_file"
-	
-	### Cleanup ###
-	rm -rf "$UPDATE_TMP_DIR"
-	
-	if [[ $updates_available -gt 0 ]]; then				### Updates available ###
-		
-		print --cr
-		print --info "Found $updates_available available updates"
-		print --info "Run 'update.sh' to install updates"
-		return 0
-		
-	else								### No updates ###
-		
-		print --success "System is up to date"
-		return 1
-		
-	fi
-}
-
-### Rollback to previous version ###
-rollback_update() {
-	local backup_name="$1"
-	
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
-	
-	if [[ -z "$backup_name" ]]; then					### No backup specified ###
-		
-		print --info "Available backups:"
-		
-		if [[ -d "$BACKUP_DIR" ]]; then
-			
-			find "$BACKUP_DIR" -maxdepth 1 -type d -name "update-*" \
-				-printf "%f\n" | sort -r | head -10
+			--help|-h)
+				show_help
+				return 0
+				;;
 				
-		fi
-		
-		print --cr
-		print --info "Usage: update.sh --rollback <backup-name>"
-		return 1
-		
-	fi
-	
-	local backup_path="${BACKUP_DIR}/${backup_name}"
-	
-	if [[ ! -d "$backup_path" ]]; then					### Backup not found ###
-		print --error "Backup not found: $backup_name"
-		return 1
-	fi
-	
-	print --warning "Rolling back to backup: $backup_name"
-	
-	### Confirm rollback ###
-	if ! ask --confirm "rollback to backup $backup_name" "true"; then	### User cancelled ###
-		print --info "Rollback cancelled"
-		return 1
-	fi
-	
-	### Restore files ###
-	local restored_files=0
-	local failed_restores=0
-	
-	find "$backup_path" -type f -name "*.sh" -o -name "*.conf" | while read -r backup_file; do
-		
-		local relative_path="${backup_file#${backup_path}/}"
-		local target_file="${PROJECT_ROOT}/${relative_path}"
-		local target_dir
-		target_dir="$(dirname "$target_file")"
-		
-		### Create target directory ###
-		mkdir -p "$target_dir" || {
-			print --error "Failed to create directory: $target_dir"
-			continue
-		}
-		
-		### Restore file ###
-		if cp "$backup_file" "$target_file"; then			### Restore successful ###
-			
-			### Set executable permissions for scripts ###
-			[[ "$relative_path" =~ \.sh$ ]] && chmod +x "$target_file"
-			
-			print --info "Restored: $relative_path"
-			((restored_files++))
-			
-		else							### Restore failed ###
-			
-			print --error "Failed to restore: $relative_path"
-			((failed_restores++))
-			
-		fi
-		
+			*)
+				print --invalid "${FUNCNAME[0]}" "$1"
+				return 1
+				;;
+		esac
+		shift
 	done
 	
-	if [[ $failed_restores -eq 0 ]]; then					### Rollback successful ###
-		
-		print --success "Rollback completed successfully"
-		print --info "Restored $restored_files files"
-		log --info "Rollback completed: $backup_name"
-		return 0
-		
-	else								### Rollback failed ###
-		
-		print --error "Rollback completed with $failed_restores errors"
-		return 1
-		
-	fi
+	### Default action if no parameters ###
+	_check_updates
 }
+
 
 ################################################################################
 ### === MAIN EXECUTION === ###
@@ -684,3 +732,4 @@ else
 	### Functions loaded and ready for use ###
 	:
 fi
+
