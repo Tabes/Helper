@@ -5,7 +5,7 @@
 ### Provides Checksums validation, Rollback Mechanism and Version Migration
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.1
+### Version: 1.0.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -13,18 +13,6 @@
 ### Commit:  Initial Update System with rollback and validation Support
 ################################################################################
 
-
-################################################################################
-### === LOAD UPDATE CONFIGURATION === ###
-################################################################################
-
-### Load update configuration ###
-if [ -f "${CONFIGS_DIR}/update.conf" ]; then
-	# shellcheck source=/dev/null
-	source "${CONFIGS_DIR}/update.conf"
-else
-	print --warning "Update configuration not found, using defaults"
-fi
 
 ################################################################################
 ### === PARSE COMMAND LINE ARGUMENTS === ###
@@ -691,12 +679,6 @@ update() {
 
 ### Main Function ###
 main() {
-	
-	### Load configuration ###
-	if ! load_config; then							### Config load failed ###
-		echo "Error: Failed to load configuration"
-		exit 1
-	fi
 	
 	### Initialize logging ###
 	log --init "${LOG_DIR}/${PROJECT_NAME:-update}.log" "${LOG_LEVEL:-INFO}"
