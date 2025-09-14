@@ -12,7 +12,7 @@
 ### Usage:   ./gitclone.sh [OPTIONS] or Source for Functions
 ################################################################################
 
-readonly header="Git Workflow Manager"
+local readonly header="Git Workflow Manager"
 
 readonly version="1.0.0"
 readonly commit="Complete Git Repository Management System"

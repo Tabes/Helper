@@ -12,7 +12,7 @@
 ### Usage:   Source this Function to load Project Configurations with Dependencies
 ################################################################################
 
-readonly header="Configuration Loader with Dependency Management"
+local readonly header="Configuration Loader with Dependency Management"
 
 readonly version="3.0.1"
 readonly commit="Complete Configuration Loader with Dependency Tracking and Project Compliance"

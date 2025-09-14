@@ -12,7 +12,7 @@
 ### Usage:   bash start.sh [OPTIONS]
 ################################################################################
 
-readonly header="Initial Setup and Installation for fresh Debian Systems"
+local readonly header="Initial Setup and Installation for fresh Debian Systems"
 
 readonly version="1.0.0"
 readonly commit="Bootstrap Installation Script for Helper Framework"

@@ -12,7 +12,7 @@
 ### Usage:   Source this File to load System Integration Functions
 ################################################################################
 
-readonly header="System Integration Library"
+local readonly header="System Integration Library"
 
 readonly version="1.0.0"
 readonly commit="System Integration Functions for Command Wrappers and bash Completion"

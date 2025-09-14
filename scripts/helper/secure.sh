@@ -12,7 +12,7 @@
 ### Usage:   Source this File to load Security and Permission Management Functions
 ################################################################################
 
-readonly header="Security & Permission Management"
+local readonly header="Security & Permission Management"
 
 readonly version="1.0.0"
 readonly commit="Security & Permission Management Functions for ACL and sudo Configuration"
