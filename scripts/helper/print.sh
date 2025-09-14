@@ -5,15 +5,13 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-08
+### Date:    2025-09-14
 ### License: MIT
 ### Usage:   Source this File to load Print Functions
+### Commit:  Print Output Functions for unified Terminal Display
 ################################################################################
-
-SCRIPT_VERSION="1.0.0"
-COMMIT="Print Output Functions for unified Terminal Display"
 
 
 ################################################################################
