@@ -32,11 +32,13 @@ parse_arguments() {
                 print --version "${header}" "${version}" "${commit}"
                 exit 0
                 ;;
+
             *)
-                ### Pass all other Arguments to CMD Function ###
+                ### Pass all other Arguments to UPDATE Function ###
                 update "$@"
                 exit $?
                 ;;
+
         esac
     done
 }
@@ -678,10 +680,7 @@ main() {
 		
 		### Parse and execute Arguments ###
 		parse_arguments "$@"
-		
-		### Run Update System ###
-		update "$@"
-		
+
 	fi
 }
 
