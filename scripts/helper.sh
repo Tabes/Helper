@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.3
+### Version: 3.0.4
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -21,8 +21,11 @@
 ### Load Configuration Files with Dependency Tracking ###
 load_config() {
 
-	### Log startup arguments ###
-	log --info "${FUNCNAME[0]} called with arguments: ($*)"
+    ### Log only if Log Function exists ###
+    if declare -f log >/dev/null 2>&1; then
+    	### Log Startup Arguments ###
+        log --info "${FUNCNAME[0]} Called with Arguments: ($*)"
+    fi
 
 	################################################################################
 	### === INTERNAL LOAD_CONFIG FUNCTIONS === ###
