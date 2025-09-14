@@ -5,7 +5,7 @@
 ### Provides Checksums validation, Rollback Mechanism and Version Migration
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.3
+### Version: 1.0.4
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
