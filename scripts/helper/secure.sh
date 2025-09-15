@@ -5,7 +5,7 @@
 ### Provides unified Secure Function for Permission Setup and Security Configuration
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.5
+### Version: 1.0.6
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -242,18 +242,18 @@ secure() {
         ### Validate target_path ###
         if [[ ! -e "$target_path" ]]; then					### Path existence check ###
             print --error "Path does not exist: $target_path"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "Path validation failed" "target_path=$target_path"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "Path validation failed" "path: $target_path"
             return 1
         fi
 
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then				### User existence check ###
             print --error "User does not exist: $target_user"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "target_user=$target_user"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "user: $target_user"
             return 1
         fi
 
-        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting permission analysis" "target_user=$target_user, target_path=$target_path, recursive=$recursive"
+        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting permission analysis" "user: $target_user, path: $target_path, recursive=$recursive"
 
         ### Display analysis header ###
         print --header "Permission Analysis"
@@ -440,14 +440,14 @@ secure() {
         ### Validate target_path ###
         if [[ ! -e "$target_path" ]]; then					### Path existence check ###
             print --error "Path does not exist: $target_path"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "Path validation failed" "target_path=$target_path"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "Path validation failed" "path: $target_path"
             return 1
         fi
 
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then				### User existence check ###
             print --error "User does not exist: $target_user"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "target_user=$target_user"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "user: $target_user"
             return 1
         fi
 
@@ -457,7 +457,7 @@ secure() {
             log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Auto-generated group name" "target_group=$target_group"
         fi
 
-        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Validation completed" "target_path=$target_path, target_user=$target_user, target_group=$target_group, recursive=$recursive"
+        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Validation completed" "path: $target_path, user: $target_user, target_group=$target_group, recursive=$recursive"
 
         ### Create group if not exists ###
         if ! getent group "$target_group" >/dev/null 2>&1; then		### Group existence check ###
@@ -571,18 +571,18 @@ secure() {
         ### Validate target_path ###
         if [[ ! -e "$target_path" ]]; then					### Path existence check ###
             print --error "Path does not exist: $target_path"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "Path validation failed" "target_path=$target_path"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "Path validation failed" "path: $target_path"
             return 1
         fi
 
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then				### User existence check ###
             print --error "User does not exist: $target_user"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "target_user=$target_user"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "user: $target_user"
             return 1
         fi
 
-        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting interactive wizard" "target_path=$target_path, target_user=$target_user, recursive=$recursive"
+        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting interactive wizard" "path: $target_path, user: $target_user, recursive=$recursive"
 
         ### Display wizard header ###
         print --header "Permission Setup Wizard"
@@ -710,11 +710,11 @@ secure() {
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then				### User existence check ###
             print --error "User does not exist: $target_user"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "target_user=$target_user"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "user: $target_user"
             return 1
         fi
 
-        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting permission removal" "target_user=$target_user, target_path=${target_path:-not_specified}, recursive=$recursive"
+        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting permission removal" "user: $target_user, path${target_path:-not_specified}, recursive=$recursive"
 
         ### Display removal header ###
         print --header "Removing Enhanced Permissions"
@@ -737,7 +737,7 @@ secure() {
         ### Remove ACL if available and target_path specified ###
         if command -v setfacl >/dev/null 2>&1 && [[ -n "$target_path" && -e "$target_path" ]]; then
             ((total_count++))
-            log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Attempting ACL removal" "target_path=$target_path"
+            log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Attempting ACL removal" "path: $target_path"
             
             ### Build setfacl command ###
             local setfacl_cmd="setfacl"
@@ -775,7 +775,7 @@ secure() {
             log --info "${FUNCNAME[0]} called with Arguments: ($*)" "No target_path specified, skipping ACL removal"
             
         elif [[ ! -e "$target_path" ]]; then					### target_path doesn't exist ###
-            log --warning "${FUNCNAME[0]} called with Arguments: ($*)" "Target path does not exist, skipping ACL removal" "target_path=$target_path"
+            log --warning "${FUNCNAME[0]} called with Arguments: ($*)" "Target path does not exist, skipping ACL removal" "path: $target_path"
             
         else									### setfacl not available ###
             log --info "${FUNCNAME[0]} called with Arguments: ($*)" "setfacl command not available, skipping ACL removal"
@@ -885,7 +885,7 @@ secure() {
         ### Validate target_user ###
         if ! id "$target_user" >/dev/null 2>&1; then				### User existence check ###
             print --error "User does not exist: $target_user"
-            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "target_user=$target_user"
+            log --error "${FUNCNAME[0]} called with Arguments: ($*)" "User validation failed" "user: $target_user"
             return 1
         fi
 
@@ -893,7 +893,7 @@ secure() {
         local commands="${DEFAULT_SUDO_COMMANDS:-/usr/bin/rsync,/usr/bin/cp,/usr/bin/mv,/usr/bin/mkdir,/usr/bin/rm}"
         local sudoers_file="${SUDOERS_PATH}/secure-${target_user}"
         
-        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting sudo configuration" "target_user=$target_user, sudoers_file=$sudoers_file, default_commands=$commands"
+        log --info "${FUNCNAME[0]} called with Arguments: ($*)" "Starting sudo configuration" "user: $target_user, sudoers_file=$sudoers_file, default_commands=$commands"
 
         ### Security warning ###
         print --warning "Configuring sudo NOPASSWD access - security implications:"
