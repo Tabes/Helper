@@ -43,7 +43,7 @@ parse_arguments() {
 				exit 0
 				;;
 
-			--test|-t)
+			--test)
 				run_print
 				exit 0
 				;;
