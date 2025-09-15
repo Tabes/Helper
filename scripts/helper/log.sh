@@ -5,7 +5,7 @@
 ### Provides unified log function for all logging operations with rotation
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.1
+### Version: 1.0.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -55,6 +55,9 @@ log() {
     local log_file="${LOG_FILE:-${LOG_DIR:-/tmp}/${script_name%.sh}.log}"
     local log_level="${LOG_LEVEL:-INFO}"
     local timestamp=""
+
+    ### Position Array for formatted Output ###
+    local col=("${POS[@]}")  ### (4 7 21 35 47 62 77 88 99) ###
     
     # shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
     _log_write() {
@@ -94,50 +97,50 @@ log() {
         local log_entry=""
         
         if [ "${LOG_USE_TABS:-true}" = "true" ]; then
-            ### Tab positions from config ###
-            local tab1="${LOG_TAB1:-1}"                            ### Position Timestamp ###
-            local tab2="${LOG_TAB2:-25}"                           ### Position Script name ###
-            local tab3="${LOG_TAB3:-40}"                           ### Position log level ###
-            local tab4="${LOG_TAB4:-50}"                           ### Position Parameters ###
-            local tab5="${LOG_TAB5:-62}"                           ### Position Comments ###
-            local tab6="${LOG_TAB6:-75}"                           ### Position Additional ###
+            ### Use col array for positions ###
+            ### col=(4 7 21 35 47 62 77 88 99) ###
             
-            ### Calculate column widths ###
-            local col1=$((tab2 - tab1 - 2))                        ### Timestamp width ###
-            local col2=$((tab3 - tab2 - 2))                        ### Script width ###
-            local col3=$((tab4 - tab3 - 2))                        ### Level width ###
-            local col4=$((tab5 - tab4))                            ### Parameters width ###
-            local col5=$((tab6 - tab5))                            ### Comments width ###
+            ### Build formatted entry with proper spacing ###
+            local formatted_timestamp="[$timestamp]"
+            local formatted_script="[${script_name:-$function_name}]"
+            local formatted_level="[$level]"
             
-            ### Build formatted entry ###
+            ### Pad each field to reach next column position ###
+            formatted_timestamp=$(printf "%-21s" "$formatted_timestamp")          ### 21 chars to col[2] ###
+            formatted_script=$(printf "%-14s" "$formatted_script")                ### 14 chars width ###
+            formatted_level=$(printf "%-9s" "$formatted_level")                   ### 9 chars width ###
+            
+            ### Format parameters (remove parentheses if empty) ###
+            if [ "$parameters" = "()" ] || [ -z "$parameters" ]; then
+                parameters=""
+            fi
+            
+            ### Build complete log entry ###
             if [ -n "$additional" ]; then
-                ### Full format with all columns ###
-                log_entry=$(printf "[%-*s] [%-*s] [%-*s] %-*s %-*s %s" \
-                    "$col1" "$timestamp" \
-                    "$col2" "${script_name:-$function_name}" \
-                    "$col3" "$level" \
-                    "$col4" "$parameters" \
-                    "$col5" "$comment" \
-                    "$additional")
+                ### Full format with all fields ###
+                formatted_params=$(printf "%-15s" "$parameters")                  ### 15 chars width ###
+                formatted_comment=$(printf "%-25s" "$comment")                    ### 25 chars width ###
+                log_entry="${formatted_timestamp} ${formatted_script} ${formatted_level} ${formatted_params} ${formatted_comment} ${additional}"
             elif [ -n "$comment" ]; then
-                ### Format without additional column ###
-                log_entry=$(printf "[%-*s] [%-*s] [%-*s] %-*s %s" \
-                    "$col1" "$timestamp" \
-                    "$col2" "${script_name:-$function_name}" \
-                    "$col3" "$level" \
-                    "$col4" "$parameters" \
-                    "$comment")
+                ### Format with comment but no additional ###
+                formatted_params=$(printf "%-15s" "$parameters")                  ### 15 chars width ###
+                log_entry="${formatted_timestamp} ${formatted_script} ${formatted_level} ${formatted_params} ${comment}"
+            elif [ -n "$parameters" ]; then
+                ### Format with parameters only ###
+                log_entry="${formatted_timestamp} ${formatted_script} ${formatted_level} ${parameters}"
             else
                 ### Minimal format ###
-                log_entry=$(printf "[%-*s] [%-*s] [%-*s] %s" \
-                    "$col1" "$timestamp" \
-                    "$col2" "${script_name:-$function_name}" \
-                    "$col3" "$level" \
-                    "$parameters")
+                log_entry="${formatted_timestamp} ${formatted_script} ${formatted_level}"
             fi
+            
+            ### Trim trailing spaces ###
+            log_entry="${log_entry%"${log_entry##*[![:space:]]}"}"
+            
         else
             ### Classic format without tabs ###
             log_entry="[$timestamp] [${script_name:-$function_name}] [$level] $parameters $comment $additional"
+            ### Trim multiple spaces ###
+            log_entry=$(echo "$log_entry" | sed 's/  */ /g')
         fi
         
         ### Write to script-specific log file ###
@@ -444,22 +447,32 @@ log() {
 
 ### Main Function ###
 main() {
+
     ### Check if no arguments provided ###
     if [ $# -eq 0 ]; then
+
         show_help
         exit 0
+
     else
+
         ### Parse and execute arguments ###
         parse_arguments "$@"
+
     fi
+
 }
 
 ### Initialize when run directly ###
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+
     ### Running directly as script ###
     main "$@"
+
 else
+
     ### Being sourced as library ###
     ### Functions loaded and ready for use ###
     :
+
 fi
