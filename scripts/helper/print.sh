@@ -1092,13 +1092,16 @@ main() {
 
 }
 
-
 ### Initialize when run directly ###
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+
 	### Running directly as script ###
 	main "$@"
+
 else
+
 	### Being sourced as library ###
 	### Functions loaded and ready for use ###
 	:
+
 fi
