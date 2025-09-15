@@ -1,16 +1,16 @@
 #!/bin/bash
 ################################################################################
 ### Universal Helper Functions - Logging Library
-### Comprehensive Logging Functions using print() Engine for formatting
-### Provides unified log Function with structured positioning and formatting
+### Comprehensive Logging Functions using print() Engine for Formatting
+### Provides unified Log Function with structured Positioning and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.0
+### Version: 2.1.0
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
 ### Usage:   Source this File to load Logging Functions or run directly
-### Commit:  Complete rewrite using print() as formatting engine
+### Commit:  Complete rewrite with helper.conf Integration and Numeric Parameters
 ################################################################################
 
 
@@ -20,9 +20,6 @@
 
 ### Parse Command Line Arguments ###
 parse_arguments() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	while [[ $# -gt 0 ]]; do
 
@@ -65,11 +62,8 @@ parse_arguments() {
 ### === LOGGING FUNCTIONS === ###
 ################################################################################
 
-### Unified Log Function using print() as formatting Engine ###
+### Unified log Function using print() as formatting engine ###
 log() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	### Local variables ###
 	local log_level=""
@@ -78,6 +72,45 @@ log() {
 	local has_print_params=false
 	local level_color=""
 	local level_symbol=""
+
+	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
+	_convert_numeric_positions() {
+		### Convert numeric position parameters to -pos format for print() ###
+		local converted_args=()
+		local i=0
+		local args=("$@")
+
+		while [ $i -lt ${#args[@]} ]; do
+
+			if [[ "${args[i]}" =~ ^[0-9]+$ ]]; then
+
+				### Check if next parameter is also numeric (row parameter) ###
+				if [ $((i+1)) -lt ${#args[@]} ] && [[ "${args[$((i+1))]}" =~ ^[0-9]+$ ]]; then
+
+					### Position and row ###
+					converted_args+=("-pos" "${args[i]}" "${args[$((i+1))]}")
+					i=$((i+2))
+
+				else
+
+					### Position only ###
+					converted_args+=("-pos" "${args[i]}")
+					i=$((i+1))
+
+				fi
+
+			else
+
+				### Regular parameter ###
+				converted_args+=("${args[i]}")
+				i=$((i+1))
+
+			fi
+
+		done
+
+		printf '%s\n' "${converted_args[@]}"
+	}
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_create_log_file() {
@@ -95,11 +128,11 @@ log() {
 			print -file "$file" -overwrite \
 				--header "Log Session Started: $(date '+%Y-%m-%d %H:%M:%S')" \
 				--cr \
-				-pos 1 "Script:  $script_name" --cr \
-				-pos 1 "PID:     $$" --cr \
-				-pos 1 "User:    $(whoami)" --cr \
-				-pos 1 "Host:    $(hostname)" --cr \
-				-pos 1 "Dir:     $(pwd)" --cr \
+				1 "Script:  $script_name" --cr \
+				1 "PID:     $$" --cr \
+				1 "User:    $(whoami)" --cr \
+				1 "Host:    $(hostname)" --cr \
+				1 "Dir:     $(pwd)" --cr \
 				--cr \
 				-line "=" 80 --cr
 
@@ -200,8 +233,8 @@ log() {
 			print -file "$file" -overwrite \
 				--header "Log Rotated: $(date '+%Y-%m-%d %H:%M:%S')" \
 				--cr \
-				-pos 1 "Previous log: ${file}.1" --cr \
-				-pos 1 "Size: $current_size bytes (limit: $max_size)" --cr \
+				1 "Previous log: ${file}.1" --cr \
+				1 "Size: $current_size bytes (limit: $max_size)" --cr \
 				--cr \
 				-line "=" 80 --cr
 
@@ -210,7 +243,7 @@ log() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_standard_log_format() {
-		### Standard log format using print() with positioning ###
+		### Standard log format using print() with helper.conf positions ###
 		local level="$1"
 		shift
 
@@ -219,18 +252,48 @@ log() {
 
 		### Check for rotation before writing ###
 		if [ "${LOG_ROTATION:-true}" = "true" ]; then
-			_rotate_log "$log_file"
+			_log_rotate "$log_file"
 		fi
 
 		### Create log file if needed ###
 		_create_log_file "$log_file"
 
+		### Use LOG_TAB_POS from helper.conf or defaults ###
+		local pos_timestamp="${LOG_TAB_POS[0]:-1}"
+		local pos_level="${LOG_TAB_POS[2]:-22}"
+		local pos_message="${LOG_TAB_POS[3]:-35}"
+
 		### Standard positioned log entry ###
-		print -file "$log_file" \
-			-pos 1 "[$timestamp]" \
-			-pos 22 "$level_color" "[$level_symbol ${level^^}]" \
-			-pos 35 NC "$@" \
-			--cr
+		if [ "${LOG_USE_REAL_TABS:-false}" = "true" ]; then
+
+			### Use real tabs instead of positioning ###
+			print -file "$log_file" \
+				"[$timestamp]" -txt $'\t' \
+				"[$level_symbol ${level^^}]" -txt $'\t' \
+				"$*" \
+				--cr
+
+		else
+
+			### Use positioned output with helper.conf positions ###
+			print -file "$log_file" \
+				"$pos_timestamp" "[$timestamp]" \
+				"$pos_level" "$level_color" "[$level_symbol ${level^^}]" \
+				"$pos_message" NC "$@" \
+				--cr
+
+		fi
+
+		### Write to central log if configured ###
+		if [ -n "$CENTRAL_LOG" ] && [ "$CENTRAL_LOG" != "$log_file" ]; then
+
+			print -file "$CENTRAL_LOG" \
+				"$pos_timestamp" "[$timestamp]" \
+				"$pos_level" "$level_color" "[${SCRIPT_NAME:-script}] [$level_symbol ${level^^}]" \
+				"$pos_message" NC "$@" \
+				--cr
+
+		fi
 
 		### Console output if verbose enabled ###
 		if [ "${VERBOSE:-false}" = "true" ] || [ "${DEBUG:-false}" = "true" ]; then
@@ -258,7 +321,7 @@ log() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_check_print_params() {
-		### Check if parameters contain print() formatting options ###
+		### Check if parameters contain print() formatting options or numeric positions ###
 		for arg in "$@"; do
 			case "$arg" in
 				-pos|-file|-array|-row|-ruler|-ruler2|-scale|-demo|-reset|\
@@ -266,6 +329,12 @@ log() {
 				-back|-up|-delete|-override|-rel|-append|-overwrite|\
 				-debug|-delay|-max|NC|RD|GN|YE|BU|CY|WH|MG)
 					return 0
+					;;
+				*)
+					### Check for numeric position parameters ###
+					if [[ "$arg" =~ ^[0-9]+$ ]]; then
+						return 0
+					fi
 					;;
 			esac
 		done
@@ -364,12 +433,19 @@ log() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_log_template() {
-		### Apply predefined log templates ###
+		### Apply predefined log templates using helper.conf positions ###
 		local template="$1"
 		shift
 
 		_get_timestamp
 		_create_log_file "$log_file"
+
+		### Use LOG_TAB_POS positions ###
+		local pos_timestamp="${LOG_TAB_POS[0]:-1}"
+		local pos_level="${LOG_TAB_POS[2]:-22}"
+		local pos_func="${LOG_TAB_POS[3]:-35}"
+		local pos_time="${LOG_TAB_POS[4]:-55}"
+		local pos_extra="${LOG_TAB_POS[5]:-70}"
 
 		case "$template" in
 			performance)
@@ -379,11 +455,11 @@ log() {
 				local memory="$3"
 
 				print -file "$log_file" \
-					-pos 1 "[$timestamp]" \
-					-pos 22 GN "[PERF]" \
-					-pos 32 "Function: $func_name" \
-					-pos 55 "Time: ${exec_time}s" \
-					-pos 70 "Mem: $memory" \
+					"$pos_timestamp" "[$timestamp]" \
+					"$pos_level" GN "[PERF]" \
+					"$pos_func" "Function: $func_name" \
+					"$pos_time" "Time: ${exec_time}s" \
+					"$pos_extra" "Mem: $memory" \
 					--cr
 				;;
 
@@ -393,11 +469,11 @@ log() {
 				local stack_trace="$2"
 
 				print -file "$log_file" \
-					-pos 1 "[$timestamp]" \
-					-pos 22 RD "[ERROR]" \
-					-pos 32 "$error_msg" \
+					"$pos_timestamp" "[$timestamp]" \
+					"$pos_level" RD "[ERROR]" \
+					"$pos_func" "$error_msg" \
 					--cr \
-					-pos 32 "Stack: $stack_trace" \
+					"$pos_func" "Stack: $stack_trace" \
 					--cr
 				;;
 
@@ -408,11 +484,11 @@ log() {
 				local source="$3"
 
 				print -file "$log_file" \
-					-pos 1 "[$timestamp]" \
-					-pos 22 RD "[SECURITY]" \
-					-pos 35 "Event: $event" \
-					-pos 55 "User: $user" \
-					-pos 70 "From: $source" \
+					"$pos_timestamp" "[$timestamp]" \
+					"$pos_level" RD "[SECURITY]" \
+					"$pos_func" "Event: $event" \
+					"$pos_time" "User: $user" \
+					"$pos_extra" "From: $source" \
 					--cr
 				;;
 
@@ -434,25 +510,53 @@ log() {
 				### Check if remaining parameters contain print() formatting ###
 				if _check_print_params "$@"; then
 
-					### Advanced formatting: pass all parameters to print() ###
+					### Advanced formatting: convert numeric positions and pass to print() ###
 					_get_timestamp
 					_get_level_formatting "$log_level"
 					_create_log_file "$log_file"
 
-					### Add timestamp and level, then pass everything to print() ###
+					### Convert numeric positions to -pos format ###
+					local converted_params
+					readarray -t converted_params < <(_convert_numeric_positions "$@")
+
+					### Use LOG_TAB_POS positions or defaults ###
+					local pos_timestamp="${LOG_TAB_POS[0]:-1}"
+					local pos_level="${LOG_TAB_POS[2]:-22}"
+					local pos_message="${LOG_TAB_POS[3]:-35}"
+
+					### Add timestamp and level, then pass converted parameters to print() ###
 					print -file "$log_file" \
-						-pos 1 "[$timestamp]" \
-						-pos 22 "$level_color" "[$level_symbol ${log_level^^}]" \
-						-pos 35 NC "$@"
+						"$pos_timestamp" "[$timestamp]" \
+						"$pos_level" "$level_color" "[$level_symbol ${log_level^^}]" \
+						"$pos_message" NC "${converted_params[@]}"
+
+					### Write to central log if configured ###
+					if [ -n "$CENTRAL_LOG" ] && [ "$CENTRAL_LOG" != "$log_file" ]; then
+
+						print -file "$CENTRAL_LOG" \
+							"$pos_timestamp" "[$timestamp]" \
+							"$pos_level" "$level_color" "[${SCRIPT_NAME:-script}] [$level_symbol ${log_level^^}]" \
+							"$pos_message" NC "${converted_params[@]}"
+
+					fi
 
 					### Console output if enabled ###
 					if [ "${VERBOSE:-false}" = "true" ]; then
 
+						### Extract text content for console (remove positioning) ###
+						local console_text=""
+						for param in "${converted_params[@]}"; do
+							case "$param" in
+								-pos|[0-9]*|NC|RD|GN|YE|BU|CY|WH|MG) ;;
+								*) console_text="$console_text $param" ;;
+							esac
+						done
+
 						case "$log_level" in
-							error)   print --error "$(echo "$@" | sed 's/-pos [0-9]* //g')" ;;
-							warning) print --warning "$(echo "$@" | sed 's/-pos [0-9]* //g')" ;;
-							info)    print --info "$(echo "$@" | sed 's/-pos [0-9]* //g')" ;;
-							success) print --success "$(echo "$@" | sed 's/-pos [0-9]* //g')" ;;
+							error)   print --error "${console_text# }" ;;
+							warning) print --warning "${console_text# }" ;;
+							info)    print --info "${console_text# }" ;;
+							success) print --success "${console_text# }" ;;
 						esac
 
 					fi
@@ -510,11 +614,6 @@ log() {
 				return 0
 				;;
 
-			--demo)
-				log_demo
-				return 0
-				;;
-
 			--help|-h)
 				show_help "log"
 				return 0
@@ -525,6 +624,7 @@ log() {
 				show_help "log"
 				return 1
 				;;
+
 		esac
 
 		shift
@@ -533,11 +633,13 @@ log() {
 
 }
 
+
+################################################################################
+### === LOG DEMO AND TESTING === ###
+################################################################################
+
 ### Demonstrate log formatting capabilities ###
 log_demo() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	print --header "Log Function Demo"
 	print --cr
@@ -546,16 +648,16 @@ log_demo() {
 	print --info "Testing standard log formats..."
 	log --info "Standard info message"
 	log --error "Standard error message"
-	log --warning "Standard warning message"
+	log --warning "Standard warning message" 
 	log --debug "Standard debug message"
 	log --success "Standard success message"
 
 	print --cr
-	print --info "Testing positioned logging..."
+	print --info "Testing positioned logging with numeric parameters..."
 
-	### Positioned logging ###
-	log --info -pos 35 "Function: demo_function" -pos 60 "Status: OK"
-	log --error -pos 35 "Function: failed_function" -pos 60 "Status: FAILED"
+	### Positioned logging with numeric parameters ###
+	log --info 35 "Function: demo_function" 60 "Status: OK"
+	log --error 35 "Function: failed_function" 60 "Status: FAILED"
 
 	print --cr
 	print --info "Testing templates..."
@@ -578,11 +680,8 @@ log_demo() {
 	print --success "Demo completed - Check log file: ${LOG_FILE:-/tmp/script.log}"
 }
 
-### Run Log Function Tests ###
+### Run log function tests ###
 run_log() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	print --header "Log Function Test Suite"
 
@@ -593,9 +692,10 @@ run_log() {
 	log --error "Test error message"
 	log --warning "Test warning message"
 
-	### Test positioning ###
-	print --info "Testing positioned logging..."
-	log --info -pos 35 "Function:" -pos 50 "test_function"
+	### Test numeric positioning ###
+	print --info "Testing numeric positioned logging..."
+	log --info 35 "Function:" 50 "test_function"
+	log --error 35 "Error in:" 50 "critical_function"
 
 	### Test templates ###
 	print --info "Testing templates..."
@@ -611,6 +711,14 @@ run_log() {
 		print --error "File operations test failed"
 	fi
 
+	### Test central logging ###
+	if [ -n "$CENTRAL_LOG" ]; then
+		print --info "Testing central log..."
+		export LOG_FILE="/tmp/script_test.log"
+		log --info "Test message for central log"
+		print --success "Central log test completed"
+	fi
+
 	print --cr
 	print --success "All log tests completed"
 }
@@ -622,9 +730,6 @@ run_log() {
 
 ### Main Function ###
 main() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	### Check if no arguments provided ###
 	if [ $# -eq 0 ]; then
