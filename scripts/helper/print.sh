@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.0
+### Version: 2.0.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -952,47 +952,74 @@ print() {
 
 			### Regular text ###
 			*)
-				### Get current position if not set ###
-				if [ -z "$cursor_row" ] || [ "$cursor_cached" = false ]; then
-					_get_cursor_position
-				fi
-
-				### Apply positioning and alignment for text ###
-				if [ -n "$current_position" ]; then
-
-					if [ "$current_alignment" = "right" ]; then
-
-						### Right align: calculate start position ###
-						local text_len=${#1}
-						local start_pos=$((current_position - text_len + 1))
-						[ $start_pos -lt 1 ] && start_pos=1
-
-						if [ -z "$output_file" ]; then
-							printf "\033[${start_pos}G" 2>/dev/null
+				### Check for numeric position parameter first ###
+				if [[ "$1" =~ ^[0-9]+$ ]]; then
+					
+					local pos_arg="$1"
+					local row_arg=""
+					
+					### Check if next parameter is also numeric (row) ###
+					if [[ "$2" =~ ^[0-9]+$ ]]; then
+						row_arg="$2"
+						shift 2
+					else
+						shift
+					fi
+					
+					### Handle positioning ###
+					if _validate_parameters "position" "$pos_arg" "position"; then
+						
+						if [ -n "$row_arg" ] && _validate_parameters "position" "$row_arg" "row"; then
+							_handle_positioning "$pos_arg" "$row_arg"
+						else
+							_handle_positioning "$pos_arg"
 						fi
+						
+					fi
+					
+				else
+					### Get current position if not set ###
+					if [ -z "$cursor_row" ] || [ "$cursor_cached" = false ]; then
+						_get_cursor_position
+					fi
 
-						_output_router "$1" true
+					### Apply positioning and alignment for text ###
+					if [ -n "$current_position" ]; then
+
+						if [ "$current_alignment" = "right" ]; then
+
+							### Right align: calculate start position ###
+							local text_len=${#1}
+							local start_pos=$((current_position - text_len + 1))
+							[ $start_pos -lt 1 ] && start_pos=1
+
+							if [ -z "$output_file" ]; then
+								printf "\033[${start_pos}G" 2>/dev/null
+							fi
+
+							_output_router "$1" true
+
+						else
+
+							### Left align: move to position and print ###
+							if [ -z "$output_file" ]; then
+								printf "\033[${current_position}G" 2>/dev/null
+							fi
+
+							_output_router "$1" true
+
+						fi
 
 					else
 
-						### Left align: move to position and print ###
-						if [ -z "$output_file" ]; then
-							printf "\033[${current_position}G" 2>/dev/null
-						fi
-
+						### No positioning, just print with color ###
 						_output_router "$1" true
 
 					fi
 
-				else
-
-					### No positioning, just print with color ###
-					_output_router "$1" true
-
+					has_output=true
+					shift
 				fi
-
-				has_output=true
-				shift
 				;;
 
 		esac
