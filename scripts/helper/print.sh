@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.1
+### Version: 2.0.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -35,11 +35,6 @@ parse_arguments() {
 
 			--version|-V)
 				print --version "${header}" "${version}" "${commit}"
-				exit 0
-				;;
-
-			--demo|-d)
-				print -demo
 				exit 0
 				;;
 
@@ -475,34 +470,6 @@ print() {
 				_output_router "$scale\n" false
 				;;
 
-			demo)
-				### Display demo output with various formatting ###
-				_output_router "${NC}\n" false
-				_process_debug_tools "ruler"
-				_output_router "\n" false
-				_process_debug_tools "scale" 
-				_output_router "\n\n" false
-
-				### Demo content ###
-				print -pos 1 GN "Lorem ipsum dolor"
-				print -pos 70 --right RD "Stet clita kasd gubergren" --cr
-
-				print -pos 70 --right YE "consetetur sadipscing" --cr 2
-				print -pos 10 CY "Nam liber tempor"
-				print -pos 80 BK "option congue" --cr
-				print -pos 10 MG "mazim placerat facer"
-				print -pos 80 WH "possim assum" --cr 2
-
-				print -pos 10 "sit amet, consectetuer"
-				print -pos 70 --right "Duis autem vel eum" --cr
-				print -pos 70 --right BU "commodo consequat" --cr 2
-
-				_output_router "${NC}" false
-				_process_debug_tools "scale"
-				_output_router "\n" false
-				_process_debug_tools "ruler"
-				_output_router "\n\n" false
-				;;
 		esac
 
 		has_output=true
