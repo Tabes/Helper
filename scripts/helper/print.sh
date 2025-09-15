@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.2
+### Version: 2.1.0
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
