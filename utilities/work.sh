@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.1
+### Version: 2.0.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -21,40 +21,47 @@ REPO_RAW_URL="https://raw.githubusercontent.com/Tabes/Helper/refs/heads/main"
 path="/opt/helper"
 logfile="$path/logs/install.log"
 
-# === Farben ===
+#### === Farben === ###
 GREEN="\e[32m"
 RED="\e[31m"
 YELLOW="\e[33m"
 RESET="\e[0m"
 
-# === Flags ===
+### === Flags === ###
 dry_run=false
 only_files=()
 
-# === Argument-Parser ===
+### === Argument-Parser === ###
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry)
             dry_run=true
             ;;
+
         --only)
             shift
+
             while [[ $# -gt 0 && "$1" != --* ]]; do
+
                 only_files+=("$1")
                 shift
+
             done
             continue
             ;;
+
     esac
+
     shift
+
 done
 
-# === Logging-Funktion ===
+### === Logging-Funktion === ###
 log() {
     echo -e "$1" | tee -a "$logfile"
 }
 
-# === Download-Funktion ===
+### === Download-Funktion === ###
 download_and_report() {
     local subdir="$1"
     shift
@@ -92,7 +99,7 @@ download_and_report() {
     done
 }
 
-# === Hauptdateien (optional auch in --only integrierbar) ===
+### === Hauptdateien (optional auch in --only integrierbar) === ###
 if ! $dry_run && [[ ${#only_files[@]} -eq 0 ]]; then
     curl -sSfL "$REPO_RAW_URL/start.sh" -o /opt/start.sh
     curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path/scripts/helper.sh"
@@ -100,7 +107,7 @@ fi
 
 ### === Plugins === ###
 download_and_report "scripts/plugins" \
-    cmd.sh log.sh print.sh secure.sh show.sh update.sh
+    cmd.sh log.sh network.sh print.sh secure.sh show.sh update.sh
 
 ### === Utilities === ###
 download_and_report "utilities" \
