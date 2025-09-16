@@ -5,7 +5,7 @@
 ### Provides unified Log Function with structured Positioning and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.0
+### Version: 2.1.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -62,8 +62,29 @@ parse_arguments() {
 ### === LOGGING FUNCTIONS === ###
 ################################################################################
 
-### Unified log Function using print() as formatting engine ###
+### Simple Test Version... ###
 log() {
+    case $1 in
+        --info) level="INFO"; shift ;;
+        --error) level="ERROR"; shift ;;
+        --warning) level="WARNING"; shift ;;
+        --debug) level="DEBUG"; shift ;;
+        --success) level="SUCCESS"; shift ;;
+        *) level="INFO" ;;  # Standard fallback
+    esac
+    
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local log_file="${LOG_FILE:-/tmp/script.log}"
+    
+    # Einfache Ausgabe
+    echo "[$timestamp] [$level] $*" >> "$log_file"
+    
+    # Console output falls gewünscht
+    [ "${VERBOSE:-false}" = "true" ] && echo "[$level] $*"
+}
+
+### Unified log Function using print() as formatting engine ###
+_log() {
 
 	### Local variables ###
 	local log_level=""
@@ -330,14 +351,19 @@ log() {
 				-debug|-delay|-max|NC|RD|GN|YE|BU|CY|WH|MG)
 					return 0
 					;;
+
 				*)
 					### Check for numeric position parameters ###
 					if [[ "$arg" =~ ^[0-9]+$ ]]; then
+
 						return 0
+
 					fi
 					;;
+
 			esac
 		done
+
 		return 1
 	}
 
@@ -547,16 +573,20 @@ log() {
 						local console_text=""
 						for param in "${converted_params[@]}"; do
 							case "$param" in
+
 								-pos|[0-9]*|NC|RD|GN|YE|BU|CY|WH|MG) ;;
 								*) console_text="$console_text $param" ;;
+
 							esac
 						done
 
 						case "$log_level" in
+
 							error)   print --error "${console_text# }" ;;
 							warning) print --warning "${console_text# }" ;;
 							info)    print --info "${console_text# }" ;;
 							success) print --success "${console_text# }" ;;
+
 						esac
 
 					fi
