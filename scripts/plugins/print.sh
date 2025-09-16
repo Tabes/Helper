@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.3
+### Version: 2.1.4
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -864,11 +864,16 @@ print() {
 
 			--right|-r)
 				current_alignment="right"
+
 				if [[ "$2" =~ ^[0-9]+$ ]]; then
+
 					current_position="$2"
 					shift 2
+
 				else
+
 					shift
+
 				fi
 				;;
 
