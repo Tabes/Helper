@@ -5,9 +5,9 @@
 ### Downloads and Configures the Helper Framework from Git Repository
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.1
+### Version: 1.0.2
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-14
+### Date:    2025-09-16
 ### License: MIT
 ### Usage:   bash start.sh [OPTIONS]
 ### Commit:  Bootstrap Installation Script for Helper Framework
@@ -243,11 +243,11 @@ setup() {
         
         ### Create required directories ###
         local dirs=(
-            "backup"
+            "backups"
             "configs"
             "docs/help"
             "logs"
-            "scripts/helper"
+            "scripts/plugins"
             "utilities"
         )
         
