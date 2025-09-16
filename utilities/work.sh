@@ -168,7 +168,7 @@ download() {
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-            log "  ${YELLOW}DRY: Would download $file → $target${RESET}"
+            log "  ${YELLOW}File: $file → Target: $target${RESET}"
             continue
         fi
 
