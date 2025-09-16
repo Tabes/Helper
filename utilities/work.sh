@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.6
+### Version: 1.0.7
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -30,6 +30,7 @@ curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path"/scripts/helper.sh
 
 
 files=(cmd.sh log.sh print.sh secure.sh show.sh update.sh)
+echo "Download...  ${files[*]}"; echo
 
 for file in "${files[@]}"; do
 
