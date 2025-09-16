@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.0
+### Version: 2.1.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -21,9 +21,6 @@
 
 ### Parse Command Line Arguments ###
 parse_arguments() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	while [[ $# -gt 0 ]]; do
 
@@ -63,9 +60,6 @@ parse_arguments() {
 
 ### Unified print Function for all Output Operations ###
 print() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	### Local variables with optimized defaults ###
 	local output_buffer=""
@@ -1009,9 +1003,6 @@ print() {
 ### Run internal Tests for print Function ###
 run_print() {
 
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
-
 	print --header "Print Function Test Suite"
 
 	### Basic functionality tests ###
@@ -1041,12 +1032,17 @@ run_print() {
 
 	### File output test ###
 	print --info "Testing file output..."
-	print -file "/tmp/print_test.log" "Test output to file"
-	if [ -f "/tmp/print_test.log" ]; then
+	print -file "/tmp/print.log" "Test output to file"
+
+	if [ -f "/tmp/print.log" ]; then
+
 		print --success "File output test passed"
-		rm -f "/tmp/print_test.log"
+		rm -f "/tmp/print.log"
+
 	else
+
 		print --error "File output test failed"
+
 	fi
 
 	print --cr
@@ -1060,9 +1056,6 @@ run_print() {
 
 ### Main Function ###
 main() {
-
-	### Log Startup Arguments ###
-	log --info "${FUNCNAME[0]} called with Arguments: ($*)"
 
 	### Check if no arguments provided ###
 	if [ $# -eq 0 ]; then
