@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.11
+### Version: 1.0.12
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -82,12 +82,12 @@ download_and_report() {
             chmod +x "$target"
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
             if [[ -n "$version" ]]; then
-                log "  ${GREEN}$(printf '%-20s' "$file") v $version${RESET}"
+                log "  ${GREEN}$(printf '%-15s' "$file") v $version${RESET}"
             else
-                log "  ${YELLOW}$(printf '%-20s' "$file") v unknown${RESET}"
+                log "  ${YELLOW}$(printf '%-15s' "$file") v unknown${RESET}"
             fi
         else
-            log "  ${RED}$(printf '%-20s' "$file") download failed${RESET}"
+            log "  ${RED}$(printf '%-15s' "$file") download failed${RESET}"
         fi
     done
 }
@@ -106,6 +106,7 @@ download_and_report "scripts/plugins" \
 download_and_report "utilities" \
     gitclone.sh work.sh
 
+echo
 
 
 
@@ -148,7 +149,7 @@ for file in "${files[@]}"; do
     curl -sSfL "$REPO_RAW_URL/scripts/plugins/$file" -o "$path/scripts/plugins/$file"
     chmod +x "$path/scripts/plugins/$file"
 
-    printf "  %-20s v%s\n" "$file" "$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$path/scripts/plugins/$file")"
+    printf "  %-15s v%s\n" "$file" "$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$path/scripts/plugins/$file")"
 done
 echo
 
@@ -161,6 +162,6 @@ for file in "${files[@]}"; do
     curl -sSfL "$REPO_RAW_URL/utilities/$file" -o "$path/utilities/$file"
     chmod +x "$path/utilities/$file"
 
-    printf "  %-20s v %s\n" "$file" "$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$path/utilities/$file")"
+    printf "  %-15s v %s\n" "$file" "$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$path/utilities/$file")"
 done
 echo
