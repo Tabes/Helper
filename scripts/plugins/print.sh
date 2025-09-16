@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.1
+### Version: 2.1.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -141,7 +141,7 @@ print() {
 		### Get current cursor position with caching ###
 		if [ -z "$output_file" ] && [ "$cursor_cached" = false ]; then
 
-			if IFS=';' read -sdR -p $'\E[6n' cursor_row cursor_col 2>/dev/null; then
+			if IFS=';' read -sdR -p $'\033[6n' cursor_row cursor_col 2>/dev/null; then
 
 				cursor_row="${cursor_row#*[}"
 				cursor_cached=true
