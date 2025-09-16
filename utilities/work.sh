@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.0
+### Version: 2.0.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -98,12 +98,16 @@ if ! $dry_run && [[ ${#only_files[@]} -eq 0 ]]; then
     curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path/scripts/helper.sh"
 fi
 
-# === Plugins ===
+### === Plugins === ###
 download_and_report "scripts/plugins" \
     cmd.sh log.sh print.sh secure.sh show.sh update.sh
 
-# === Utilities ===
+### === Utilities === ###
 download_and_report "utilities" \
-    gitclone.sh work.sh
+    dos2linux.sh gitclone.sh work.sh
+
+### === Configs === ###
+download_and_report "configs" \
+    project.conf helper.conf update.conf
 
 echo; echo
