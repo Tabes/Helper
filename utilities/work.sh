@@ -18,18 +18,23 @@
 
 path="/opt/helper"
 
+echo "Download URL: $REPO_RAW_URL"
+echo "Target Path:  $path"
+
 curl -sSfL "$REPO_RAW_URL/start.sh" -o /opt/start.sh
 curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path"/scripts/helper.sh
 
 
 
 files=(cmd.sh log.sh print.sh secure.sh show.sh update.sh)
+echo "Files:  ${files[*]}"
 
 for file in "${files[@]}"; do
     curl -sSfL "$REPO_RAW_URL/scripts/plugins/$file" -o "$path/scripts/plugins/$file"
 done
 
 files=(gitclone.sh work.sh)
+echo "Files:  ${files[*]}"
 
 for file in "${files[@]}"; do
     curl -sSfL "$REPO_RAW_URL/utilities/$file" -o "$path/utilities/$file"
