@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.0
+### Version: 2.1.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -48,6 +48,7 @@ declare -A file_groups=(
 
 ### === Summary Collector === ###
 declare -A summary_versions=()
+declare -A summary_groups=()
 
 ### === Argument Parser === ###
 while [[ $# -gt 0 ]]; do
@@ -78,7 +79,7 @@ done
 ### === Logger === ###
 log() { echo -e "$1" | tee -a "$logfile"; }
 
-# Suggest similar filenames based on Levenshtein distance
+### === Suggest similar filenames === ###
 similar_files() {
     local input="$1"; shift
     local candidates=("$@")
@@ -97,11 +98,11 @@ similar_files() {
             }
             print d[len_a,len_b]
         }')
-        [[ "$dist" -le 3 ]] && echo "    → Did you mean: $candidate?"
+        [[ "$dist" -le 3 ]] && printf "    → Did you mean: %s\n" "$candidate"
     done
 }
 
-### === (Validate --only Files) === ###
+### === Validate --only Files === ###
 validate_files() {
     local valid_files=("$@")
     local invalid=()
@@ -160,7 +161,7 @@ download() {
     download_group "$group" || return
 
     [[ ${#only_files[@]} -gt 0 ]] && validate_files "${files[@]}"
-    log "\n📦 Downloading: ${files[*]}\n"
+    log "\n📦 Downloading group: $group\n"
 
     for file in "${files[@]}"; do
         [[ ${#only_files[@]} -gt 0 && ! " ${only_files[*]} " =~ " $file " ]] && continue
@@ -168,7 +169,7 @@ download() {
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-            log "  ${YELLOW}File: $file → Target: $target${RESET}"
+            printf "  [DRY]   %-15s → %s\n" "$file" "$target"
             continue
         fi
 
@@ -176,7 +177,7 @@ download() {
         if $backup_enabled && [[ -f "$target" ]]; then
             mkdir -p "$backup_path/$subdir"
             cp "$target" "$backup_path/$subdir/$file"
-            log "  ${YELLOW}Backup created for $file → $backup_path/$subdir/$file${RESET}"
+            printf "  [BACKUP] %-15s → %s\n" "$file" "$backup_path/$subdir/$file"
         fi
 
         rm -f "$target"
@@ -184,10 +185,12 @@ download() {
             chmod +x "$target"
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
             summary_versions["$file"]="${version:-unknown}"
-            log "  ${GREEN}$(printf '%-15s' "$file") v${version:-unknown}${RESET}"
+            summary_groups["$file"]="$group"
+            printf "  [OK]     %-15s v%s\n" "$file" "${version:-unknown}"
         else
             summary_versions["$file"]="failed"
-            log "  ${RED}$(printf '%-15s' "$file") failed${RESET}"
+            summary_groups["$file"]="$group"
+            printf "  [FAIL]   %-15s download failed\n" "$file"
         fi
     done
     echo
@@ -207,10 +210,14 @@ download "$configs_path"   ${file_groups[configs]}
 ### === Summary Output === ###
 if $summary_mode; then
     echo -e "\n📊 Summary of downloaded files:\n"
-    printf "  %-20s %s\n" "File" "Version"
-    printf "  %-20s %s\n" "--------------------" "--------"
-    for file in "${!summary_versions[@]}"; do
-        printf "  %-20s %s\n" "$file" "${summary_versions[$file]}"
+    for group in plugins utilities configs; do
+        echo "🔹 Group: $group"
+        printf "  %-20s %s\n" "File" "Version"
+        printf "  %-20s %s\n" "--------------------" "--------"
+        for file in "${!summary_versions[@]}"; do
+            [[ "${summary_groups[$file]}" == "$group" ]] && \
+            printf "  %-20s %s\n" "$file" "${summary_versions[$file]}"
+        done
+        echo
     done
-    echo
 fi
