@@ -16,6 +16,7 @@
 
 ################################################################################
 
+REPO_RAW_URL="https://raw.githubusercontent.com/Tabes/Helper/refs/heads/main"
 path="/opt/helper"
 
 echo "Download URL: $REPO_RAW_URL"
