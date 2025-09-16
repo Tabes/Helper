@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.2
+### Version: 2.1.3
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -874,11 +874,16 @@ print() {
 
 			--left|-l)
 				current_alignment="left"
+
 				if [[ "$2" =~ ^[0-9]+$ ]]; then
+
 					current_position="$2"
 					shift 2
+
 				else
+
 					shift
+
 				fi
 				;;
 
@@ -913,35 +918,47 @@ print() {
 
 			### Regular text ###
 			*)
-				### Check for numeric position parameter first ###
+				### Check for numeric Position Parameter first ###
 				if [[ "$1" =~ ^[0-9]+$ ]]; then
 					
 					local pos_arg="$1"
 					local row_arg=""
+					shift
 					
-					### Check if next parameter is also numeric (row) ###
+					### Check if next Parameter is also numeric (row) ###
 					if [[ "$2" =~ ^[0-9]+$ ]]; then
+
 						row_arg="$2"
 						shift 2
+
 					else
+
 						shift
+
 					fi
 					
 					### Handle positioning ###
 					if _validate_parameters "position" "$pos_arg" "position"; then
 						
 						if [ -n "$row_arg" ] && _validate_parameters "position" "$row_arg" "row"; then
+
 							_handle_positioning "$pos_arg" "$row_arg"
+
 						else
+
 							_handle_positioning "$pos_arg"
+
 						fi
 						
 					fi
 					
 				else
+
 					### Get current position if not set ###
 					if [ -z "$cursor_row" ] || [ "$cursor_cached" = false ]; then
+
 						_get_cursor_position
+
 					fi
 
 					### Apply positioning and alignment for text ###
@@ -955,7 +972,9 @@ print() {
 							[ $start_pos -lt 1 ] && start_pos=1
 
 							if [ -z "$output_file" ]; then
+
 								printf "\033[${start_pos}G" 2>/dev/null
+
 							fi
 
 							_output_router "$1" true
@@ -964,7 +983,9 @@ print() {
 
 							### Left align: move to position and print ###
 							if [ -z "$output_file" ]; then
+
 								printf "\033[${current_position}G" 2>/dev/null
+
 							fi
 
 							_output_router "$1" true
