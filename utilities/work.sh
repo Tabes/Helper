@@ -30,25 +30,23 @@ curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path"/scripts/helper.sh
 
 
 files=(cmd.sh log.sh print.sh secure.sh show.sh update.sh)
-echo "Files:  ${files[*]}"
 
 for file in "${files[@]}"; do
 
-    rm "$path/scripts/plugins/$file"
+    rm "$path/scripts/plugins/$file"; echo "  $file"
     curl -sSfL "$REPO_RAW_URL/scripts/plugins/$file" -o "$path/scripts/plugins/$file"
     chmod +x "$path/scripts/plugins/$file"
 
 done
 
 files=(gitclone.sh work.sh)
-echo "Files:  ${files[*]}"
-echo
+echo "Download...  ${files[*]}"; echo
 
 for file in "${files[@]}"; do
 
-    rm "$path/utilities/$file"
+    rm "$path/utilities/$file"; echo "  $file"
     curl -sSfL "$REPO_RAW_URL/utilities/$file" -o "$path/utilities/$file"
     chmod +x "$path/utilities/$file"
 
 done
-
+echo
