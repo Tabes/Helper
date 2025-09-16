@@ -82,9 +82,9 @@ download_and_report() {
             chmod +x "$target"
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
             if [[ -n "$version" ]]; then
-                log "  ${GREEN}$(printf '%-15s' "$file") v $version${RESET}"
+                log "  ${GREEN}$(printf '%-15s' "$file") v$version${RESET}"
             else
-                log "  ${YELLOW}$(printf '%-15s' "$file") v unknown${RESET}"
+                log "  ${YELLOW}$(printf '%-15s' "$file") unknown${RESET}"
             fi
         else
             log "  ${RED}$(printf '%-15s' "$file") download failed${RESET}"
