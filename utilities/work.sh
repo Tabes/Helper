@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.3
+### Version: 2.0.4
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -62,11 +62,33 @@ log() {
     echo -e "$1" | tee -a "$logfile"
 }
 
+validate_files() {
+    local valid_files=("$@")
+    local invalid=()
+
+    for requested in "${only_files[@]}"; do
+        if [[ ! " ${valid_files[*]} " =~ " $requested " ]]; then
+            invalid+=("$requested")
+        fi
+    done
+
+    if [[ ${#invalid[@]} -gt 0 ]]; then
+        echo -e "\n❌ Ungültige Datei(en) in --only: ${invalid[*]}"
+        echo "➡️  Erlaubt sind: ${valid_files[*]}"
+        exit 1
+    fi
+}
+
 ### === Download-Funktion === ###
 download() {
     local subdir="$1"
     shift
     local files=("$@")
+
+    ### === Validierung bei --only === ###
+    if [[ ${#only_files[@]} -gt 0 ]]; then
+        validate_files "${files[@]}"
+    fi
 
     log "\n📦 Downloading: ${files[*]}\n"
 
