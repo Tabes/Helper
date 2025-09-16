@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.2
+### Version: 2.0.3
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -13,6 +13,7 @@
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
 ################################################################################
 
+# shellcheck disable=SC2155
 
 ################################################################################
 
@@ -62,7 +63,7 @@ log() {
 }
 
 ### === Download-Funktion === ###
-download_and_report() {
+download() {
     local subdir="$1"
     shift
     local files=("$@")
@@ -72,31 +73,48 @@ download_and_report() {
     for file in "${files[@]}"; do
         # Wenn --only gesetzt ist, nur diese Dateien verarbeiten
         if [[ ${#only_files[@]} -gt 0 ]]; then
+
             [[ ! " ${only_files[*]} " =~ " $file " ]] && continue
+
         fi
 
         local target="$path/$subdir/$file"
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
+
             log "  ${YELLOW}DRY: Would download $file → $target${RESET}"
             continue
+
         fi
 
         rm -f "$target"
 
-        if curl -sSfL "$url" -o "$target"; then
+        if curl -sSfL "$url" -o "$target" 2>/dev/null; then
+
             chmod +x "$target"
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
+
             if [[ -n "$version" ]]; then
+
                 log "  ${GREEN}$(printf '%-15s' "$file") v$version${RESET}"
+
             else
+
                 log "  ${YELLOW}$(printf '%-15s' "$file") unknown${RESET}"
+
             fi
+
         else
-            log "  ${RED}$(printf '%-15s' "$file") download failed${RESET}"
+
+            log "  ${RED}$(printf '%-15s' "$file") failed${RESET}"
+
         fi
+
     done
+
+    echo
+
 }
 
 ### === Hauptdateien (optional auch in --only integrierbar) === ###
@@ -106,15 +124,15 @@ if ! $dry_run && [[ ${#only_files[@]} -eq 0 ]]; then
 fi
 
 ### === Plugins === ###
-download_and_report "scripts/plugins" \
+download "scripts/plugins" \
     cmd.sh log.sh network.sh print.sh secure.sh show.sh update.sh
 
 ### === Utilities === ###
-download_and_report "utilities" \
+download "utilities" \
     dos2linux.sh gitclone.sh work.sh
 
 ### === Configs === ###
-download_and_report "configs" \
+download "configs" \
     project.conf helper.conf update.conf
 
 echo; echo
