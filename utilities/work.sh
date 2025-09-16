@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.0.4
+### Version: 2.1.0
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -18,143 +18,199 @@
 ################################################################################
 
 
+### === Repository and Subpaths === ###
 REPO_RAW_URL="https://raw.githubusercontent.com/Tabes/Helper/refs/heads/main"
 path="/opt/helper"
+backup_path="$path/backups"
+plugins_path="scripts/plugins"
+utilities_path="utilities"
+configs_path="configs"
 logfile="$path/logs/install.log"
 
-#### === Farben === ###
-GREEN="\e[32m"
-RED="\e[31m"
-YELLOW="\e[33m"
-RESET="\e[0m"
+### === Terminal Colors === ###
+GREEN="\e[32m"; RED="\e[31m"; YELLOW="\e[33m"; RESET="\e[0m"
 
-### === Flags === ###
+### === Flags and Filters === ###
 dry_run=false
 only_files=()
+groups=()
+list_mode=false
+interactive_mode=false
+summary_mode=false
+backup_enabled=false
 
-### === Argument-Parser === ###
+### === File Groups Definition === ###
+declare -A file_groups=(
+    [plugins]="cmd.sh log.sh network.sh print.sh secure.sh show.sh update.sh"
+    [utilities]="dos2linux.sh gitclone.sh work.sh"
+    [configs]="project.conf helper.conf update.conf"
+)
+
+### === Summary Collector === ###
+declare -A summary_versions=()
+
+### === Argument Parser === ###
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --dry)
-            dry_run=true
-            ;;
-
+        --dry) dry_run=true ;;
+        --list) list_mode=true ;;
+        --interactive) interactive_mode=true ;;
+        --summary) summary_mode=true ;;
+        --backup) backup_enabled=true ;;
         --only)
             shift
-
             while [[ $# -gt 0 && "$1" != --* ]]; do
-
-                only_files+=("$1")
-                shift
-
+                only_files+=("$1"); shift
             done
             continue
             ;;
-
+        --group)
+            shift
+            while [[ $# -gt 0 && "$1" != --* ]]; do
+                groups+=("$1"); shift
+            done
+            continue
+            ;;
     esac
-
     shift
-
 done
 
-### === Logging-Funktion === ###
-log() {
-    echo -e "$1" | tee -a "$logfile"
+### === Logger === ###
+log() { echo -e "$1" | tee -a "$logfile"; }
+
+# Suggest similar filenames based on Levenshtein distance
+similar_files() {
+    local input="$1"; shift
+    local candidates=("$@")
+    for candidate in "${candidates[@]}"; do
+        local dist=$(awk -v a="$input" -v b="$candidate" '
+        function min(x,y,z){return x<y?(x<z?x:z):(y<z?y:z)}
+        BEGIN{
+            len_a=length(a); len_b=length(b)
+            for(i=0;i<=len_a;i++) d[i,0]=i
+            for(j=0;j<=len_b;j++) d[0,j]=j
+            for(i=1;i<=len_a;i++){
+                for(j=1;j<=len_b;j++){
+                    cost=(substr(a,i,1)==substr(b,j,1)?0:1)
+                    d[i,j]=min(d[i-1,j]+1,d[i,j-1]+1,d[i-1,j-1]+cost)
+                }
+            }
+            print d[len_a,len_b]
+        }')
+        [[ "$dist" -le 3 ]] && echo "    → Did you mean: $candidate?"
+    done
 }
 
+### === (Validate --only Files) === ###
 validate_files() {
     local valid_files=("$@")
     local invalid=()
-
     for requested in "${only_files[@]}"; do
-        if [[ ! " ${valid_files[*]} " =~ " $requested " ]]; then
-            invalid+=("$requested")
-        fi
+        [[ ! " ${valid_files[*]} " =~ " $requested " ]] && invalid+=("$requested")
     done
-
     if [[ ${#invalid[@]} -gt 0 ]]; then
-        echo -e "\n❌ Ungültige Datei(en) in --only: ${invalid[*]}"
-        echo "➡️  Erlaubt sind: ${valid_files[*]}"
+        echo -e "\n❌ Invalid file(s) in --only: ${invalid[*]}"
+        echo "➡️  Allowed files: ${valid_files[*]}"
+        for wrong in "${invalid[@]}"; do
+            similar_files "$wrong" "${valid_files[@]}"
+        done
         exit 1
     fi
 }
 
-### === Download-Funktion === ###
+### === Check if group should be downloaded === ###
+download_group() {
+    local group="$1"
+    [[ ${#groups[@]} -eq 0 ]] && return 0
+    [[ " ${groups[*]} " =~ " $group " ]] && return 0
+    return 1
+}
+
+### === List available groups and files === ###
+if $list_mode; then
+    echo -e "\n📂 Available groups and files:\n"
+    for group in "${!file_groups[@]}"; do
+        echo "🔹 $group:"
+        for file in ${file_groups[$group]}; do
+            echo "    - $file"
+        done
+        echo
+    done
+    exit 0
+fi
+
+### === Interactive group selection === ###
+if $interactive_mode; then
+    echo -e "\n🧭 Select group(s) to download:\n"
+    select group in "${!file_groups[@]}" "All" "Cancel"; do
+        case "$group" in
+            Cancel) echo "❌ Cancelled."; exit 0 ;;
+            All) groups=(); break ;;
+            *) groups+=("$group"); break ;;
+        esac
+    done
+fi
+
+### === Download Function === ###
 download() {
-    local subdir="$1"
-    shift
+    local subdir="$1"; shift
     local files=("$@")
+    local group="${subdir##*/}"
 
-    ### === Validierung bei --only === ###
-    if [[ ${#only_files[@]} -gt 0 ]]; then
-        validate_files "${files[@]}"
-    fi
+    download_group "$group" || return
 
+    [[ ${#only_files[@]} -gt 0 ]] && validate_files "${files[@]}"
     log "\n📦 Downloading: ${files[*]}\n"
 
     for file in "${files[@]}"; do
-        # Wenn --only gesetzt ist, nur diese Dateien verarbeiten
-        if [[ ${#only_files[@]} -gt 0 ]]; then
-
-            [[ ! " ${only_files[*]} " =~ " $file " ]] && continue
-
-        fi
-
+        [[ ${#only_files[@]} -gt 0 && ! " ${only_files[*]} " =~ " $file " ]] && continue
         local target="$path/$subdir/$file"
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-
             log "  ${YELLOW}DRY: Would download $file → $target${RESET}"
             continue
+        fi
 
+        # === Backup existing file ===
+        if $backup_enabled && [[ -f "$target" ]]; then
+            mkdir -p "$backup_path/$subdir"
+            cp "$target" "$backup_path/$subdir/$file"
+            log "  ${YELLOW}Backup created for $file → $backup_path/$subdir/$file${RESET}"
         fi
 
         rm -f "$target"
-
         if curl -sSfL "$url" -o "$target" 2>/dev/null; then
-
             chmod +x "$target"
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
-
-            if [[ -n "$version" ]]; then
-
-                log "  ${GREEN}$(printf '%-15s' "$file") v$version${RESET}"
-
-            else
-
-                log "  ${YELLOW}$(printf '%-15s' "$file") unknown${RESET}"
-
-            fi
-
+            summary_versions["$file"]="${version:-unknown}"
+            log "  ${GREEN}$(printf '%-15s' "$file") v${version:-unknown}${RESET}"
         else
-
+            summary_versions["$file"]="failed"
             log "  ${RED}$(printf '%-15s' "$file") failed${RESET}"
-
         fi
-
     done
-
     echo
-
 }
 
-### === Hauptdateien (optional auch in --only integrierbar) === ###
+### === Download Core Files (unless --only or --dry) === ###
 if ! $dry_run && [[ ${#only_files[@]} -eq 0 ]]; then
     curl -sSfL "$REPO_RAW_URL/start.sh" -o /opt/start.sh
     curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path/scripts/helper.sh"
 fi
 
-### === Plugins === ###
-download "scripts/plugins" \
-    cmd.sh log.sh network.sh print.sh secure.sh show.sh update.sh
+### === Execute Downloads by Group === ###
+download "$plugins_path"   ${file_groups[plugins]}
+download "$utilities_path" ${file_groups[utilities]}
+download "$configs_path"   ${file_groups[configs]}
 
-### === Utilities === ###
-download "utilities" \
-    dos2linux.sh gitclone.sh work.sh
-
-### === Configs === ###
-download "configs" \
-    project.conf helper.conf update.conf
-
-echo; echo
+### === Summary Output === ###
+if $summary_mode; then
+    echo -e "\n📊 Summary of downloaded files:\n"
+    printf "  %-20s %s\n" "File" "Version"
+    printf "  %-20s %s\n" "--------------------" "--------"
+    for file in "${!summary_versions[@]}"; do
+        printf "  %-20s %s\n" "$file" "${summary_versions[$file]}"
+    done
+    echo
+fi
