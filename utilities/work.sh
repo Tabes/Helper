@@ -19,8 +19,10 @@
 REPO_RAW_URL="https://raw.githubusercontent.com/Tabes/Helper/refs/heads/main"
 path="/opt/helper"
 
+echo
 echo "Download URL: $REPO_RAW_URL"
 echo "Target Path:  $path"
+echo
 
 curl -sSfL "$REPO_RAW_URL/start.sh" -o /opt/start.sh
 curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path"/scripts/helper.sh
@@ -28,6 +30,7 @@ curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path"/scripts/helper.sh
 
 
 files=(cmd.sh log.sh print.sh secure.sh show.sh update.sh)
+echo
 echo "Files:  ${files[*]}"
 
 for file in "${files[@]}"; do
