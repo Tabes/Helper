@@ -5,9 +5,9 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.2
+### Version: 1.0.3
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-14
+### Date:    2025-09-16
 ### License: MIT
 ### Usage:   Source this Function to load Project Configurations with Dependencies
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
@@ -30,7 +30,6 @@ curl -sSfL "$REPO_RAW_URL/scripts/helper.sh" -o "$path"/scripts/helper.sh
 
 
 files=(cmd.sh log.sh print.sh secure.sh show.sh update.sh)
-echo
 echo "Files:  ${files[*]}"
 
 for file in "${files[@]}"; do
@@ -39,6 +38,7 @@ done
 
 files=(gitclone.sh work.sh)
 echo "Files:  ${files[*]}"
+echo
 
 for file in "${files[@]}"; do
     curl -sSfL "$REPO_RAW_URL/utilities/$file" -o "$path/utilities/$file"
