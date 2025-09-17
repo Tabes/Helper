@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.16
+### Version: 2.1.17
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -148,17 +148,20 @@ print() {
 	_get_cursor_position() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
-		### Get current cursor position with caching ###
+		### Get current Cursor Position with caching ###
 		if [ -z "$output_file" ] && [ "$cursor_cached" = false ]; then
+			$debug && debug --info "${FUNCNAME[0]}" "($*)" 4 "Get current Cursor Position with caching" ### Debug Function to show Variables and Status ###
 
 			if IFS=';' read -sdR -p $'\033[6n' cursor_row cursor_col 2>/dev/null; then
+				$debug && debug --info "${FUNCNAME[0]}" "($*)" 5 "read: cursor_row cursor_col" ### Debug Function to show Variables and Status ###
 
 				cursor_row="${cursor_row#*[}"
 				cursor_cached=true
 
 			else
+				$debug && debug --info "${FUNCNAME[0]}" "($*)" 5 "Fallback Values if Cursor Query fails" ### Debug Function to show Variables and Status ###
 
-				### Fallback values if cursor query fails ###
+				### Fallback Values if Cursor Query fails ###
 				cursor_row=1
 				cursor_col=1
 
