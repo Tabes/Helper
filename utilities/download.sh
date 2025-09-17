@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.20
+### Version: 2.1.21
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -288,10 +288,10 @@ fi
 
 ### === Execute Downloads by Group === ###
 download "$configs_path"   ${file_groups[configs]}
-download ""                ${file_groups[project]}
 download "$helper_path"    ${file_groups[helper]}
 download "$plugins_path"   ${file_groups[plugins]}
 download "$utilities_path" ${file_groups[utilities]}
+download ""                ${file_groups[project]}
 
 ### === Summary Output === ###
 if $summary_mode; then
