@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.11
+### Version: 2.1.12
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -111,7 +111,7 @@ similar_files() {
             print d[len_a,len_b]
         }')
 
-        [[ "$dist" -le 3 ]] && printf "    → Did you mean: %s${NC}\n" "$candidate"
+        [[ "$dist" -le 3 ]] && printf "    → Did you mean: ${YE}%s${NC}\n\n" "$candidate"
 
     done
 
