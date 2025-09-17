@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.12
+### Version: 2.1.13
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -66,7 +66,7 @@ parse_arguments() {
 ### Unified print Function for all Output Operations ###
 print() {
 
-	$debug && debug --info "${FUNCNAME[0]}" "($*)" 2 "call print()" ### Debug Function to show Variables and Status ###
+	$debug && debug --info "${FUNCNAME[0]}" "($*)" 2 "call print() Function" ### Debug Function to show Variables and Status ###
 
 	### Local variables with optimized defaults ###
 	local output_buffer=""
@@ -86,6 +86,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_create_file_path() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Create directory path for output file with error handling ###
 		local file_path="$1"
 		local dir_path
@@ -118,6 +120,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_format_and_output_line() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Format and output a single line with positioning ###
 		local line="$1"
 		local line_index="$2"
@@ -145,6 +149,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_get_cursor_position() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Get current cursor position with caching ###
 		if [ -z "$output_file" ] && [ "$cursor_cached" = false ]; then
 
@@ -166,6 +172,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_handle_positioning() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Handle cursor positioning and alignment with validation ###
 		local pos="$1"
 		local row="$2"
@@ -232,6 +240,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_invalid_operation() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Handle invalid operations with standardized error messages ###
 		local function="$1"
 		local invalid_param="$2"
@@ -242,6 +252,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_output_router() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Route output to console or file with optimized handling ###
 		local text="$1"
 		local use_color="${2:-false}"
@@ -286,6 +298,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_process_array() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Process array output with enhanced buffer management and error handling ###
 		local items=()
 		local delay_time=0
@@ -433,6 +447,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_process_debug_tools() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Handle debug and ruler display functions ###
 		local tool="$1"
 		local option="$2"
@@ -479,6 +495,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_process_movement() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Handle cursor movement commands with validation ###
 		local direction="$1"
 		local count="${2:-1}"
@@ -521,6 +539,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_reset_output_buffer() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Reset output arrays and variables ###
 		unset arr_lines_output 2>/dev/null
 		output_buffer=""
@@ -530,6 +550,8 @@ print() {
 
 	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_validate_parameters() {
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
+
 		### Validate common parameter types and ranges ###
 		local param_type="$1"
 		local param_value="$2"
