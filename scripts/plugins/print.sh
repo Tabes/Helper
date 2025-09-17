@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.11
+### Version: 2.1.12
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -68,7 +68,6 @@ print() {
 
 	$debug && debug --info "${FUNCNAME[0]}" "($*)" 2 "call print()" ### Debug Function to show Variables and Status ###
 
-	return 0
 	### Local variables with optimized defaults ###
 	local output_buffer=""
 	local current_color="${NC}"
@@ -578,8 +577,10 @@ print() {
 		return 0
 	}
 
-	### Parse and Execute Arguments sequentially ###
+	### Parse & Execute Arguments sequentially ###
 	while [[ $# -gt 0 ]]; do
+
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "Parse & Execute Arguments sequentially" ### Debug Function to show Variables and Status ###
 
 		case $1 in
 			### Position and movement with validation ###
