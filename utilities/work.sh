@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.6
+### Version: 2.1.7
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -169,7 +169,7 @@ download() {
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-            printf "  [${YE}DRY${NC}]   %-14s → %s${NC}\n" "$file" "$target"
+            printf "   [${YE}DRY${NC}]   %-14s → %s${NC}\n" "$file" "$target"
             continue
         fi
 
@@ -177,7 +177,7 @@ download() {
         if $backup_enabled && [[ -f "$target" ]]; then
             mkdir -p "$backup_path/$subdir"
             cp "$target" "$backup_path/$subdir/$file"
-            printf "  [${YE}BACKUP${NC}] %-13s → %s${NC}\n" "$file" "$backup_path/$subdir/$file"
+            printf "   [${YE}BACKUP${NC}] %-13s → %s${NC}\n" "$file" "$backup_path/$subdir/$file"
         fi
 
         rm -f "$target"
@@ -186,11 +186,11 @@ download() {
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
             summary_versions["$file"]="${version:-unknown}"
             summary_groups["$file"]="$group"
-            printf "  [${GN}OK${NC}]     %-15s v%s${NC}\n" "$file" "${version:-${YE}unknown${NC}}"
+            printf "   [${GN}OK${NC}]     %-15s v%s${NC}\n" "$file" "${version:-${YE}unknown${NC}}"
         else
             summary_versions["$file"]="failed"
             summary_groups["$file"]="$group"
-            printf "  [${RD}FAIL${NC}]   %-15s failed\n" "$file"
+            printf "   [${RD}FAIL${NC}]   %-15s failed\n" "$file"
         fi
     done
     echo
