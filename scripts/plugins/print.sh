@@ -27,6 +27,7 @@ parse_arguments() {
 		case $1 in
 			--debug|-d)
 				debug=true
+				$debug && debug --info "${FUNCNAME[0]}" "($*)" 1 "message" ### Debug Function to show Variables and Status ###
 				;;
 
 			--help|-h)
