@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.11
+### Version: 3.0.12
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -440,7 +440,8 @@ debug() {
 	local level="${4:-1}"
 	local msg="${5:-no message}"
 
-	printf "%s %s %s %s %s\n" "debug: ${log_level}" "Function: ${caller_function}" "Values: ${parameter}" "Level: ${level}" "${msg}"
+	printf "%s ${YE}%s${NC} %s ${GN}%s${NC} %s${NC} %s${NC} %s${NC} %s ${CY}%s${NC}\n" \
+			"debug:" "${log_level}" "Function:" "${caller_function}" "Values:" "${parameter}" "Level:" "${level}" "${msg}"
 
 }
 
