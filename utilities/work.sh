@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.5
+### Version: 2.1.6
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -209,14 +209,14 @@ download "$configs_path"   ${file_groups[configs]}
 
 ### === Summary Output === ###
 if $summary_mode; then
-    echo -e "\n📊 Summary of downloaded files:\n"
+    echo -e "\n📊 Summary of downloaded files:"
     for group in plugins utilities configs; do
-        printf "%s\n\n" "🔹 Group: $group"
+        printf "\b%s\n\n" "🔹 Group: $group"
         printf "   %-20s %s${NC}\n" "File" "Version"
         printf "   %-20s %s${NC}\n" "--------------------" "--------"
         for file in "${!summary_versions[@]}"; do
             [[ "${summary_groups[$file]}" == "$group" ]] && \
-            printf "  %-20s %s${NC}\n" "$file" "${summary_versions[$file]}"
+            printf "   %-20s %s${NC}\n" "$file" "${summary_versions[$file]}"
         done
         echo
     done
