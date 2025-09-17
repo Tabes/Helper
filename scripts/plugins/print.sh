@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.15
+### Version: 2.1.16
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -1036,6 +1036,13 @@ print() {
 				;;
 
 		esac
+
+		local msg="output_buffer: $output_buffer, current_color: $current_color, current_alignment: $current_alignment, \
+					current_position: $current_position, current_row: $current_row, suppress_newline: $suppress_newline, \
+					has_output: $has_output, output_file: $output_file, file_append: $file_append, cursor_row: $cursor_row, \
+					cursor_col: $cursor_col, relative_position: $relative_position, cursor_cached: $cursor_cached"
+
+		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "$msg" ### Debug Function to show Variables and Status ###
 
 	done
 
