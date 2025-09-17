@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.14
+### Version: 2.1.15
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -23,7 +23,8 @@ REPO_RAW_URL="https://raw.githubusercontent.com/Tabes/Helper/refs/heads/main"
 path="/opt/helper"
 
 backup_path="$path/backups"
-plugins_path="scripts/plugins"
+helper_path="scripts"
+plugins_path="$helper_path/plugins"
 utilities_path="utilities"
 configs_path="configs"
 
@@ -44,6 +45,8 @@ backup_enabled=false
 ### === File Groups Definition === ###
 declare -A file_groups=(
 
+    [project]="start.sh"
+    [helper]="helper.sh"
     [plugins]="cmd.sh log.sh network.sh print.sh secure.sh show.sh update.sh"
     [utilities]="download.sh dos2linux.sh gitclone.sh work.sh"
     [configs]="project.conf helper.conf update.conf"
@@ -281,6 +284,8 @@ if ! $dry_run && [[ ${#only_files[@]} -eq 0 ]]; then
 fi
 
 ### === Execute Downloads by Group === ###
+download ""                ${file_groups[project]}
+download "$helper_path"    ${file_groups[helper]}
 download "$plugins_path"   ${file_groups[plugins]}
 download "$utilities_path" ${file_groups[utilities]}
 download "$configs_path"   ${file_groups[configs]}
