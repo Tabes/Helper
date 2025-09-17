@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.7
+### Version: 2.1.10
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -66,8 +66,9 @@ parse_arguments() {
 ### Unified print Function for all Output Operations ###
 print() {
 
-	$debug && debug --info "${FUNCNAME[0]}" "($*)" 1 "message" ### Debug Function to show Variables and Status ###
+	$debug && debug --info "${FUNCNAME[0]}" "($*)" 2 "message" ### Debug Function to show Variables and Status ###
 
+	return 0
 	### Local variables with optimized defaults ###
 	local output_buffer=""
 	local current_color="${NC}"
@@ -706,15 +707,21 @@ print() {
 
 			### Debug and tools ###
 			-debug)
-				debug_mode=true
-				if [ "$2" = "true" ]; then
+				debug=true
+				$debug && debug --info "${FUNCNAME[0]}" "($*)" 1 "message" ### Debug Function to show Variables and Status ###
+
+				shift
+
+
+				# debug_mode=true
+				# if [ "$2" = "true" ]; then
 					### Show debug info ###
-					_get_cursor_position
-					print --info "Debug: pos($current_position) row($current_row) col($cursor_col) align($current_alignment) rel_pos($relative_position)"
-					shift 2
-				else
+				# 	_get_cursor_position
+				# 	print --info "Debug: pos($current_position) row($current_row) col($cursor_col) align($current_alignment) rel_pos($relative_position)"
+				# 	shift 2
+				# else
 					shift
-				fi
+				# fi
 				;;
 
 			-ruler)

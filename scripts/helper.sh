@@ -5,9 +5,9 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.7
+### Version: 3.0.9
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-14
+### Date:    2025-09-17
 ### License: MIT
 ### Usage:   Source this Function to load Project Configurations with Dependencies
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
@@ -441,7 +441,8 @@ debug() {
 	local level="${5:-1}"
 	local msg="${6:-no message}"
 
-	printf "%s %s %s %s %s %s\n" "${log_level}" "${caller_function}" "${section}" "${parameter}" "${level}" "${msg}"
+	printf "%s %s %s %s %s %s\n" "debug: ${log_level}" "Function: ${caller_function}" "Section: ${section}" \
+									"Values: ${parameter}" "Level: ${level}" "${msg}"
 
 	# arr=$(printf "%s " "${ARR[@]}" | sed 's/[[:space:]]*$//')
 
