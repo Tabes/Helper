@@ -284,11 +284,11 @@ if ! $dry_run && [[ ${#only_files[@]} -eq 0 ]]; then
 fi
 
 ### === Execute Downloads by Group === ###
+download "$configs_path"   ${file_groups[configs]}
 download ""                ${file_groups[project]}
 download "$helper_path"    ${file_groups[helper]}
 download "$plugins_path"   ${file_groups[plugins]}
 download "$utilities_path" ${file_groups[utilities]}
-download "$configs_path"   ${file_groups[configs]}
 
 ### === Summary Output === ###
 if $summary_mode; then
