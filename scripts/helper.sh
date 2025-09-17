@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.6
+### Version: 3.0.7
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-14
 ### License: MIT
@@ -425,6 +425,45 @@ load_config() {
 	fi
 
 	return 0
+
+}
+
+
+################################################################################
+### === CONFIGURATION LOADING WITH DEPENDENCY MANAGEMENT === ###
+################################################################################
+
+debug() {
+	local log_level="${1:---info}"
+	local caller_function="$2"
+	local section="${3:-0.0}"
+	local parameter="${4:-empty}"
+	local level="${5:-1}"
+	local msg="${6:-no message}"
+
+	printf "%s %s %s %s %s %s\n" "${log_level}" "${caller_function}" "${section}" "${parameter}" "${level}" "${msg}"
+
+	# arr=$(printf "%s " "${ARR[@]}" | sed 's/[[:space:]]*$//')
+
+	# output -c "$rd" "${POS[0]}" -line '_' $((MAX_COL - (POS[0] * 2) + 2)) -cr ### Dividing Line (POS Start, calculated End POS) ###
+
+	# output -c "$gn" "${POS[0]}" "$pos" -c "$BK" "${POS[2]}" "$msg" -cr
+	# output -c "$BK" "${POS[2]}" 'Application: (' -c "$wh" "$app" -c "$BK" '), Command: (' -c "$wh" "$cmd"
+
+	# output -c "$BK" '), Parameter: (' -c "$wh" "${3:-none}" -c "$BK" '), '
+
+	# if ((${#arr} <= 15)); then
+
+	# 	output 'Option: (' -c "$wh" "$arr" -c "$BK" ')' -cr 1
+
+	# else
+
+	# 	output -cr
+	# 	output -r 34 'Option: (' -c "$wh" -l 35 "$arr" -c "$BK" ')' -cr 1
+
+	# fi
+
+	# output -c "$rd" "${POS[0]}" -line '_' $((MAX_COL - (POS[0] * 2) + 2)) -cr ### Dividing Line (POS Start, calculated End POS) ###
 
 }
 
