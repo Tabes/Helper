@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.15
+### Version: 2.1.16
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -13,7 +13,7 @@
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
 ################################################################################
 
-# shellcheck disable=SC2076,SC2086,SC2155
+# shellcheck disable=SC1090,SC2076,SC2086,SC2155
 
 ################################################################################
 
@@ -41,6 +41,7 @@ list_mode=false
 interactive_mode=false
 summary_mode=false
 backup_enabled=false
+sourcing=false
 
 ### === File Groups Definition === ###
 declare -A file_groups=(
@@ -62,6 +63,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry) dry_run=true ;;
         --list) list_mode=true ;;
+        --sourcing) sourcing=true ;;
         --interactive) interactive_mode=true ;;
         --summary) summary_mode=true ;;
         --backup) backup_enabled=true ;;
@@ -252,6 +254,7 @@ download() {
 
         if curl -sSfL "$url" -o "$target" 2>/dev/null; then
             chmod +x "$target"
+            $sourcing && source "${target}"
 
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
 
