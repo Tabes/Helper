@@ -13,7 +13,7 @@
 ### Commit:  Complete Framework Integration with parse_arguments and main function
 ################################################################################
 
-# shellcheck disable=SC2120
+# shellcheck disable=SC2120,SC2317,SC2329
 
 ################################################################################
 ### Parse Command Line Arguments ###
@@ -84,7 +84,6 @@ print() {
 	local debug_mode=false
 	local cursor_cached=false
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_create_file_path() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -118,7 +117,6 @@ print() {
 		return 0
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_format_and_output_line() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -147,7 +145,6 @@ print() {
 		_output_router "\n" false
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_get_cursor_position() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -170,7 +167,6 @@ print() {
 		fi
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_handle_positioning() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -238,7 +234,6 @@ print() {
 		return 0
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_invalid_operation() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -250,7 +245,6 @@ print() {
 		print -l 4 "Usage: $function [option] [Parameter]  (-h or --help for Help) for more Information."
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_output_router() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -296,7 +290,6 @@ print() {
 		return 0
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_process_array() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -445,7 +438,6 @@ print() {
 		return 0
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_process_debug_tools() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -493,7 +485,6 @@ print() {
 		suppress_newline=true
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_process_movement() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -537,7 +528,6 @@ print() {
 		return 0
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_reset_output_buffer() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
@@ -548,11 +538,10 @@ print() {
 		cursor_cached=false
 	}
 
-	# shellcheck disable=SC2317,SC2329	# Function called conditionally within main function
 	_validate_parameters() {
 		$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "call sub() Function" ### Debug Function to show Variables and Status ###
 
-		### Validate common parameter types and ranges ###
+		### Validate common Parameter Types and Ranges ###
 		local param_type="$1"
 		local param_value="$2"
 		local param_name="$3"
