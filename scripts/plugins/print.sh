@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.5
+### Version: 2.1.6
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -261,10 +261,10 @@ print() {
 
 		else
 
-			### Console output with formatting ###
+			### Console Output with Formatting ###
 			if [ "$use_color" = true ] && [ -n "$current_color" ]; then
 
-				printf "%s%s%s" "$current_color" "$text" "$NC"
+				printf "${current_color}%s${NC}" "$text"
 
 			else
 
@@ -537,6 +537,7 @@ print() {
 
 				fi
 				;;
+
 			position)
 				if [[ ! "$param_value" =~ ^[0-9]+$ ]] || [ "$param_value" -lt 1 ] || [ "$param_value" -gt 200 ]; then
 
@@ -545,6 +546,7 @@ print() {
 
 				fi
 				;;
+
 			time)
 				if [[ ! "$param_value" =~ ^[0-9]*\.?[0-9]+$ ]] || (( $(printf "%.0f" $(echo "$param_value < 0" | bc -l 2>/dev/null || echo "1")) )); then
 
@@ -553,6 +555,7 @@ print() {
 
 				fi
 				;;
+
 			file)
 				if [ -z "$param_value" ]; then
 
@@ -561,6 +564,7 @@ print() {
 
 				fi
 				;;
+
 		esac
 
 		return 0
