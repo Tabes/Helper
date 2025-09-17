@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.14
+### Version: 2.1.15
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -720,7 +720,7 @@ print() {
 			### Debug and tools ###
 			-debug)
 				debug=true
-				$debug && debug --info "${FUNCNAME[0]}" "($*)" 1 "message" ### Debug Function to show Variables and Status ###
+				$debug && debug --info "${FUNCNAME[0]}" "($*)" 3 "-debug) Parse & Execute Arguments sequentially" ### Debug Function to show Variables and Status ###
 
 				shift
 
