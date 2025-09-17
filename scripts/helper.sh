@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.9
+### Version: 3.0.10
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -436,12 +436,11 @@ load_config() {
 debug() {
 	local log_level="${1:---info}"
 	local caller_function="$2"
-	local section="${3:-0.0}"
-	local parameter="${4:-empty}"
-	local level="${5:-1}"
-	local msg="${6:-no message}"
+	local parameter="${3:-empty}"
+	local level="${4:-1}"
+	local msg="${5:-no message}"
 
-	printf "%s %s %s %s %s %s\n" "debug: ${log_level}" "Function: ${caller_function}" "Section: ${section}" \
+	printf "%s %s %s %s %s\n" "debug: ${log_level}" "Function: ${caller_function}" \
 									"Values: ${parameter}" "Level: ${level}" "${msg}"
 
 	# arr=$(printf "%s " "${ARR[@]}" | sed 's/[[:space:]]*$//')
@@ -1333,10 +1332,14 @@ main() {
 
 ### Initialize when run directly ###
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+
 	### Running directly as Script ###
 	main "$@"
+
 else
+
 	### Being sourced as library ###
 	### Functions loaded and ready for use ###
 	:
+
 fi
