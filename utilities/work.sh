@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.4
+### Version: 2.1.5
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -169,7 +169,7 @@ download() {
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-            printf "  [${YE}DRY${NC}]   %-15s → %s${NC}\n" "$file" "$target"
+            printf "  [${YE}DRY${NC}]   %-14s → %s${NC}\n" "$file" "$target"
             continue
         fi
 
@@ -177,7 +177,7 @@ download() {
         if $backup_enabled && [[ -f "$target" ]]; then
             mkdir -p "$backup_path/$subdir"
             cp "$target" "$backup_path/$subdir/$file"
-            printf "  [${YE}BACKUP${NC}] %-15s → %s${NC}\n" "$file" "$backup_path/$subdir/$file"
+            printf "  [${YE}BACKUP${NC}] %-13s → %s${NC}\n" "$file" "$backup_path/$subdir/$file"
         fi
 
         rm -f "$target"
@@ -211,9 +211,9 @@ download "$configs_path"   ${file_groups[configs]}
 if $summary_mode; then
     echo -e "\n📊 Summary of downloaded files:\n"
     for group in plugins utilities configs; do
-        echo "🔹 Group: $group"
-        printf "  %-20s %s${NC}\n" "File" "Version"
-        printf "  %-20s %s${NC}\n" "--------------------" "--------"
+        printf "%s\n\n" "🔹 Group: $group"
+        printf "   %-20s %s${NC}\n" "File" "Version"
+        printf "   %-20s %s${NC}\n" "--------------------" "--------"
         for file in "${!summary_versions[@]}"; do
             [[ "${summary_groups[$file]}" == "$group" ]] && \
             printf "  %-20s %s${NC}\n" "$file" "${summary_versions[$file]}"
