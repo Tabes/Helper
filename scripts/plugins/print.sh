@@ -5,7 +5,7 @@
 ### Provides unified print Function for all Output Operations and Formatting
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.13
+### Version: 2.1.14
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-15
 ### License: MIT
@@ -27,7 +27,7 @@ parse_arguments() {
 		case $1 in
 			--debug|-d)
 				debug=true
-				$debug && debug --info "${FUNCNAME[0]}" "($*)" 1 "message" ### Debug Function to show Variables and Status ###
+				$debug && debug --info "${FUNCNAME[0]}" "($*)" 2 "--debug|-d Parse Command Line Arguments" ### Debug Function to show Variables and Status ###
 				;;
 
 			--help|-h)
