@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.13
+### Version: 2.1.14
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -201,7 +201,25 @@ download() {
 
     download_group "$group" || return
 
-    [[ ${#only_files[@]} -gt 0 ]] && validate_files "${files[@]}"
+    if [[ ${#only_files[@]} -gt 0 ]]; then
+        local matched=()
+
+        for f in "${files[@]}"; do
+
+            [[ " ${only_files[*]} " =~ " $f " ]] && matched+=("$f")
+
+        done
+
+        if [[ ${#matched[@]} -eq 0 ]]; then
+
+            return
+
+        fi
+
+        validate_files "${files[@]}"
+
+    fi
+
     log "\n📦 Downloading group: $group\n"
 
     for file in "${files[@]}"; do
