@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.1
+### Version: 2.1.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-16
 ### License: MIT
@@ -28,7 +28,7 @@ configs_path="configs"
 logfile="$path/logs/install.log"
 
 ### === Terminal Colors === ###
-GREEN="\e[32m"; RED="\e[31m"; YELLOW="\e[33m"; RESET="\e[0m"
+GN="\e[32m"; RD="\e[31m"; YE="\e[33m"; NC="\e[0m"
 
 ### === Flags and Filters === ###
 dry_run=false
@@ -190,7 +190,7 @@ download() {
         else
             summary_versions["$file"]="failed"
             summary_groups["$file"]="$group"
-            printf "  [FAIL]   %-15s download failed\n" "$file"
+            printf "  ${RD}[FAIL]${NC}   %-15s download failed\n" "$file"
         fi
     done
     echo
