@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.23
+### Version: 2.1.24
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -262,7 +262,7 @@ download() {
             summary_groups["$file"]="$group"
 
             printf "   [${GN}OK${NC}]     %-15s v%s${NC}" "$file" "${version:-${YE}unknown${NC}}"
-            $sourcing && printf "  ${GN}%-10s\n" "sourced" || printf "${NC}%s\n" ""
+            $sourcing && printf "  ${GN}%-10s${NC}\n" "sourced" || printf "${NC}%s\n" ""
 
         else
 
