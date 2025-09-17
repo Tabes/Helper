@@ -66,7 +66,7 @@ parse_arguments() {
 ### Unified print Function for all Output Operations ###
 print() {
 
-	$debug && debug --info "${FUNCNAME[0]}" "($*)" 2 "message" ### Debug Function to show Variables and Status ###
+	$debug && debug --info "${FUNCNAME[0]}" "($*)" 2 "call print()" ### Debug Function to show Variables and Status ###
 
 	return 0
 	### Local variables with optimized defaults ###
