@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.10
+### Version: 3.0.11
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -440,30 +440,7 @@ debug() {
 	local level="${4:-1}"
 	local msg="${5:-no message}"
 
-	printf "%s %s %s %s %s\n" "debug: ${log_level}" "Function: ${caller_function}" \
-									"Values: ${parameter}" "Level: ${level}" "${msg}"
-
-	# arr=$(printf "%s " "${ARR[@]}" | sed 's/[[:space:]]*$//')
-
-	# output -c "$rd" "${POS[0]}" -line '_' $((MAX_COL - (POS[0] * 2) + 2)) -cr ### Dividing Line (POS Start, calculated End POS) ###
-
-	# output -c "$gn" "${POS[0]}" "$pos" -c "$BK" "${POS[2]}" "$msg" -cr
-	# output -c "$BK" "${POS[2]}" 'Application: (' -c "$wh" "$app" -c "$BK" '), Command: (' -c "$wh" "$cmd"
-
-	# output -c "$BK" '), Parameter: (' -c "$wh" "${3:-none}" -c "$BK" '), '
-
-	# if ((${#arr} <= 15)); then
-
-	# 	output 'Option: (' -c "$wh" "$arr" -c "$BK" ')' -cr 1
-
-	# else
-
-	# 	output -cr
-	# 	output -r 34 'Option: (' -c "$wh" -l 35 "$arr" -c "$BK" ')' -cr 1
-
-	# fi
-
-	# output -c "$rd" "${POS[0]}" -line '_' $((MAX_COL - (POS[0] * 2) + 2)) -cr ### Dividing Line (POS Start, calculated End POS) ###
+	printf "%s %s %s %s %s\n" "debug: ${log_level}" "Function: ${caller_function}" "Values: ${parameter}" "Level: ${level}" "${msg}"
 
 }
 
