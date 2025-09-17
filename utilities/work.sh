@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.8
+### Version: 2.1.9
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -142,10 +142,10 @@ fi
 
 ### === Interactive group selection === ###
 if $interactive_mode; then
-    echo -e "\n🧭 Select group(s) to download:\n"
+    echo -e "\n\n🧭 Select group(s) to download:\n"
     select group in "${!file_groups[@]}" "All" "Cancel"; do
         case "$group" in
-            Cancel) echo "❌ Cancelled."; exit 0 ;;
+            Cancel) echo -e "\n❌ Cancelled...\n\n"; exit 0 ;;
             All) groups=(); break ;;
             *) groups+=("$group"); break ;;
         esac
