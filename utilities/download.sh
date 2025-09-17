@@ -261,7 +261,8 @@ download() {
             summary_versions["$file"]="${version:-unknown}"
             summary_groups["$file"]="$group"
 
-            printf "   [${GN}OK${NC}]     %-15s v%s${NC}\n" "$file" "${version:-${YE}unknown${NC}}"
+            printf "   [${GN}OK${NC}]     %-15s v%s${NC}" "$file" "${version:-${YE}unknown${NC}}"
+            $sourcing && (( ${#only_files[@]} > 0 )) && printf "  sourced\n" || printf "  sourced\n"
 
         else
 
