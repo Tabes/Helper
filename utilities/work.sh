@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.3
+### Version: 2.1.4
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-17
 ### License: MIT
@@ -98,7 +98,7 @@ similar_files() {
             }
             print d[len_a,len_b]
         }')
-        [[ "$dist" -le 3 ]] && printf "    → Did you mean: %s\n" "$candidate"
+        [[ "$dist" -le 3 ]] && printf "    → Did you mean: %s${NC}\n" "$candidate"
     done
 }
 
@@ -169,7 +169,7 @@ download() {
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-            printf "  [${YE}DRY${NC}]   %-12s → %s\n" "$file" "${YE}$target${NC}"
+            printf "  [${YE}DRY${NC}]   %-15s → %s${NC}\n" "$file" "$target"
             continue
         fi
 
@@ -177,7 +177,7 @@ download() {
         if $backup_enabled && [[ -f "$target" ]]; then
             mkdir -p "$backup_path/$subdir"
             cp "$target" "$backup_path/$subdir/$file"
-            printf "  [${YE}BACKUP] %-12s → %s\n" "$file${NC}" "$backup_path/$subdir/$file"
+            printf "  [${YE}BACKUP${NC}] %-15s → %s${NC}\n" "$file" "$backup_path/$subdir/$file"
         fi
 
         rm -f "$target"
@@ -186,7 +186,7 @@ download() {
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
             summary_versions["$file"]="${version:-unknown}"
             summary_groups["$file"]="$group"
-            printf "  [${GN}OK${NC}]     %-15s v%s\n" "$file" "${version:-${YE}unknown${NC}}"
+            printf "  [${GN}OK${NC}]     %-15s v%s${NC}\n" "$file" "${version:-${YE}unknown${NC}}"
         else
             summary_versions["$file"]="failed"
             summary_groups["$file"]="$group"
@@ -212,11 +212,11 @@ if $summary_mode; then
     echo -e "\n📊 Summary of downloaded files:\n"
     for group in plugins utilities configs; do
         echo "🔹 Group: $group"
-        printf "  %-20s %s\n" "File" "Version"
-        printf "  %-20s %s\n" "--------------------" "--------"
+        printf "  %-20s %s${NC}\n" "File" "Version"
+        printf "  %-20s %s${NC}\n" "--------------------" "--------"
         for file in "${!summary_versions[@]}"; do
             [[ "${summary_groups[$file]}" == "$group" ]] && \
-            printf "  %-20s %s\n" "$file" "${summary_versions[$file]}"
+            printf "  %-20s %s${NC}\n" "$file" "${summary_versions[$file]}"
         done
         echo
     done
