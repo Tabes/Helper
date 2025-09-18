@@ -68,6 +68,18 @@ declare -A file_groups=(
 
 )
 
+### === Status Symbole === ###
+declare -A symbol=(
+    [ok]="✅"
+    [skipped]="⏩"
+    [failed]="❌"
+    [unknown]="❓"
+    [downloaded]="🟢"
+    [dry]="💧"
+    [backup]="📦"
+    [sourced]="📜"
+)
+
 ### === Summary Collector === ###
 declare -A summary_versions=()
 declare -A summary_groups=()
@@ -87,8 +99,11 @@ while [[ $# -gt 0 ]]; do
             shift
 
             while [[ $# -gt 0 && "$1" != --* ]]; do
+
                 only_files+=("$1"); shift
+
             done
+
             continue
             ;;
 
@@ -266,7 +281,7 @@ download() {
             summary_status["$file"]="downloaded"
 
             # printf "   [${GN}OK${NC}]     %-${pos[file]}s v%-${pos[version]}s " "$file" "${version:-${YE}unknown${NC}}"
-            printf "[${GN}%-${pos[P1]}s${NC}] %-${pos[file]}s v%-${pos[version]}s " "OK" "$file" "${version:-${YE}unknown${NC}}"
+            printf "%-${pos[P1]}s [${GN}%-${pos[P2]}s${NC}] %-${pos[file]}s v%-${pos[version]}s " "" "OK" "$file" "${version:-${YE}unknown${NC}}"
 
             if $sourcing; then
 
