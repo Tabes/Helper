@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.43
+### Version: 2.1.44
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -364,7 +364,7 @@ if $summary_mode; then
                 mod=$(date -r "$full_path" +"%Y-%m-%d %H:%M:%S" 2>/dev/null)
             fi
 
-            printf "   %-20s %-10s ${status_color}%-12s${NC}" "$file" "$version" "$status_text"
+            printf "   %-18s %-10s ${status_color}%-15s${NC}" "$file" "$version" "$status_text"
             if $verbose_mode; then
                 printf " %-40s %-10s %-20s" "$full_path" "$size" "$mod"
             fi
