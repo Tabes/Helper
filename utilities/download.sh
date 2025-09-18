@@ -250,9 +250,10 @@ download() {
 
         fi
 
-        rm -f "$target"
+        # rm -f "$target"
 
-        local curl_opts=(--silent --show-error --fail --location --remote-time --time-cond "$target")
+        local curl_opts=(--silent --show-error --fail --location --remote-time)
+        [[ -f "$target" ]] && curl_opts+=(--time-cond "$target")
 
         if curl "${curl_opts[@]}" -o "$target" "$url" 2>/dev/null; then
             chmod +x "$target"
