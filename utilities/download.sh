@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.45
+### Version: 2.1.46
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -337,7 +337,7 @@ if $summary_mode; then
         fi
         echo
 
-        printf "   %-15s %-10s %-15s" "---------------" "--------" "------------"
+        printf "   %-15s %-10s %-15s" "---------------" "----------" "---------------"
         if $verbose_mode; then
             printf " %-40s %-10s %-20s" "----------------------------------------" "----------" "--------------------"
         fi
