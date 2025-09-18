@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.40
+### Version: 2.1.41
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -46,7 +46,8 @@ verbose_mode=false
 
 ### === Column Positions === ###
 declare -A pos=(
-    [P1]=3
+    [P0]=2
+    [P1]=4
     [P2]=9
     [P3]=16
     [file]=20
