@@ -5,9 +5,9 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.31
+### Version: 2.1.32
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-17
+### Date:    2025-09-18
 ### License: MIT
 ### Usage:   Source this Function to load Project Configurations with Dependencies
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
@@ -252,27 +252,32 @@ download() {
 
         rm -f "$target"
 
-        if curl -sSfL "$url" -o "$target" 2>/dev/null; then
+        local curl_opts=(--silent --show-error --fail --location --remote-time --time-cond "$target")
+
+        if curl "${curl_opts[@]}" -o "$target" "$url" 2>/dev/null; then
             chmod +x "$target"
             $sourcing && source "${target}"
 
             local version=$(grep -oP '^### Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$target")
-
             summary_versions["$file"]="${version:-unknown}"
             summary_groups["$file"]="$group"
+            summary_status["$file"]="downloaded"
 
-            # printf "   [${GN}OK${NC}]     %-15s v%s${NC}" "$file" "${version:-${YE}unknown${NC}}"
-             #$sourcing && printf "  ${GN}%-15s${NC}\n" "sourced" || printf "${NC}%s\n" ""
+            printf "   [${GN}OK${NC}]     %-15s v%-8s  %-10s${NC}\n" \
+                "$file" "${version:-${YE}unknown${NC}}" "$([[ $sourcing == true ]] && echo -e "${GN}sourced${NC}")"
 
-            printf "   [${GN}OK${NC}]     %-15s v%-8s  %-10s${NC}\n" "$file" "${version:-${YE}unknown${NC}}" "$([[ $sourcing == true ]] && echo -e "${GN}sourced${NC}")"
+        elif curl -s -o /dev/null -w "%{http_code}" --location --time-cond "$target" "$url" | grep -q "304"; then
+            summary_versions["$file"]="cached"
+            summary_groups["$file"]="$group"
+            summary_status["$file"]="skipped"
+            continue
 
         else
-
             summary_versions["$file"]="failed"
             summary_groups["$file"]="$group"
+            summary_status["$file"]="failed"
 
             printf "   [${RD}FAIL${NC}]   %-15s failed\n" "$file"
-
         fi
 
     done
@@ -298,21 +303,19 @@ download ""                ${file_groups[project]}
 
 ### === Summary Output === ###
 if $summary_mode; then
-    echo -e "\n📊 Summary of downloaded files:"
+    echo -e "\n📊 Summary of processed files:\n"
 
-    for group in plugins utilities configs; do
+    for group in project helper plugins utilities configs; do
         printf "\n%s\n\n" "🔹 Group: $group"
-        printf "   %-20s %s${NC}\n" "File" "Version"
-        printf "   %-20s %s${NC}\n" "--------------------" "--------"
+        printf "   %-20s %-10s %-10s${NC}\n" "File" "Version" "Status"
+        printf "   %-20s %-10s %-10s${NC}\n" "--------------------" "--------" "----------"
 
         for file in "${!summary_versions[@]}"; do
             [[ "${summary_groups[$file]}" == "$group" ]] && \
-
-            printf "   %-20s %s${NC}\n" "$file" "${summary_versions[$file]}"
-
+            printf "   %-20s %-10s %-10s${NC}\n" \
+                "$file" "${summary_versions[$file]}" "${summary_status[$file]}"
         done
 
         echo
-
     done
 fi
