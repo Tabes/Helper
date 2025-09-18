@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.49
+### Version: 2.1.50
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -356,10 +356,10 @@ if $summary_mode; then
             mod="–"
 
             case "$raw_status" in
-                downloaded) status_text="${symbol[downloaded]} ${label[downloaded]}";   status_color="$GN" ;;
-                skipped)    status_text="${symbol[skipped]} ${label[skipped]}";         status_color="$YE" ;;
-                failed)     status_text="${symbol[failed]} ${label[failed]}";           status_color="$RD" ;;
-                *)          status_text="${symbol[unknown]} ${label[unknown]}";         status_color="$RD" ;;
+                downloaded) status_text="${symbol[downloaded]} ${label[downloaded]}"; status_color="$GN" ;;
+                skipped)    status_text="${symbol[skipped]} ${label[skipped]}"; status_color="$YE" ;;
+                failed)     status_text="${symbol[failed]} ${label[failed]}"; status_color="$RD" ;;
+                *)          status_text="${symbol[unknown]} ${label[unknown]}"; status_color="$RD" ;;
             esac
 
             if $verbose_mode && [[ -f "$full_path" ]]; then
