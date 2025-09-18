@@ -44,16 +44,19 @@ backup_enabled=false
 sourcing=false
 verbose_mode=false
 
-### === Column Positions (absolute) === ###
+### === Column Positions === ###
 declare -A pos=(
-    [P0]=2      # Einrückung
-    [P1]=4      # Label
-    [P2]=12     # File
-    [P3]=32     # Version
-    [P4]=45     # Status
-    [P5]=60     # Path
-    [P6]=100    # Size
-    [P7]=112    # Modified
+    [P0]=2          # Position #0
+    [P1]=4          # Position #1
+    [P2]=12         # Position #2
+    [P3]=32         # Position #3
+    [P4]=45         # Position #4
+    [File]=15       # File
+    [Version]=10    # Version
+    [Status]=15     # Status
+    [Path]=40       # Path
+    [Size]=10       # Size
+    [Modified]=20   # Modified
 )
 
 ### === File Groups Definition === ###
@@ -331,15 +334,15 @@ if $summary_mode; then
 
     for group in project helper plugins utilities configs; do
         printf "\n🔹 Group: %s\n\n" "$group"
-        printf "   %-15s %-10s %-15s" "File" "Version" "Status"
+        printf "   %-${pos[File]}s %-${pos[Version]}s %-${pos[Status]}s" "File" "Version" "Status"
         if $verbose_mode; then
-            printf " %-40s %-10s %-20s" "Path" "Size" "Modified"
+            printf " %-${pos[Path]}s %-${pos[Size]}s %-${pos[Modified]}s" "Path" "Size" "Modified"
         fi
         echo
 
-        printf "   %-15s %-10s %-15s" "---------------" "----------" "---------------"
+        printf "   %-${pos[File]}s %-${pos[Version]}s %-${pos[Status]}s" "---------------" "----------" "---------------"
         if $verbose_mode; then
-            printf " %-40s %-10s %-20s" "----------------------------------------" "----------" "--------------------"
+            printf " %-${pos[Path]}s %-${pos[Size]}s %-${pos[Modified]}s" "----------------------------------------" "----------" "--------------------"
         fi
         echo
 
@@ -353,10 +356,10 @@ if $summary_mode; then
             mod="–"
 
             case "$raw_status" in
-                downloaded) status_text="✅ downloaded"; status_color="$GN" ;;
-                skipped)    status_text="⏩ skipped";    status_color="$YE" ;;
-                failed)     status_text="❌ failed";     status_color="$RD" ;;
-                *)          status_text="❓ unknown";    status_color="$RD" ;;
+                downloaded) status_text="${symbol[downloaded]}"; status_color="$GN" ;;
+                skipped)    status_text="${symbol[skipped]}";    status_color="$YE" ;;
+                failed)     status_text="${symbol[failed]}";     status_color="$RD" ;;
+                *)          status_text="${symbol[unknown]}";    status_color="$RD" ;;
             esac
 
             if $verbose_mode && [[ -f "$full_path" ]]; then
@@ -366,7 +369,7 @@ if $summary_mode; then
 
             printf "   %-15s %-10s ${status_color}%-15s${NC}" "$file" "$version" "$status_text"
             if $verbose_mode; then
-                printf " %-40s %-10s %-20s" "$full_path" "$size" "$mod"
+                printf " %-${pos[Path]}s %-${pos[Size]}s %-${pos[Modified]}s" "$full_path" "$size" "$mod"
             fi
             echo
         done
