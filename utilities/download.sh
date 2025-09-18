@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.33
+### Version: 2.1.34
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -42,6 +42,7 @@ interactive_mode=false
 summary_mode=false
 backup_enabled=false
 sourcing=false
+verbose_mode=false
 
 ### === File Groups Definition === ###
 declare -A file_groups=(
@@ -57,6 +58,7 @@ declare -A file_groups=(
 ### === Summary Collector === ###
 declare -A summary_versions=()
 declare -A summary_groups=()
+declare -A summary_status=()
 
 ### === Argument Parser === ###
 while [[ $# -gt 0 ]]; do
@@ -67,6 +69,7 @@ while [[ $# -gt 0 ]]; do
         --interactive) interactive_mode=true ;;
         --summary) summary_mode=true ;;
         --backup) backup_enabled=true ;;
+        --verbose) verbose_mode=true ;;
         --only)
             shift
 
@@ -308,13 +311,48 @@ if $summary_mode; then
 
     for group in project helper plugins utilities configs; do
         printf "\n%s\n\n" "🔹 Group: $group"
-        printf "   %-20s %-10s %-10s${NC}\n" "File" "Version" "Status"
-        printf "   %-20s %-10s %-10s${NC}\n" "--------------------" "--------" "----------"
+        printf "   %-20s %-10s %-10s" "File" "Version" "Status"
+
+        if $verbose_mode; then
+            printf " %-30s %-10s %-20s" "Path" "Size" "Modified"
+        fi
+
+        echo
+        printf "   %-20s %-10s %-10s" "--------------------" "--------" "----------"
+
+        if $verbose_mode; then
+            printf " %-30s %-10s %-20s" "------------------------------" "----------" "--------------------"
+        fi
+
+        echo
 
         for file in "${!summary_versions[@]}"; do
-            [[ "${summary_groups[$file]}" == "$group" ]] && \
-            printf "   %-20s %-10s %-10s${NC}\n" \
-                "$file" "${summary_versions[$file]}" "${summary_status[$file]}"
+            [[ "${summary_groups[$file]}" == "$group" ]] || continue
+
+            status="${summary_status[$file]}"
+            case "$status" in
+                downloaded) status="${GN}✅ downloaded${NC}" ;;
+                skipped)    status="${YE}⏩ skipped${NC}" ;;
+                failed)     status="${RD}❌ failed${NC}" ;;
+            esac
+
+            version="${summary_versions[$file]}"
+            path="$path/$group/$file"
+            size="–"
+            mod="–"
+
+            if $verbose_mode && [[ -f "$path" ]]; then
+                size=$(stat -c %s "$path" 2>/dev/null)
+                mod=$(date -r "$path" +"%Y-%m-%d %H:%M:%S" 2>/dev/null)
+            fi
+
+            printf "   %-20s %-10s %-10s" "$file" "$version" "$status"
+
+            if $verbose_mode; then
+                printf " %-30s %-10s %-20s" "$path" "$size" "$mod"
+            fi
+
+            echo
         done
 
         echo
