@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.46
+### Version: 2.1.47
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -53,7 +53,7 @@ declare -A pos=(
     [P4]=45         # Position #4
     [File]=15       # File
     [Version]=10    # Version
-    [Status]=15     # Status
+    [Status]=18     # Status
     [Path]=40       # Path
     [Size]=10       # Size
     [Modified]=20   # Modified
@@ -340,7 +340,7 @@ if $summary_mode; then
         fi
         echo
 
-        printf "   %-${pos[File]}s %-${pos[Version]}s %-${pos[Status]}s" "---------------" "----------" "---------------"
+        printf "   %-${pos[File]}s %-${pos[Version]}s %-${pos[Status]}s" "---------------" "--------" "-------------"
         if $verbose_mode; then
             printf " %-${pos[Path]}s %-${pos[Size]}s %-${pos[Modified]}s" "----------------------------------------" "----------" "--------------------"
         fi
