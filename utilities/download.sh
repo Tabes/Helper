@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.36
+### Version: 2.1.37
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -46,6 +46,9 @@ verbose_mode=false
 
 ### === Column Positions === ###
 declare -A pos=(
+    [P1]=3
+    [P1]=9
+    [P1]=16
     [file]=20
     [version]=10
     [status]=12
@@ -262,11 +265,17 @@ download() {
             summary_groups["$file"]="$group"
             summary_status["$file"]="downloaded"
 
-            printf "   [${GN}OK${NC}]     %-${pos[file]}s v%-${pos[version]}s " "$file" "${version:-${YE}unknown${NC}}"
+            # printf "   [${GN}OK${NC}]     %-${pos[file]}s v%-${pos[version]}s " "$file" "${version:-${YE}unknown${NC}}"
+            printf "[${GN}%-{pos[P1]}s${NC}] %-${pos[file]}s v%-${pos[version]}s " "OK" "$file" "${version:-${YE}unknown${NC}}"
+
             if $sourcing; then
+
                 printf "${GN}%-${pos[status]}s${NC}\n" "sourced"
+
             else
+
                 printf "%-${pos[status]}s\n" ""
+
             fi
 
         elif curl -s -o /dev/null -w "%{http_code}" --location --time-cond "$target" "$url" | grep -q "304"; then
