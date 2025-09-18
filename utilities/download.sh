@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.35
+### Version: 2.1.36
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -43,6 +43,16 @@ summary_mode=false
 backup_enabled=false
 sourcing=false
 verbose_mode=false
+
+### === Column Positions === ###
+declare -A pos=(
+    [file]=20
+    [version]=10
+    [status]=12
+    [path]=40
+    [size]=10
+    [mod]=20
+)
 
 ### === File Groups Definition === ###
 declare -A file_groups=(
@@ -211,21 +221,13 @@ download() {
 
     if [[ ${#only_files[@]} -gt 0 ]]; then
         local matched=()
-
         for f in "${files[@]}"; do
-
             [[ " ${only_files[*]} " =~ " $f " ]] && matched+=("$f")
-
         done
-
         if [[ ${#matched[@]} -eq 0 ]]; then
-
             return
-
         fi
-
         validate_files "${files[@]}"
-
     fi
 
     log "\n📦 Downloading group: ${YE}$group${NC}\n"
@@ -237,23 +239,16 @@ download() {
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-
-            printf "   [${YE}DRY${NC}]   %-14s → %s${NC}\n" "$file" "$target"
+            printf "   [${YE}DRY${NC}]   %-${pos[file]}s → %s${NC}\n" "$file" "$target"
             continue
-
         fi
 
         # === Backup existing file ===
         if $backup_enabled && [[ -f "$target" ]]; then
-
             mkdir -p "$backup_path/$subdir"
             cp "$target" "$backup_path/$subdir/$file"
-
-            printf "   [${YE}BACKUP${NC}] %-13s → %s${NC}\n" "$file" "$backup_path/$subdir/$file"
-
+            printf "   [${YE}BACKUP${NC}] %-${pos[file]}s → %s${NC}\n" "$file" "$backup_path/$subdir/$file"
         fi
-
-        # rm -f "$target"
 
         local curl_opts=(--silent --show-error --fail --location --remote-time)
         [[ -f "$target" ]] && curl_opts+=(--time-cond "$target")
@@ -267,8 +262,12 @@ download() {
             summary_groups["$file"]="$group"
             summary_status["$file"]="downloaded"
 
-            printf "   [${GN}OK${NC}]     %-15s v%-8s  %-10s${NC}\n" \
-                "$file" "${version:-${YE}unknown${NC}}" "$([[ $sourcing == true ]] && echo -e "${GN}sourced${NC}")"
+            printf "   [${GN}OK${NC}]     %-${pos[file]}s v%-${pos[version]}s " "$file" "${version:-${YE}unknown${NC}}"
+            if $sourcing; then
+                printf "${GN}%-${pos[status]}s${NC}\n" "sourced"
+            else
+                printf "%-${pos[status]}s\n" ""
+            fi
 
         elif curl -s -o /dev/null -w "%{http_code}" --location --time-cond "$target" "$url" | grep -q "304"; then
             summary_versions["$file"]="cached"
@@ -280,14 +279,11 @@ download() {
             summary_versions["$file"]="failed"
             summary_groups["$file"]="$group"
             summary_status["$file"]="failed"
-
-            printf "   [${RD}FAIL${NC}]   %-15s failed\n" "$file"
+            printf "   [${RD}FAIL${NC}]   %-${pos[file]}s %-${pos[version]}s %-${pos[status]}s\n" "$file" "failed" ""
         fi
-
     done
 
     echo
-
 }
 
 ### === Download Core Files (unless --only or --dry) === ###
@@ -311,21 +307,28 @@ if $summary_mode; then
 
     for group in project helper plugins utilities configs; do
         printf "\n%s\n\n" "🔹 Group: $group"
-        printf "   %-20s %-10s %-12s" "File" "Version" "Status"
 
+        # Header
+        printf "   %-${pos[file]}s %-${pos[version]}s %-${pos[status]}s" "File" "Version" "Status"
         if $verbose_mode; then
-            printf " %-40s %-10s %-20s" "Path" "Size" "Modified"
+            printf " %-${pos[path]}s %-${pos[size]}s %-${pos[mod]}s" "Path" "Size" "Modified"
         fi
-
-        echo
-        printf "   %-20s %-10s %-12s" "--------------------" "--------" "------------"
-
-        if $verbose_mode; then
-            printf " %-40s %-10s %-20s" "----------------------------------------" "----------" "--------------------"
-        fi
-
         echo
 
+        # Divider
+        printf "   %-${pos[file]}s %-${pos[version]}s %-${pos[status]}s" \
+            "$(printf '%.0s-' $(seq 1 ${pos[file]}))" \
+            "$(printf '%.0s-' $(seq 1 ${pos[version]}))" \
+            "$(printf '%.0s-' $(seq 1 ${pos[status]}))"
+        if $verbose_mode; then
+            printf " %-${pos[path]}s %-${pos[size]}s %-${pos[mod]}s" \
+                "$(printf '%.0s-' $(seq 1 ${pos[path]}))" \
+                "$(printf '%.0s-' $(seq 1 ${pos[size]}))" \
+                "$(printf '%.0s-' $(seq 1 ${pos[mod]}))"
+        fi
+        echo
+
+        # Rows
         for file in "${!summary_versions[@]}"; do
             [[ "${summary_groups[$file]}" == "$group" ]] || continue
 
@@ -335,7 +338,6 @@ if $summary_mode; then
             size="–"
             mod="–"
 
-            # Format status with color and icon
             case "$raw_status" in
                 downloaded) status_text="✅ downloaded"; status_color="$GN" ;;
                 skipped)    status_text="⏩ skipped";    status_color="$YE" ;;
@@ -343,19 +345,16 @@ if $summary_mode; then
                 *)          status_text="❓ unknown";    status_color="$RD" ;;
             esac
 
-            # Get file info if verbose and file exists
             if $verbose_mode && [[ -f "$full_path" ]]; then
                 size=$(stat -c %s "$full_path" 2>/dev/null)
                 mod=$(date -r "$full_path" +"%Y-%m-%d %H:%M:%S" 2>/dev/null)
             fi
 
-            # Print base columns
-            printf "   %-20s %-10s " "$file" "$version"
-            printf "${status_color}%-12s${NC}" "$status_text"
+            printf "   %-${pos[file]}s %-${pos[version]}s " "$file" "$version"
+            printf "${status_color}%-${pos[status]}s${NC}" "$status_text"
 
-            # Print verbose columns if enabled
             if $verbose_mode; then
-                printf " %-40s %-10s %-20s" "$full_path" "$size" "$mod"
+                printf " %-${pos[path]}s %-${pos[size]}s %-${pos[mod]}s" "$full_path" "$size" "$mod"
             fi
 
             echo
