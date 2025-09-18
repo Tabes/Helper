@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.42
+### Version: 2.1.43
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -203,15 +203,6 @@ download_group() {
 
 }
 
-### === Print Output on fixed Position === ###
-print_at() {
-    local start=$1
-    local text="$2"
-    local next=$3
-    local width=$(( next - start ))
-    printf "%*s%-*s" "$start" "" "$width" "$text"
-}
-
 ### === List available groups and files === ###
 if $list_mode; then
     echo -e "\n📂 Available groups and files:\n"
@@ -277,23 +268,14 @@ download() {
         local url="$REPO_RAW_URL/$subdir/$file"
 
         if $dry_run; then
-            print_at "${pos[P0]}" "" "${pos[P1]}"
-            print_at "${pos[P1]}" "[${YE}${symbol[dry]} DRY${NC}]" "${pos[P2]}"
-            print_at "${pos[P2]}" "$file" "${pos[P3]}"
-            print_at "${pos[P3]}" "→ $target" "${pos[P4]}"
-            echo
+            printf "   [${YE}DRY${NC}]     %-20s → %s\n" "$file" "$target"
             continue
         fi
 
-        # === Backup existing file ===
         if $backup_enabled && [[ -f "$target" ]]; then
             mkdir -p "$backup_path/$subdir"
             cp "$target" "$backup_path/$subdir/$file"
-            print_at "${pos[P0]}" "" "${pos[P1]}"
-            print_at "${pos[P1]}" "[${YE}${symbol[backup]} BACKUP${NC}]" "${pos[P2]}"
-            print_at "${pos[P2]}" "$file" "${pos[P3]}"
-            print_at "${pos[P3]}" "→ $backup_path/$subdir/$file" "${pos[P4]}"
-            echo
+            printf "   [${YE}BACKUP${NC}]  %-20s → %s\n" "$file" "$backup_path/$subdir/$file"
         fi
 
         local curl_opts=(--silent --show-error --fail --location --remote-time)
@@ -308,14 +290,8 @@ download() {
             summary_groups["$file"]="$group"
             summary_status["$file"]="downloaded"
 
-            print_at "${pos[P0]}" "" "${pos[P1]}"
-            print_at "${pos[P1]}" "[${GN}${symbol[ok]} OK${NC}]" "${pos[P2]}"
-            print_at "${pos[P2]}" "$file" "${pos[P3]}"
-            print_at "${pos[P3]}" "v${version:-${YE}unknown${NC}}" "${pos[P4]}"
-            if $sourcing; then
-                print_at "${pos[P4]}" "[${GN}${symbol[sourced]} sourced${NC}]" $((pos[P4]+16))
-            fi
-            echo
+            printf "   [${GN}OK${NC}]       %-20s v%-10s %-12s\n" \
+                "$file" "${version:-${YE}unknown${NC}}" "$([[ $sourcing == true ]] && echo -e "${GN}sourced${NC}")"
 
         elif curl -s -o /dev/null -w "%{http_code}" --location --time-cond "$target" "$url" | grep -q "304"; then
             summary_versions["$file"]="cached"
@@ -327,12 +303,7 @@ download() {
             summary_versions["$file"]="failed"
             summary_groups["$file"]="$group"
             summary_status["$file"]="failed"
-
-            print_at "${pos[P0]}" "" "${pos[P1]}"
-            print_at "${pos[P1]}" "[${RD}${symbol[failed]} FAIL${NC}]" "${pos[P2]}"
-            print_at "${pos[P2]}" "$file" "${pos[P3]}"
-            print_at "${pos[P3]}" "failed" "${pos[P4]}"
-            echo
+            printf "   [${RD}FAIL${NC}]     %-20s failed\n" "$file"
         fi
     done
 
@@ -359,33 +330,19 @@ if $summary_mode; then
     echo -e "\n📊 Summary of processed files:\n"
 
     for group in project helper plugins utilities configs; do
-        printf "\n%s\n\n" "🔹 Group: $group"
-
-        # Header
-        print_at "${pos[P1]}" "Label" "${pos[P2]}"
-        print_at "${pos[P2]}" "File" "${pos[P3]}"
-        print_at "${pos[P3]}" "Version" "${pos[P4]}"
-        print_at "${pos[P4]}" "Status" "${pos[P5]}"
+        printf "\n🔹 Group: %s\n\n" "$group"
+        printf "   %-20s %-10s %-12s" "File" "Version" "Status"
         if $verbose_mode; then
-            print_at "${pos[P5]}" "Path" "${pos[P6]}"
-            print_at "${pos[P6]}" "Size" "${pos[P7]}"
-            print_at "${pos[P7]}" "Modified" $((pos[P7]+20))
+            printf " %-40s %-10s %-20s" "Path" "Size" "Modified"
         fi
         echo
 
-        # Divider
-        print_at "${pos[P1]}" "$(printf '%.0s-' $(seq 1 $((pos[P2]-pos[P1]))))" "${pos[P2]}"
-        print_at "${pos[P2]}" "$(printf '%.0s-' $(seq 1 $((pos[P3]-pos[P2]))))" "${pos[P3]}"
-        print_at "${pos[P3]}" "$(printf '%.0s-' $(seq 1 $((pos[P4]-pos[P3]))))" "${pos[P4]}"
-        print_at "${pos[P4]}" "$(printf '%.0s-' $(seq 1 $((pos[P5]-pos[P4]))))" "${pos[P5]}"
+        printf "   %-20s %-10s %-12s" "--------------------" "--------" "------------"
         if $verbose_mode; then
-            print_at "${pos[P5]}" "$(printf '%.0s-' $(seq 1 $((pos[P6]-pos[P5]))))" "${pos[P6]}"
-            print_at "${pos[P6]}" "$(printf '%.0s-' $(seq 1 $((pos[P7]-pos[P6]))))" "${pos[P7]}"
-            print_at "${pos[P7]}" "$(printf '%.0s-' $(seq 1 20))" $((pos[P7]+20))
+            printf " %-40s %-10s %-20s" "----------------------------------------" "----------" "--------------------"
         fi
         echo
 
-        # Rows
         for file in "${!summary_versions[@]}"; do
             [[ "${summary_groups[$file]}" == "$group" ]] || continue
 
@@ -396,10 +353,10 @@ if $summary_mode; then
             mod="–"
 
             case "$raw_status" in
-                downloaded) status_text="downloaded"; status_color="$GN"; status_icon="${symbol[downloaded]}" ;;
-                skipped)    status_text="skipped";    status_color="$YE"; status_icon="${symbol[skipped]}" ;;
-                failed)     status_text="failed";     status_color="$RD"; status_icon="${symbol[failed]}" ;;
-                *)          status_text="unknown";    status_color="$RD"; status_icon="${symbol[unknown]}" ;;
+                downloaded) status_text="✅ downloaded"; status_color="$GN" ;;
+                skipped)    status_text="⏩ skipped";    status_color="$YE" ;;
+                failed)     status_text="❌ failed";     status_color="$RD" ;;
+                *)          status_text="❓ unknown";    status_color="$RD" ;;
             esac
 
             if $verbose_mode && [[ -f "$full_path" ]]; then
@@ -407,14 +364,9 @@ if $summary_mode; then
                 mod=$(date -r "$full_path" +"%Y-%m-%d %H:%M:%S" 2>/dev/null)
             fi
 
-            print_at "${pos[P1]}" "[${status_color}${status_icon} ${status_text}${NC}]" "${pos[P2]}"
-            print_at "${pos[P2]}" "$file" "${pos[P3]}"
-            print_at "${pos[P3]}" "$version" "${pos[P4]}"
-            print_at "${pos[P4]}" "$status_text" "${pos[P5]}"
+            printf "   %-20s %-10s ${status_color}%-12s${NC}" "$file" "$version" "$status_text"
             if $verbose_mode; then
-                print_at "${pos[P5]}" "$full_path" "${pos[P6]}"
-                print_at "${pos[P6]}" "$size" "${pos[P7]}"
-                print_at "${pos[P7]}" "$mod" $((pos[P7]+20))
+                printf " %-40s %-10s %-20s" "$full_path" "$size" "$mod"
             fi
             echo
         done
