@@ -83,7 +83,7 @@ declare -A symbol=(
 )
 
 ### === Status Symbole === ###
-declare -A lable=(
+declare -A label=(
     [ok]="OK"
     [skipped]="skipped"
     [failed]="FAIL"
@@ -356,10 +356,10 @@ if $summary_mode; then
             mod="–"
 
             case "$raw_status" in
-                downloaded) status_text="${symbol[downloaded]}"; status_color="$GN" ;;
-                skipped)    status_text="${symbol[skipped]}";    status_color="$YE" ;;
-                failed)     status_text="${symbol[failed]}";     status_color="$RD" ;;
-                *)          status_text="${symbol[unknown]}";    status_color="$RD" ;;
+                downloaded) status_text="${symbol[downloaded]} ${label[downloaded]}";   status_color="$GN" ;;
+                skipped)    status_text="${symbol[skipped]} ${label[skipped]}";         status_color="$YE" ;;
+                failed)     status_text="${symbol[failed]} ${label[failed]}";           status_color="$RD" ;;
+                *)          status_text="${symbol[unknown]} ${label[unknown]}";         status_color="$RD" ;;
             esac
 
             if $verbose_mode && [[ -f "$full_path" ]]; then
