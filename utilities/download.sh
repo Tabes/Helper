@@ -266,7 +266,7 @@ download() {
             summary_status["$file"]="downloaded"
 
             # printf "   [${GN}OK${NC}]     %-${pos[file]}s v%-${pos[version]}s " "$file" "${version:-${YE}unknown${NC}}"
-            printf "[${GN}%-{pos[P1]}s${NC}] %-${pos[file]}s v%-${pos[version]}s " "OK" "$file" "${version:-${YE}unknown${NC}}"
+            printf "[${GN}%-${pos[P1]}s${NC}] %-${pos[file]}s v%-${pos[version]}s " "OK" "$file" "${version:-${YE}unknown${NC}}"
 
             if $sourcing; then
 
