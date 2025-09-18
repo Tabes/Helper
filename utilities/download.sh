@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.34
+### Version: 2.1.35
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-18
 ### License: MIT
@@ -311,17 +311,17 @@ if $summary_mode; then
 
     for group in project helper plugins utilities configs; do
         printf "\n%s\n\n" "🔹 Group: $group"
-        printf "   %-20s %-10s %-10s" "File" "Version" "Status"
+        printf "   %-20s %-10s %-12s" "File" "Version" "Status"
 
         if $verbose_mode; then
-            printf " %-30s %-10s %-20s" "Path" "Size" "Modified"
+            printf " %-40s %-10s %-20s" "Path" "Size" "Modified"
         fi
 
         echo
-        printf "   %-20s %-10s %-10s" "--------------------" "--------" "----------"
+        printf "   %-20s %-10s %-12s" "--------------------" "--------" "------------"
 
         if $verbose_mode; then
-            printf " %-30s %-10s %-20s" "------------------------------" "----------" "--------------------"
+            printf " %-40s %-10s %-20s" "----------------------------------------" "----------" "--------------------"
         fi
 
         echo
@@ -329,27 +329,33 @@ if $summary_mode; then
         for file in "${!summary_versions[@]}"; do
             [[ "${summary_groups[$file]}" == "$group" ]] || continue
 
-            status="${summary_status[$file]}"
-            case "$status" in
-                downloaded) status="${GN}✅ downloaded${NC}" ;;
-                skipped)    status="${YE}⏩ skipped${NC}" ;;
-                failed)     status="${RD}❌ failed${NC}" ;;
-            esac
-
+            raw_status="${summary_status[$file]}"
             version="${summary_versions[$file]}"
-            path="$path/$group/$file"
+            full_path="$path/$group/$file"
             size="–"
             mod="–"
 
-            if $verbose_mode && [[ -f "$path" ]]; then
-                size=$(stat -c %s "$path" 2>/dev/null)
-                mod=$(date -r "$path" +"%Y-%m-%d %H:%M:%S" 2>/dev/null)
+            # Format status with color and icon
+            case "$raw_status" in
+                downloaded) status_text="✅ downloaded"; status_color="$GN" ;;
+                skipped)    status_text="⏩ skipped";    status_color="$YE" ;;
+                failed)     status_text="❌ failed";     status_color="$RD" ;;
+                *)          status_text="❓ unknown";    status_color="$RD" ;;
+            esac
+
+            # Get file info if verbose and file exists
+            if $verbose_mode && [[ -f "$full_path" ]]; then
+                size=$(stat -c %s "$full_path" 2>/dev/null)
+                mod=$(date -r "$full_path" +"%Y-%m-%d %H:%M:%S" 2>/dev/null)
             fi
 
-            printf "   %-20s %-10s %-10s" "$file" "$version" "$status"
+            # Print base columns
+            printf "   %-20s %-10s " "$file" "$version"
+            printf "${status_color}%-12s${NC}" "$status_text"
 
+            # Print verbose columns if enabled
             if $verbose_mode; then
-                printf " %-30s %-10s %-20s" "$path" "$size" "$mod"
+                printf " %-40s %-10s %-20s" "$full_path" "$size" "$mod"
             fi
 
             echo
