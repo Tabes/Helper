@@ -5,9 +5,9 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.16
+### Version: 3.0.17
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-17
+### Date:    2025-09-18
 ### License: MIT
 ### Usage:   Source this Function to load Project Configurations with Dependencies
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
@@ -425,23 +425,6 @@ load_config() {
 	fi
 
 	return 0
-
-}
-
-
-################################################################################
-### === CONFIGURATION LOADING WITH DEPENDENCY MANAGEMENT === ###
-################################################################################
-
-debug() {
-	local log_level="${1:---info}"
-	local caller_function="$2"
-	local parameter="${3:-empty}"
-	local level="${4:-1}"
-	local msg="${5:-no message}"
-
-	printf "  ${GN}%s${NC} %s ${MG}%s${NC} %s${NC} %s ${GR}%s${NC}\n" \
-			"${caller_function}" "${parameter}" "Level:" "${level}" "${msg}"
 
 }
 
