@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.54 
+### Version: 2.1.55
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-19
 ### License: MIT
@@ -305,7 +305,7 @@ download() {
             summary_status["$file"]="downloaded"
 
             printf "   [${GN}OK${NC}]       %-20s v%-10s %-12s\n" \
-                "$file" "${version:-${YE}unknown${NC]}" "$([[ $sourcing == true ]] && echo -e "${GN}sourced${NC}")"
+                "$file" "${version:-${YE}unknown${NC}}" "$([[ $sourcing == true ]] && echo -e "${GN}sourced${NC}")"
 
         elif curl -s -o /dev/null -w "%{http_code}" --location --time-cond "$target" "$url" | grep -q "304"; then
             summary_versions["$file"]="cached"
