@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.0
+### Version: 1.0.1
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-19
 ### License: MIT
@@ -33,13 +33,11 @@ parse_arguments() {
                 exit 0
                 ;;
             *)
-                ### Pass all other arguments to main processing ###
-                break
+                ### Pass all other Arguments to main Processing ###
+                return 0
                 ;;
 
         esac
-
-        shift
 
     done
 }
@@ -408,7 +406,7 @@ main() {
         ### Parse and execute arguments ###
         parse_arguments "$@"
         
-        ### If arguments remain, pass them to test function ###
+        ### If Arguments remain, pass them to test Function ###
         if [ $# -gt 0 ]; then
             test "$@"
         fi
