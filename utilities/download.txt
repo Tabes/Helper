@@ -5,9 +5,9 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.52
+### Version: 2.1.54
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-18
+### Date:    2025-09-19
 ### License: MIT
 ### Usage:   Source this Function to load Project Configurations with Dependencies
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
@@ -52,8 +52,8 @@ declare -A pos=(
     [P3]=32         # Position #3
     [P4]=45         # Position #4
     [File]=15       # File
-    [Version]=10    # Version
-    [Status]=16     # Status
+    [Version]=9     # Version
+    [Status]=14     # Status
     [Path]=40       # Path
     [Size]=10       # Size
     [Modified]=20   # Modified
@@ -333,6 +333,14 @@ if $summary_mode; then
     echo -e "\n📊 Summary of processed files:\n"
 
     for group in project helper plugins utilities configs; do
+        # Prüfen, ob die Gruppe Dateien enthält
+        group_has_files=false
+        for file in "${!summary_versions[@]}"; do
+            [[ "${summary_groups[$file]}" == "$group" ]] && group_has_files=true && break
+        done
+
+        $group_has_files || continue  # Gruppe überspringen, wenn leer
+
         printf "\n🔹 Group: %s\n\n" "$group"
         printf "   %-${pos[File]}s %-${pos[Version]}s %-${pos[Status]}s" "File" "Version" "Status"
         if $verbose_mode; then
@@ -340,7 +348,7 @@ if $summary_mode; then
         fi
         echo
 
-        printf "   %-${pos[File]}s %-${pos[Version]}s %-${pos[Status]}s" "---------------" "--------" "-------------"
+        printf "   %-${pos[File]}s %-${pos[Version]}s %-${pos[Status]}s" "---------------" "--------" "----------------"
         if $verbose_mode; then
             printf " %-${pos[Path]}s %-${pos[Size]}s %-${pos[Modified]}s" "----------------------------------------" "----------" "--------------------"
         fi
@@ -356,10 +364,10 @@ if $summary_mode; then
             mod="–"
 
             case "$raw_status" in
-                downloaded) status_text="${label[downloaded]}"; status_color="$GN" ;;
-                skipped)    status_text="${symbol[skipped]} ${label[skipped]}"; status_color="$YE" ;;
-                failed)     status_text="${label[failed]}"; status_color="$RD" ;;
-                *)          status_text="${symbol[unknown]} ${label[unknown]}"; status_color="$RD" ;;
+                downloaded) status_text="${symbol[downloaded]} ${label[downloaded]}"; status_color="$GN" ;;
+                skipped)    status_text="${symbol[skipped]} ${label[skipped]}";     status_color="$YE" ;;
+                failed)     status_text="${symbol[failed]} ${label[failed]}";       status_color="$RD" ;;
+                *)          status_text="${symbol[unknown]} ${label[unknown]}";     status_color="$RD" ;;
             esac
 
             if $verbose_mode && [[ -f "$full_path" ]]; then
