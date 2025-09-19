@@ -63,7 +63,7 @@ declare -A file_groups=(
     [project]="start.sh"
     [helper]="helper.sh"
     [plugins]="cmd.sh log.sh debug.sh network.sh print.sh secure.sh show.sh update.sh"
-    [utilities]="download.sh dos2linux.sh gitclone.sh test_suit.sh work.sh"
+    [utilities]="download.sh dos2linux.sh gitclone.sh test_suite.sh work.sh"
     [configs]="project.conf helper.conf update.conf"
 )
 
