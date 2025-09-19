@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 2.1.57
+### Version: 2.1.58
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-19
 ### License: MIT
@@ -62,7 +62,7 @@ declare -A pos=(
 declare -A file_groups=(
     [project]="start.sh"
     [helper]="helper.sh"
-    [plugins]="cmd.sh log.sh debug.sh network.sh print.sh secure.sh show.sh update.sh"
+    [plugins]="cmd.sh log.sh debug.sh network.sh print.sh secure.sh show.sh update.sh utilities.sh"
     [utilities]="download.sh dos2linux.sh gitclone.sh test_suite.sh work.sh"
     [configs]="project.conf helper.conf update.conf"
 )
