@@ -67,8 +67,8 @@ test_start() {
 }
 
 test_pass() {
-    ((pass_count++))
-    printf "${GN}PASS${NC}\n"
+    cursor_pos --set "${POS[P5]}"
+    ((pass_count++));   printf "${GN}%s${NC}\n" "pass"
 }
 
 test_fail() {
