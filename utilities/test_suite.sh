@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.15
+### Version: 1.0.16
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -62,12 +62,12 @@ current_suite=""
 
 ### Test helper functions ###
 test_start() {
-    cursor_pos --set "${POS[P5]}"
+    # cursor_pos --set "${POS[P5]}"
     ((test_count++));   printf "${CY}%s %02d:${NC} %s " "Test" "$test_count" "$1"
 }
 
 test_pass() {
-    cursor_pos --set "${POS[P5]}"
+    # cursor_pos --set "${POS[P5]}"
     ((pass_count++));   printf "${GN}%s${NC}\n" "pass"
 }
 
@@ -158,7 +158,7 @@ test_cursor_pos() {
     fi
     
     test_start "--get (basic position query)"
-    # result=$(cursor_pos --get)  ### Test 1: Basic --get functionality ###
+    result=$(cursor_pos --get)  ### Test 1: Basic --get functionality ###
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
 
