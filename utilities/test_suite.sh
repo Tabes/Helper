@@ -110,9 +110,8 @@ test_cursor_pos() {
     current_suite="cursor_pos"
     test_reset
     
-    printf "\nTesting cursor_pos() Function with all Parameter Combinations...\n\n"
+    printf "Testing cursor_pos() Function with all Parameter Combinations...\n\n"
 
-    return 0
     ### Auto-load framework dependencies if not available ###
     if ! declare -f cursor_pos >/dev/null 2>&1; then
         printf "Loading framework dependencies...\n"
@@ -160,15 +159,6 @@ test_cursor_pos() {
     fi
     
     ### Test 1: Basic --get functionality ###
-    test_start "--get (Basic Position Query)"
-    result=$(cursor_pos --get)
-    if [[ "$result" =~ ^[0-9]+\ [0-9]+$ ]]; then
-        test_pass
-        test_info "Current position: $result"
-    else
-        test_fail "Invalid format: '$result'"
-    fi
-
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
 
