@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.3
+### Version: 1.0.4
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -113,7 +113,46 @@ test_cursor_pos() {
     test_reset
     
     printf "\nTesting cursor_pos() function with all parameter combinations...\n\n"
-    
+
+    ### Auto-load framework dependencies if not available ###
+    if ! declare -f cursor_pos >/dev/null 2>&1; then
+        printf "Loading framework dependencies...\n"
+        
+        ### Try to source helper.conf first ###
+        local helper_conf_locations=(
+            "/opt/helper/configs/helper.conf"
+            "./configs/helper.conf"
+            "../configs/helper.conf"
+        )
+        
+        for conf_location in "${helper_conf_locations[@]}"; do
+            if [[ -f "$conf_location" ]]; then
+                # shellcheck source=/dev/null
+                source "$conf_location"
+                printf "  ✓ Loaded: %s\n" "$conf_location"
+                break
+            fi
+        done
+        
+        ### Try to source helper.sh ###
+        local helper_locations=(
+            "/opt/helper/scripts/helper.sh"
+            "./scripts/helper.sh"
+            "../scripts/helper.sh"
+        )
+        
+        for helper_location in "${helper_locations[@]}"; do
+            if [[ -f "$helper_location" ]]; then
+                # shellcheck source=/dev/null
+                source "$helper_location"
+                printf "  ✓ Loaded: %s\n" "$helper_location"
+                break
+            fi
+        done
+        
+        printf "\n"
+    fi
+
     ### Verify function exists ###
     if ! declare -f cursor_pos >/dev/null 2>&1; then
         printf "${RD}ERROR: cursor_pos function not found.${NC}\n"
