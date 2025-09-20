@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.10
+### Version: 1.0.11
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -110,7 +110,7 @@ test_cursor_pos() {
     current_suite="cursor_pos"
     test_reset
     
-    printf "Testing cursor_pos() Function with all Parameter Combinations...\n\n"
+    printf "Testing this Function with all it's Parameter in Combinations...\n\n"
 
     ### Auto-load framework dependencies if not available ###
     if ! declare -f cursor_pos >/dev/null 2>&1; then
