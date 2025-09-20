@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.24
+### Version: 1.0.25
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -171,20 +171,20 @@ test_cursor_pos() {
     [[ $result =~ ^[0-9]+$ ]] && { test_pass; test_info "Current Column: $result"; } || test_fail "Invalid format: '$result'"
 
     ### Test 3: --get --row ###
-    test_start "--get --row (row only)"
+    test_start "--get --row (Row only)"
     result=$(cursor_pos --get --row)
     [[ $result =~ ^[0-9]+$ ]] && { test_pass; test_info "Current Row: $result"; } || test_fail "Invalid format: '$result'"
 
     ### Test 4: --get --col --row ###
-    test_start "--get --col --row (both values)"
+    test_start "--get --col --row (both Values)"
     result=$(cursor_pos --get --col --row)
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Position: $result"; } || test_fail "Invalid format: '$result'"
     
     printf "\n--- Position Setting Tests ---\n\n"
     
     ### Test 5: --set absolute Column only ###
-    test_start "--set ${POS[P6]} (absolute Column (Row $row))"
-    cursor_pos --set "${POS[P6]} $row"
+    test_start "--set ${POS[P6]} (absolute Column (Row ${row}))"
+    cursor_pos --set "${POS[P6]} ${row}"
 
     echo "${POS[P6]} $row"
     return 0
