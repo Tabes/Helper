@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.38
+### Version: 1.0.39
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -183,7 +183,7 @@ test_cursor_pos() {
     printf "\n--- Position Setting Tests ---\n\n"; cursor_pos --save
     
     ### Test 5: --set absolute Column only ###
-    test_start "--set ${POS[P6]} ${cur_row} (absolute Column, Col & Row)"; cursor_pos --save; printf "Col: %02d, Row: %02d" "${POS[col]}" "${POS[row]}"
+    test_start "--set ${POS[P6]} ${cur_row} (absolute Column, Col & Row)"; cursor_pos --save; printf "Col: %02d, Row: %02d" "${POS[_col]}" "${POS[_row]}"
     cursor_pos --set "${POS[P6]}" "${cur_row}"; printf "%s" "$SYMBOL_ERROR"
     result=$(cursor_pos --get --col); cursor_pos --restore
     echo "$result, ${POS[P6]}"
@@ -221,7 +221,7 @@ test_cursor_pos() {
     test_start "--save (save current Position)"
     cursor_pos --set "${POS[P5]}" "${POS[P3]}"
     cursor_pos --save
-    [[ ${POS[col]} == ${POS[P5]} && ${POS[row]} == ${POS[P3]} ]] && test_pass || test_fail "POS Array not updated: col=${POS[col]}, row=${POS[row]}"
+    [[ ${POS[_col]} == ${POS[P5]} && ${POS[_row]} == ${POS[P3]} ]] && test_pass || test_fail "POS Array not updated: col=${POS[_col]}, row=${POS[_row]}"
 
     ### Test 10: --restore Functionality ###
     test_start "--restore (restore saved Position)"
@@ -233,7 +233,7 @@ test_cursor_pos() {
     ### Test 11: --set with --save ###
     test_start "--set ${POS[P6]} ${POS[P4]} --save (set and save)"
     cursor_pos --set "${POS[P6]}" "${POS[P4]}" --save
-    [[ ${POS[col]} == ${POS[P6]} && ${POS[row]} == ${POS[P4]} ]] && test_pass || test_fail "POS not saved: col=${POS[col]}, row=${POS[row]}"
+    [[ ${POS[_col]} == ${POS[P6]} && ${POS[_row]} == ${POS[P4]} ]] && test_pass || test_fail "POS not saved: col=${POS[_col]}, row=${POS[_row]}"
 
     ### Test 12: --restore --set (combined) ###
     test_start "--restore --set +10 (restore then move)"
