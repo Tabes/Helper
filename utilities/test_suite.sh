@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.12
+### Version: 1.0.13
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -157,7 +157,7 @@ test_cursor_pos() {
         return 1
     fi
     
-    
+    test_start "--get (basic position query)"
     # result=$(cursor_pos --get)  ### Test 1: Basic --get functionality ###
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
