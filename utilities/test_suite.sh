@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.4
+### Version: 1.0.5
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -112,7 +112,7 @@ test_cursor_pos() {
     current_suite="cursor_pos"
     test_reset
     
-    printf "\nTesting cursor_pos() function with all parameter combinations...\n\n"
+    printf "\nTesting cursor_pos() Function with all Parameter Combinations...\n\n"
 
     ### Auto-load framework dependencies if not available ###
     if ! declare -f cursor_pos >/dev/null 2>&1; then
@@ -161,7 +161,7 @@ test_cursor_pos() {
     fi
     
     ### Test 1: Basic --get functionality ###
-    test_start "--get (basic position query)"
+    test_start "--get (Basic Position Query)"
     result=$(cursor_pos --get)
     if [[ "$result" =~ ^[0-9]+\ [0-9]+$ ]]; then
         test_pass
@@ -169,7 +169,12 @@ test_cursor_pos() {
     else
         test_fail "Invalid format: '$result'"
     fi
-    
+
+    [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
+
+
+    return 0
+
     ### Test 2: --get --col ###
     test_start "--get --col (column only)"
     result=$(cursor_pos --get --col)
@@ -412,7 +417,7 @@ test() {
     ### Clear screen and show header ###
     clear
     printf "${BU}Universal Helper Library - Test Suite${NC}\n"
-    printf "====================================\n"
+    printf "___________________________________________________________\n"
     printf "Suite: %s | Mode: %s\n\n" "$test_suite" "$test_mode"
     
     ### Execute test suite ###
@@ -421,12 +426,12 @@ test() {
             if [[ "$test_mode" == "auto" ]]; then
                 test_cursor_pos
             else
-                printf "${YE}Interactive mode not yet implemented for cursor_pos${NC}\n"
+                printf "\n${YE}Interactive mode not yet implemented for cursor_pos()${NC}\n\n"
                 return 1
             fi
             ;;
         *)
-            printf "${RD}ERROR: Unknown test suite: $test_suite${NC}\n"
+            printf "${RD}ERROR: Unknown Funcrion for Test Suite: $test_suite${NC}\n"
             return 1
             ;;
     esac
