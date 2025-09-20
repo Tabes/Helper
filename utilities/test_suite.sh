@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.6
+### Version: 1.0.7
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -62,8 +62,8 @@ current_suite=""
 
 ### Test helper functions ###
 test_start() {
-    ((test_count++))
-    printf "${CY}Test %02d:${NC} %-40s " "$test_count" "$1"
+    local pos="$(cursor_pos --set)"
+    ((test_count++));   printf "${CY}%s %02d:${NC} %-${pos}s " "Test" "$test_count" "$1"
 }
 
 test_pass() {
