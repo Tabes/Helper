@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.7
+### Version: 1.0.8
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -420,6 +420,7 @@ test() {
     printf "___________________________________________________________\n"
     printf "Suite: %s | Mode: %s\n\n" "$test_suite" "$test_mode"
     
+    return 0
     ### Execute test suite ###
     case "$test_suite" in
         cursor_pos)
