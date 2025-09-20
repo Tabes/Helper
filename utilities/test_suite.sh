@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.16
+### Version: 1.0.18
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -67,16 +67,17 @@ test_start() {
 }
 
 test_pass() {
-    # cursor_pos --set "${POS[P5]}"
+    cursor_pos --set "${POS[P5]}"
     ((pass_count++));   printf "${GN}%s${NC}\n" "pass"
 }
 
 test_fail() {
+    cursor_pos --set "${POS[P5]}"
     ((fail_count++));   printf "  ${RD}FAIL${NC} - %s\n\n" "$1"
 }
 
 test_info() {
-    printf "${YE}INFO:${NC} %s\n" "$1"
+    printf "  ${YE}result:${NC} %s\n" "$1"
 }
 
 test_summary() {
@@ -162,18 +163,13 @@ test_cursor_pos() {
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
 
+    ### Test 2: --get --col ###
+    test_start "--get --col (Column only)"
+    result=$(cursor_pos --get --col)
+    [[ $result =~ ^[0-9]+$ ]] && { test_pass; test_info "Current Column: $result"; } || test_fail "Invalid format: '$result'"
+
     return 0
 
-    ### Test 2: --get --col ###
-    test_start "--get --col (column only)"
-    result=$(cursor_pos --get --col)
-    if [[ "$result" =~ ^[0-9]+$ ]]; then
-        test_pass
-        test_info "Current column: $result"
-    else
-        test_fail "Invalid format: '$result'"
-    fi
-    
     ### Test 3: --get --row ###
     test_start "--get --row (row only)"
     result=$(cursor_pos --get --row)
