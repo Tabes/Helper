@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.1
+### Version: 1.0.2
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-19
 ### License: MIT
@@ -32,8 +32,16 @@ parse_arguments() {
                 print --version "${header}" "${version}" "${commit}"
                 exit 0
                 ;;
+
+            test)
+                shift
+                test "$@"
+                exit 0
+                ;;
+
             *)
                 ### Pass all other Arguments to main Processing ###
+                shift
                 return 0
                 ;;
 
