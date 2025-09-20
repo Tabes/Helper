@@ -5,14 +5,15 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.17
+### Version: 3.0.19
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-18
+### Date:    2025-09-20
 ### License: MIT
 ### Usage:   Source this Function to load Project Configurations with Dependencies
 ### Commit:  Complete Configuration Loader with Dependency Tracking and Project Compliance"
 ################################################################################
 
+# shellcheck disable=
 
 ################################################################################
 ### Parse Command Line Arguments ###
@@ -45,388 +46,6 @@ parse_arguments() {
 ################################################################################
 
 ### Load Configuration Files with Dependency Tracking ###
-load_config() {
-
-    ### Log only if Log Function exists ###
-    if declare -f log >/dev/null 2>&1; then
-    	### Log Startup Arguments ###
-        log --info "${FUNCNAME[0]} Called with Arguments: ($*)"
-    fi
-
-	################################################################################
-	### === INTERNAL LOAD_CONFIG FUNCTIONS === ###
-	################################################################################
-
-	### Load file with dependency tracking (internal) ###
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_load_file() {
-		local file="$1"
-		local real_file
-
-		real_file=$(realpath "$file" 2>/dev/null) || return 1
-
-		### Skip if already loaded ###
-		if [[ -n "${loaded_files[$real_file]}" ]]; then				### Check load status ###
-
-			case "${loaded_files[$real_file]}" in
-
-				"loading")
-					[[ "$debug" == "true" ]] && echo "DEBUG: Circular dependency detected: $file"
-					return 0
-					;;
-
-				"loaded")
-					[[ "$debug" == "true" ]] && echo "DEBUG: Already loaded, skipping: $file"
-					return 0
-					;;
-
-			esac
-
-		fi
-
-		### Mark as loading ###
-		loaded_files["$real_file"]="loading"
-		[[ "$debug" == "true" ]] && echo "DEBUG: Loading: $file"
-
-		### Source the file ###
-		# shellcheck source=/dev/null
-		if source "$file"; then							### Load successful ###
-
-			loaded_files["$real_file"]="loaded"
-			load_order+=("$file")
-			[[ "$debug" == "true" ]] && echo "DEBUG: Successfully loaded: $file"
-			return 0
-
-		else									### Load failed ###
-
-			unset loaded_files["$real_file"]
-			print --error "Failed to load: $file"
-			return 1
-
-		fi
-
-	}
-
-	### Validate directory existence (internal) ###
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_validate_dirs() {
-		local missing_dirs=()
-
-		if [[ -n "${REQUIRED_DIRS[*]}" ]]; then				### Check required directories ###
-
-			[[ "$debug" == "true" ]] && echo "DEBUG: Validating required directories: ${REQUIRED_DIRS[*]}"
-
-			for dir in "${REQUIRED_DIRS[@]}"; do
-
-				eval "dir=\"$dir\""					### Expand variables ###
-
-				if [[ ! -d "$dir" ]]; then				### Directory missing ###
-
-					missing_dirs+=("$dir")
-					[[ "$debug" == "true" ]] && echo "DEBUG: Missing required directory: $dir"
-
-				fi
-
-			done
-
-			if [[ ${#missing_dirs[@]} -gt 0 ]]; then			### Report missing directories ###
-
-				print --warning "Warning: Missing required directories: ${missing_dirs[*]}"
-
-			fi
-
-		fi
-
-	}
-
-	### Validate file existence (internal) ###
-	# shellcheck disable=SC2317,SC2329  # Function called conditionally within main function
-	_validate_files() {
-		local missing_files=()
-
-		if [[ -n "${REQUIRED_FILES[*]}" ]]; then			### Check required files ###
-
-			[[ "$debug" == "true" ]] && echo "DEBUG: Validating required files: ${REQUIRED_FILES[*]}"
-
-			for file in "${REQUIRED_FILES[@]}"; do
-
-				eval "file=\"$file\""					### Expand variables ###
-
-				if [[ ! -f "$file" ]]; then				### File missing ###
-
-					missing_files+=("$file")
-					[[ "$debug" == "true" ]] && echo "DEBUG: Missing required file: $file"
-
-				fi
-
-			done
-
-			if [[ ${#missing_files[@]} -gt 0 ]]; then		### Report missing files ###
-
-				print --warning "Warning: Missing required files: ${missing_files[*]}"
-
-			fi
-
-		fi
-
-	}
-
-	################################################################################
-	### === MAIN LOAD_CONFIG LOGIC === ###
-	################################################################################
-
-    ### Parse Parameters with intelligent Detection ###
-    local project_root_arg=""
-    local debug="false"
-
-    ### Intelligent parameter parsing ###
-    if [[ $# -eq 1 ]]; then						### Single parameter ###
-
-        if [[ "$1" == "true" || "$1" == "false" ]]; then		### Boolean parameter ###
-
-            debug="$1"
-            project_root_arg=""					### Use auto-detection ###
-
-        else								### Path parameter ###
-
-            project_root_arg="$1"
-            debug="false"
-
-        fi
-
-    elif [[ $# -eq 2 ]]; then						### Two parameters ###
-
-        project_root_arg="$1"
-        debug="$2"
-
-    fi
-
-	### Enable debug output ###
-	[[ "$debug" == "true" ]] && set -x
-
-	### Initialize dependency tracking ###
-	declare -A loaded_files
-	local load_order=()
-
-	### Determine project root path ###
-	local project_root
-
-	if [[ -n "$project_root_arg" ]]; then					### Use provided path ###
-
-		project_root="$project_root_arg"
-
-		if [[ ! -d "$project_root" ]]; then				### Validate provided path ###
-
-			print --error "Error: Provided path '$project_root' is not a directory."
-			return 1
-
-		fi
-
-		[[ "$debug" == "true" ]] && echo "DEBUG: Using provided project_root: $project_root"
-
-	else									### Auto-detect project root ###
-
-		local script_path script_dir
-
-		script_path="$(realpath "${BASH_SOURCE[0]}")"
-		script_dir="$(dirname "$script_path")"
-		project_root="$(dirname "$script_dir")"
-
-		[[ "$debug" == "true" ]] && echo "DEBUG: Auto-detected project_root: $project_root"
-
-	fi
-
-	### Search for project.conf ###
-	local project_conf_path
-	local config_found=false
-
-    ### Try multiple locations ###
-    local config_locations=(
-        "$project_root/configs/project.conf"
-        "$project_root/project.conf" 
-        "$project_root/config/project.conf"
-    )
-
-    for conf_location in "${config_locations[@]}"; do
-        if [[ -f "$conf_location" ]]; then
-            project_conf_path="$conf_location"
-            config_found=true
-            [[ "$debug" == "true" ]] && echo "DEBUG: Found config at: $conf_location"
-            break
-        fi
-    done
-
-	### Exit if no configuration found ###
-	if [[ "$config_found" != "true" ]]; then				### No config found ###
-
-		print --error "Error: Project configuration not found in any standard location."
-		return 1
-
-	fi
-
-	### Load project.conf with dependency tracking ###
-	_load_file "$project_conf_path" || {					### Load main config ###
-
-		print --error "Error: Failed to source project configuration."
-		return 1
-
-	}
-
-	### Set PROJECT_ROOT ###
-	PROJECT_ROOT="$project_root"
-	export PROJECT_ROOT
-
-	[[ "$debug" == "true" ]] && echo "DEBUG: Set PROJECT_ROOT=$PROJECT_ROOT"
-
-	### Load HELPER_CONFIG if exists ###
-	if [[ -n "$HELPER_CONFIG" && -f "$HELPER_CONFIG" ]]; then		### Load helper config ###
-
-		_load_file "$HELPER_CONFIG" || {
-			print --warning "Warning: Failed to source helper configuration: $HELPER_CONFIG"
-		}
-
-		[[ "$debug" == "true" ]] && echo "DEBUG: Processed HELPER_CONFIG: $HELPER_CONFIG"
-
-	fi
-
-	### Load files from configured directories ###
-	if [[ -n "${LOAD_CONFIG_DIRS[*]}" ]]; then				### Process configured directories ###
-
-		local dir file pattern basename exclude exclusion
-		local files_loaded=0
-
-		[[ "$debug" == "true" ]] && echo "DEBUG: Processing LOAD_CONFIG_DIRS: ${LOAD_CONFIG_DIRS[*]}"
-		[[ "$debug" == "true" ]] && echo "DEBUG: Using patterns: ${LOAD_CONFIG_PATTERN[*]}"
-		[[ "$debug" == "true" ]] && echo "DEBUG: Exclusion patterns: ${LOAD_CONFIG_EXCLUSION[*]}"
-
-		for dir in "${LOAD_CONFIG_DIRS[@]}"; do
-
-			eval "dir=\"$dir\""					### Expand variables ###
-
-			if [[ ! -d "$dir" ]]; then				### Skip non-existent directories ###
-
-				[[ "$debug" == "true" ]] && echo "DEBUG: Skipping non-existent directory: $dir"
-				continue
-
-			fi
-
-			[[ "$debug" == "true" ]] && echo "DEBUG: Processing directory: $dir"
-
-			for pattern in "${LOAD_CONFIG_PATTERN[@]}"; do		### Process each pattern ###
-
-				[[ "$debug" == "true" ]] && echo "DEBUG: Searching for pattern: $pattern in $dir"
-
-				shopt -s nullglob					### Handle no matches ###
-
-				for file in "$dir"/$pattern; do
-
-					[[ -f "$file" ]] || continue			### Skip non-files ###
-
-					basename=$(basename "$file")
-					exclude=0
-
-					if [[ -n "${LOAD_CONFIG_EXCLUSION[*]}" ]]; then	### Check exclusions ###
-
-						for exclusion in "${LOAD_CONFIG_EXCLUSION[@]}"; do
-
-							case "$basename" in
-
-								$exclusion)
-									exclude=1
-									[[ "$debug" == "true" ]] && echo "DEBUG: Excluding $file (matches $exclusion)"
-									break
-									;;
-
-							esac
-
-						done
-
-					fi
-
-					[[ "$exclude" -eq 1 ]] && continue		### Skip excluded ###
-
-					if [[ "$file" -ef "${BASH_SOURCE[0]}" ]]; then	### Skip self-reference ###
-
-						[[ "$debug" == "true" ]] && echo "DEBUG: Skipping self-reference: $file"
-						continue
-
-					fi
-
-					### Skip already loaded files ###
-					real_file_path=$(realpath "$file" 2>/dev/null)
-
-					if [[ -n "${loaded_files[$real_file_path]}" ]]; then	### Already processed ###
-
-						[[ "$debug" == "true" ]] && echo "DEBUG: Skipping already loaded: $file"
-						continue
-
-					fi
-
-					### Load file with dependency tracking ###
-					if _load_file "$file"; then			### Load successful ###
-
-						((files_loaded++))
-						[[ "$debug" == "true" ]] && echo "DEBUG: Loaded file #$files_loaded: $file"
-
-					else						### Load failed ###
-
-						print --warning "Warning: Failed to load: $file"
-
-					fi
-
-				done
-
-				shopt -u nullglob					### Restore glob behavior ###
-
-			done
-
-		done
-
-		[[ "$debug" == "true" ]] && echo "DEBUG: Total additional files loaded: $files_loaded"
-
-	else									### No directories configured ###
-
-		[[ "$debug" == "true" ]] && echo "DEBUG: No LOAD_CONFIG_DIRS defined, skipping pattern-based loading"
-
-	fi
-
-	### Validate required resources ###
-	_validate_dirs								### Check directories ###
-	_validate_files								### Check files ###
-
-	### Export configuration status ###
-	export PROJECT_CONFIG_LOADED="true"
-	export PROJECT_CONFIG_VERSION="${PROJECT_VERSION:-unknown}"
-	export LOAD_CONFIG_FILES_COUNT="${#load_order[@]}"
-
-	### Disable debug output ###
-	[[ "$debug" == "true" ]] && set +x
-
-	### Final debug report ###
-	if [[ "$debug" == "true" ]]; then					### Debug summary ###
-
-		echo "DEBUG: =========================================="
-		echo "DEBUG: Configuration loading completed"
-		echo "DEBUG: Project Root: $PROJECT_ROOT"
-		echo "DEBUG: Total files loaded: ${#load_order[@]}"
-		echo "DEBUG: Load order:"
-
-		local i=1
-
-		for file in "${load_order[@]}"; do
-
-			printf "DEBUG:   %2d. %s\n" "$i" "$file"
-			((i++))
-
-		done
-
-		echo "DEBUG: =========================================="
-
-	fi
-
-	return 0
-
-}
 
 
 ################################################################################
@@ -1060,7 +679,7 @@ header() {
 
 	done
 
-	### Validate required parameters ###
+	### Validate required Parameters ###
 	if [[ -z "$target_file" ]]; then
 		print --error "No target file specified. Use --file <filename>"
 		return 1
@@ -1136,6 +755,189 @@ header() {
 ################################################################################
 ### === UTILITY & FLOW CONTROL FUNCTIONS === ###
 ################################################################################
+
+### Universal Cursor Position Management ###
+cursor_pos() {
+    local action=""
+    local col_param=""
+    local row_param=""
+    local get_col=false
+    local get_row=false
+    local save_pos=false
+    local restore_pos=false
+    
+    ### Parse arguments ###
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --get)
+                action="get"
+                shift
+                ;;
+            --set)
+                action="set"
+                shift
+                ### Parse numeric parameters for set ###
+                if [[ "$1" =~ ^[+-]?[0-9]+$ ]]; then
+                    col_param="$1"
+                    shift
+                    if [[ "$1" =~ ^[+-]?[0-9]+$ ]]; then
+                        row_param="$1"
+                        shift
+                    fi
+                fi
+                ;;
+            --col)
+                get_col=true
+                shift
+                ;;
+            --row)
+                get_row=true
+                shift
+                ;;
+            --save)
+                save_pos=true
+                shift
+                ;;
+            --restore)
+                restore_pos=true
+                shift
+                ;;
+            *)
+                # TODO: Log unknown parameter when logging system available
+                return 1
+                ;;
+        esac
+    done
+    
+    ### Execute restore first if requested ###
+    [[ "$restore_pos" == "true" ]] && {
+        [[ -n "${POS[col]}" && -n "${POS[row]}" ]] && {
+            tput cup $((POS[row] - 1)) $((POS[col] - 1)) 2>/dev/null || {
+                # TODO: Log cursor movement failure when logging system available
+                return 1
+            }
+        } || {
+            # TODO: Log no saved position available when logging system available
+            return 1
+        }
+    }
+    
+    ### Handle main action ###
+    case "$action" in
+        get)
+            ### Get current cursor position and update POS array ###
+            if IFS=';' read -sdR -p $'\E[6n' row col; then
+                row="${row#*[}"
+                POS[row]="$row"
+                POS[col]="$col"
+                
+                ### Return requested values ###
+                if [[ "$get_col" == "true" && "$get_row" == "true" ]]; then
+                    echo "${POS[col]} ${POS[row]}"
+                elif [[ "$get_col" == "true" ]]; then
+                    echo "${POS[col]}"
+                elif [[ "$get_row" == "true" ]]; then
+                    echo "${POS[row]}"
+                else
+                    echo "${POS[col]} ${POS[row]}"
+                fi
+            else
+                echo "1 1"
+                return 1
+            fi
+            ;;
+            
+        set)
+            ### Validate set parameters ###
+            [[ -z "$col_param" ]] && {
+                # TODO: Log no values provided for set when logging system available
+                return 1
+            }
+            
+            [[ ! "$col_param" =~ ^[+-]?[0-9]+$ ]] && {
+                # TODO: Log validation failure when logging system available
+                return 1
+            }
+            
+            [[ -n "$row_param" && ! "$row_param" =~ ^[+-]?[0-9]+$ ]] && {
+                # TODO: Log validation failure when logging system available
+                return 1
+            }
+            
+            ### Direct cursor position query for relative calculations ###
+            if [[ "$col_param" =~ ^[+-] ]] || [[ "$row_param" =~ ^[+-] ]]; then
+                if IFS=';' read -sdR -p $'\E[6n' row col; then
+                    row="${row#*[}"
+                    POS[row]="$row"
+                    POS[col]="$col"
+                else
+                    # Use cached values or fallback
+                    row="${POS[row]:-1}"
+                    col="${POS[col]:-1}"
+                fi
+            fi
+            
+            local new_col="$col_param"
+            local new_row="${POS[row]:-1}"  # Default to current/cached row
+            
+            ### Handle relative column positioning ###
+            [[ "$col_param" =~ ^[+-] ]] && {
+                new_col=$(( ${POS[col]:-1} + col_param ))
+            }
+            
+            ### Handle row parameter if provided ###
+            [[ -n "$row_param" ]] && {
+                if [[ "$row_param" =~ ^[+-] ]]; then
+                    new_row=$(( ${POS[row]:-1} + row_param ))
+                else
+                    new_row="$row_param"
+                fi
+            }
+            
+            ### Bounds checking ###
+            [[ "$new_col" -lt 1 ]] && new_col=1
+            [[ "$new_row" -lt 1 ]] && new_row=1
+            [[ "$new_col" -gt 200 ]] && new_col=200
+            [[ "$new_row" -gt 200 ]] && new_row=200
+            
+            ### Move cursor and update POS array ###
+            tput cup $((new_row - 1)) $((new_col - 1)) 2>/dev/null && {
+                POS[row]="$new_row"
+                POS[col]="$new_col"
+            } || {
+                # TODO: Log cursor movement failure when logging system available
+                return 1
+            }
+            ;;
+            
+        "")
+            ### No action specified ###
+            if [[ "$restore_pos" == "true" ]]; then
+                # restore already handled above
+                :
+            else
+                # TODO: Log no action specified when logging system available
+                return 1
+            fi
+            ;;
+            
+        *)
+            # TODO: Log invalid action when logging system available
+            return 1
+            ;;
+    esac
+    
+    ### Handle save if requested ###
+    [[ "$save_pos" == "true" ]] && {
+        if IFS=';' read -sdR -p $'\E[6n' row col; then
+            row="${row#*[}"
+            POS[row]="$row"
+            POS[col]="$col"
+        fi
+    }
+    
+    return 0
+}
 
 ### Universal Utility Function ###
 utility() {
