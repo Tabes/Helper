@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.11
+### Version: 1.0.12
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -13,7 +13,7 @@
 ### Commit:  Initial Test Suite with cursor_pos testing capabilities
 ################################################################################
 
-# shellcheck disable=SC2317,SC2329
+# shellcheck disable=SC2015,SC2317,SC2329
 
 ################################################################################
 ### Parse Command Line Arguments ###
@@ -72,8 +72,7 @@ test_pass() {
 }
 
 test_fail() {
-    ((fail_count++))
-    printf "${RD}FAIL${NC} - %s\n" "$1"
+    ((fail_count++));   printf "  ${RD}FAIL${NC} - %s\n\n" "$1"
 }
 
 test_info() {
@@ -114,7 +113,7 @@ test_cursor_pos() {
 
     ### Auto-load framework dependencies if not available ###
     if ! declare -f cursor_pos >/dev/null 2>&1; then
-        printf "Loading framework dependencies...\n"
+        printf "%s\n" "Loading framework dependencies..."
         
         ### Try to source helper.conf first ###
         local helper_conf_locations=(
@@ -153,12 +152,13 @@ test_cursor_pos() {
 
     ### Verify function exists ###
     if ! declare -f cursor_pos >/dev/null 2>&1; then
-        printf "${RD}ERROR: cursor_pos function not found.${NC}\n"
-        printf "Please ensure helper.sh is sourced first.\n"
+        printf "${RD}%s${NC}\n" "ERROR: cursor_pos function not found."
+        printf "%s\n" "Please ensure helper.sh is sourced first."
         return 1
     fi
     
-    ### Test 1: Basic --get functionality ###
+    
+    # result=$(cursor_pos --get)  ### Test 1: Basic --get functionality ###
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
 
@@ -405,7 +405,7 @@ test() {
     
     ### Clear screen and show header ###
     clear
-    printf "${BU}Universal Helper Library - Test Suite${NC}\n"
+    printf "${BU}%s${NC}\n" "Universal Helper Library - Test Suite"
     printf "────────────────────────────────────────────────────────────────────\n\n"
     printf "Suite: %s | Mode: %s\n\n" "$test_suite" "$test_mode"
     
@@ -415,14 +415,16 @@ test() {
             if [[ "$test_mode" == "auto" ]]; then
                 test_cursor_pos
             else
-                printf "\n${YE}Interactive mode not yet implemented for cursor_pos()${NC}\n\n"
+                printf "\n${YE}%s${NC}\n\n" "Interactive mode not yet implemented for cursor_pos()"
                 return 1
             fi
             ;;
+
         *)
-            printf "${RD}ERROR: Unknown Funcrion for Test Suite: $test_suite${NC}\n"
+            printf "${RD}%s$test_suite${NC}\n" "ERROR: Unknown Funcrion for Test Suite: "
             return 1
             ;;
+
     esac
 }
 
