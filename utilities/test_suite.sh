@@ -108,6 +108,7 @@ test_reset() {
 ### Test cursor_pos function with all parameter combinations ###
 test_cursor_pos() {
     current_suite="cursor_pos"
+    local row=24
     test_reset
     
     printf "Testing this Function with all it's Parameter in Combinations...\n\n"
@@ -182,8 +183,8 @@ test_cursor_pos() {
     printf "\n--- Position Setting Tests ---\n\n"
     
     ### Test 5: --set absolute Column only ###
-    test_start "--set ${POS[P6]} (absolute Column)"
-    cursor_pos --set "${POS[P6]}"
+    test_start "--set ${POS[P6]} (absolute Column (Row $row))"
+    cursor_pos --set "${POS[P6]} $row"
     result=$(cursor_pos --get --col)
     [[ $result == "${POS[P6]}" ]] && test_pass || test_fail "Expected ${POS[P6]}, got $result"
 
