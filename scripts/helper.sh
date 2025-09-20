@@ -773,35 +773,46 @@ cursor_pos() {
                 action="get"
                 shift
                 ;;
+
             --set)
                 action="set"
                 shift
                 ### Parse numeric parameters for set ###
                 if [[ "$1" =~ ^[+-]?[0-9]+$ ]]; then
+
                     col_param="$1"
                     shift
+
                     if [[ "$1" =~ ^[+-]?[0-9]+$ ]]; then
+
                         row_param="$1"
                         shift
+
                     fi
+
                 fi
                 ;;
+
             --col)
                 get_col=true
                 shift
                 ;;
+
             --row)
                 get_row=true
                 shift
                 ;;
+
             --save)
                 save_pos=true
                 shift
                 ;;
+
             --restore)
                 restore_pos=true
                 shift
                 ;;
+
             *)
                 # TODO: Log unknown parameter when logging system available
                 return 1
@@ -831,108 +842,138 @@ cursor_pos() {
                 POS[row]="$row"
                 POS[col]="$col"
                 
-                ### Return requested values ###
+                ### Return requested Values ###
                 if [[ "$get_col" == "true" && "$get_row" == "true" ]]; then
+
                     echo "${POS[col]} ${POS[row]}"
+
                 elif [[ "$get_col" == "true" ]]; then
+
                     echo "${POS[col]}"
+
                 elif [[ "$get_row" == "true" ]]; then
+
                     echo "${POS[row]}"
+
                 else
+
                     echo "${POS[col]} ${POS[row]}"
+
                 fi
+
             else
+
                 echo "1 1"
                 return 1
+
             fi
             ;;
             
-        set)
-            ### Validate set parameters ###
-            [[ -z "$col_param" ]] && {
-                # TODO: Log no values provided for set when logging system available
-                return 1
-            }
-            
-            [[ ! "$col_param" =~ ^[+-]?[0-9]+$ ]] && {
-                # TODO: Log validation failure when logging system available
-                return 1
-            }
-            
-            [[ -n "$row_param" && ! "$row_param" =~ ^[+-]?[0-9]+$ ]] && {
-                # TODO: Log validation failure when logging system available
-                return 1
-            }
-            
-            ### Direct cursor position query for relative calculations ###
-            if [[ "$col_param" =~ ^[+-] ]] || [[ "$row_param" =~ ^[+-] ]]; then
-                if IFS=';' read -sdR -p $'\E[6n' row col; then
-                    row="${row#*[}"
-                    POS[row]="$row"
-                    POS[col]="$col"
-                else
-                    # Use cached values or fallback
-                    row="${POS[row]:-1}"
-                    col="${POS[col]:-1}"
-                fi
-            fi
-            
-            local new_col="$col_param"
-            local new_row="${POS[row]:-1}"  # Default to current/cached row
-            
-            ### Handle relative column positioning ###
-            [[ "$col_param" =~ ^[+-] ]] && {
-                new_col=$(( ${POS[col]:-1} + col_param ))
-            }
-            
-            ### Handle row parameter if provided ###
-            [[ -n "$row_param" ]] && {
-                if [[ "$row_param" =~ ^[+-] ]]; then
-                    new_row=$(( ${POS[row]:-1} + row_param ))
-                else
-                    new_row="$row_param"
-                fi
-            }
-            
-            ### Bounds checking ###
-            [[ "$new_col" -lt 1 ]] && new_col=1
-            [[ "$new_row" -lt 1 ]] && new_row=1
-            [[ "$new_col" -gt 200 ]] && new_col=200
-            [[ "$new_row" -gt 200 ]] && new_row=200
-            
-            ### Move cursor and update POS array ###
-            tput cup $((new_row - 1)) $((new_col - 1)) 2>/dev/null && {
-                POS[row]="$new_row"
-                POS[col]="$new_col"
-            } || {
-                # TODO: Log cursor movement failure when logging system available
-                return 1
-            }
-            ;;
-            
-        "")
-            ### No action specified ###
+		set)
+			### Validate set parameters ###
+			[[ -z "$col_param" ]] && {
+
+				# TODO: Log no values provided for set when logging system available
+				return 1
+
+			}
+			
+			[[ ! "$col_param" =~ ^[+-]?[0-9]+$ ]] && {
+
+				# TODO: Log validation failure when logging system available
+				return 1
+
+			}
+			
+			[[ -n "$row_param" && ! "$row_param" =~ ^[+-]?[0-9]+$ ]] && {
+
+				# TODO: Log validation failure when logging system available
+				return 1
+
+			}
+			
+			### Get REAL current position from terminal ###
+			local current_row=1
+			local current_col=1
+			
+			if IFS=';' read -sdR -p $'\E[6n' row col; then
+
+				current_row="${row#*[}"
+				current_col="$col"
+
+			fi
+			
+			local new_col="$col_param"
+			local new_row="$current_row"  # Keep current row
+			
+			### Handle relative Column Positioning ###
+			[[ "$col_param" =~ ^[+-] ]] && {
+
+				new_col=$((current_col + col_param))
+
+			}
+			
+			### Handle row Parameter if provided ###
+			[[ -n "$row_param" ]] && {
+
+				if [[ "$row_param" =~ ^[+-] ]]; then
+
+					new_row=$((current_row + row_param))
+
+				else
+
+					new_row="$row_param"
+
+				fi
+
+			}
+			
+			### Bounds checking ###
+			[[ "$new_col" -lt 1 ]] && new_col=1
+			[[ "$new_row" -lt 1 ]] && new_row=1
+			[[ "$new_col" -gt 200 ]] && new_col=200
+			[[ "$new_row" -gt 200 ]] && new_row=200
+			
+			### Move Cursor to Position ###
+			tput cup $((new_row - 1)) $((new_col - 1)) 2>/dev/null || {
+
+				# TODO: Log cursor movement failure when logging system available
+				return 1
+
+			}
+			;;
+
+       "")
+            ### No Action specified ###
             if [[ "$restore_pos" == "true" ]]; then
+
                 # restore already handled above
                 :
+
             else
+
                 # TODO: Log no action specified when logging system available
                 return 1
+
             fi
             ;;
             
         *)
+
             # TODO: Log invalid action when logging system available
             return 1
             ;;
+
     esac
     
     ### Handle save if requested ###
     [[ "$save_pos" == "true" ]] && {
         if IFS=';' read -sdR -p $'\E[6n' row col; then
+
             row="${row#*[}"
             POS[row]="$row"
             POS[col]="$col"
+
         fi
     }
     
