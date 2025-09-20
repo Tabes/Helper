@@ -5,9 +5,9 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.2
+### Version: 1.0.3
 ### Author:  Mawage (Development Team)
-### Date:    2025-09-19
+### Date:    2025-09-20
 ### License: MIT
 ### Usage:   Source this File to load Test Functions or run directly for Testing
 ### Commit:  Initial Test Suite with cursor_pos testing capabilities
