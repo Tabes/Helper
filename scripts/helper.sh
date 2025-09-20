@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.19
+### Version: 3.0.20
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -822,8 +822,8 @@ cursor_pos() {
     
     ### Execute restore first if requested ###
     [[ "$restore_pos" == "true" ]] && {
-        [[ -n "${POS[col]}" && -n "${POS[row]}" ]] && {
-            tput cup $((POS[row] - 1)) $((POS[col] - 1)) 2>/dev/null || {
+        [[ -n "${POS[_col]}" && -n "${POS[_row]}" ]] && {
+            tput cup $((POS[_row] - 1)) $((POS[_col] - 1)) 2>/dev/null || {
                 # TODO: Log cursor movement failure when logging system available
                 return 1
             }
@@ -839,25 +839,25 @@ cursor_pos() {
             ### Get current cursor position and update POS array ###
             if IFS=';' read -sdR -p $'\E[6n' row col; then
                 row="${row#*[}"
-                POS[row]="$row"
-                POS[col]="$col"
+                POS[_row]="$row"
+                POS[_col]="$col"
                 
                 ### Return requested Values ###
                 if [[ "$get_col" == "true" && "$get_row" == "true" ]]; then
 
-                    echo "${POS[col]} ${POS[row]}"
+                    echo "${POS[_col]} ${POS[_row]}"
 
                 elif [[ "$get_col" == "true" ]]; then
 
-                    echo "${POS[col]}"
+                    echo "${POS[_col]}"
 
                 elif [[ "$get_row" == "true" ]]; then
 
-                    echo "${POS[row]}"
+                    echo "${POS[_row]}"
 
                 else
 
-                    echo "${POS[col]} ${POS[row]}"
+                    echo "${POS[_col]} ${POS[_row]}"
 
                 fi
 
@@ -971,8 +971,8 @@ cursor_pos() {
         if IFS=';' read -sdR -p $'\E[6n' row col; then
 
             row="${row#*[}"
-            POS[row]="$row"
-            POS[col]="$col"
+            POS[_row]="$row"
+            POS[_col]="$col"
 
         fi
     }
