@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.18
+### Version: 1.0.19
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -67,17 +67,17 @@ test_start() {
 }
 
 test_pass() {
-    cursor_pos --set "${POS[P5]}"
+    cursor_pos --set "${POS[P6]}"
     ((pass_count++));   printf "${GN}%s${NC}\n" "pass"
 }
 
 test_fail() {
-    cursor_pos --set "${POS[P5]}"
+    cursor_pos --set "${POS[P6]}"
     ((fail_count++));   printf "  ${RD}FAIL${NC} - %s\n\n" "$1"
 }
 
 test_info() {
-    printf "  ${YE}result:${NC} %s\n" "$1"
+    printf "  ${YE}result:${NC} %s\n\n" "$1"
 }
 
 test_summary() {
@@ -157,9 +157,10 @@ test_cursor_pos() {
         printf "%s\n" "Please ensure helper.sh is sourced first."
         return 1
     fi
-    
+
+    ### Test 1: Basic --get functionality ###
     test_start "--get (basic position query)"
-    result=$(cursor_pos --get)  ### Test 1: Basic --get functionality ###
+    result=$(cursor_pos --get)
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
 
@@ -168,18 +169,13 @@ test_cursor_pos() {
     result=$(cursor_pos --get --col)
     [[ $result =~ ^[0-9]+$ ]] && { test_pass; test_info "Current Column: $result"; } || test_fail "Invalid format: '$result'"
 
-    return 0
-
     ### Test 3: --get --row ###
     test_start "--get --row (row only)"
     result=$(cursor_pos --get --row)
-    if [[ "$result" =~ ^[0-9]+$ ]]; then
-        test_pass
-        test_info "Current row: $result"
-    else
-        test_fail "Invalid format: '$result'"
-    fi
-    
+    [[ $result =~ ^[0-9]+$ ]] && { test_pass; test_info "Current Row: $result"; } || test_fail "Invalid format: '$result'"
+
+    return 0
+
     ### Test 4: --get --col --row ###
     test_start "--get --col --row (both values)"
     result=$(cursor_pos --get --col --row)
