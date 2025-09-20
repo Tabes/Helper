@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.19
+### Version: 1.0.20
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -160,7 +160,7 @@ test_cursor_pos() {
 
     ### Test 1: Basic --get functionality ###
     test_start "--get (basic position query)"
-    result=$(cursor_pos --get)
+    # result=$(cursor_pos --get)
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
 
@@ -174,97 +174,62 @@ test_cursor_pos() {
     result=$(cursor_pos --get --row)
     [[ $result =~ ^[0-9]+$ ]] && { test_pass; test_info "Current Row: $result"; } || test_fail "Invalid format: '$result'"
 
-    return 0
-
     ### Test 4: --get --col --row ###
     test_start "--get --col --row (both values)"
     result=$(cursor_pos --get --col --row)
-    if [[ "$result" =~ ^[0-9]+\ [0-9]+$ ]]; then
-        test_pass
-        test_info "Position: $result"
-    else
-        test_fail "Invalid format: '$result'"
-    fi
+    [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Position: $result"; } || test_fail "Invalid format: '$result'"
     
     printf "\n--- Position Setting Tests ---\n\n"
     
-    ### Test 5: --set absolute column only ###
-    test_start "--set ${POS[P3]} (absolute column)"
+    ### Test 5: --set absolute Column only ###
+    test_start "--set ${POS[P3]} (absolute Column)"
     cursor_pos --set "${POS[P3]}"
     result=$(cursor_pos --get --col)
-    if [[ "$result" == "${POS[P3]}" ]]; then
-        test_pass
-    else
-        test_fail "Expected ${POS[P3]}, got $result"
-    fi
-    
-    ### Test 6: --set absolute column and row ###
-    test_start "--set ${POS[P4]} ${POS[P2]} (absolute column & row)"
+    [[ $result == "${POS[P3]}" ]] && test_pass || test_fail "Expected ${POS[P3]}, got $result"
+
+    ### Test 6: --set absolute Column and Row ###
+    test_start "--set ${POS[P4]} ${POS[P2]} (absolute Column & Row)"
     cursor_pos --set "${POS[P4]}" "${POS[P2]}"
     result=$(cursor_pos --get)
-    if [[ "$result" == "${POS[P4]} ${POS[P2]}" ]]; then
-        test_pass
-    else
-        test_fail "Expected '${POS[P4]} ${POS[P2]}', got '$result'"
-    fi
-    
+    [[ $result == "${POS[P4]} ${POS[P2]}" ]] && test_pass || test_fail "Expected '${POS[P4]} ${POS[P2]}', got '$result'"
+
     ### Test 7: --set relative column ###
-    test_start "--set +5 (relative column)"
-    cursor_pos --set "${POS[P2]}"  # Set known position first
+    test_start "--set +5 (relative Column)"
+    cursor_pos --set "${POS[P2]}"  # Set known Position first
     cursor_pos --set +5
     expected=$((POS[P2] + 5))
     result=$(cursor_pos --get --col)
-    if [[ "$result" == "$expected" ]]; then
-        test_pass
-    else
-        test_fail "Expected $expected, got $result"
-    fi
-    
-    ### Test 8: --set relative column and row ###
+    [[ $result == "$expected" ]] && test_pass || test_fail "Expected $expected, got $result"
+
+    ### Test 8: --set relative Column and Row ###
     test_start "--set +3 -2 (relative column & row)"
-    cursor_pos --set "${POS[P3]}" "${POS[P2]}"  # Set known position
+    cursor_pos --set "${POS[P3]}" "${POS[P2]}"  # Set known Position
     cursor_pos --set +3 -2
     expected_col=$((POS[P3] + 3))
     expected_row=$((POS[P2] - 2))
     result=$(cursor_pos --get)
-    if [[ "$result" == "$expected_col $expected_row" ]]; then
-        test_pass
-    else
-        test_fail "Expected '$expected_col $expected_row', got '$result'"
-    fi
-    
+    [[ $result == "$expected_col $expected_row" ]] && test_pass || test_fail "Expected '$expected_col $expected_row', got '$result'"
+
     printf "\n--- Save/Restore Tests ---\n\n"
     
-    ### Test 9: --save functionality ###
-    test_start "--save (save current position)"
+    ### Test 9: --Save functionality ###
+    test_start "--save (save current Position)"
     cursor_pos --set "${POS[P5]}" "${POS[P3]}"
     cursor_pos --save
-    if [[ "${POS[col]}" == "${POS[P5]}" && "${POS[row]}" == "${POS[P3]}" ]]; then
-        test_pass
-    else
-        test_fail "POS array not updated: col=${POS[col]}, row=${POS[row]}"
-    fi
-    
-    ### Test 10: --restore functionality ###
-    test_start "--restore (restore saved position)"
+    [[ ${POS[col]} == ${POS[P5]} && ${POS[row]} == ${POS[P3]} ]] && test_pass || test_fail "POS Array not updated: col=${POS[col]}, row=${POS[row]}"
+
+    ### Test 10: --restore Functionality ###
+    test_start "--restore (restore saved Position)"
     cursor_pos --set "${POS[P6]}" "${POS[P4]}"  # Move somewhere else
-    cursor_pos --restore    # Should go back to saved position
+    cursor_pos --restore    # Should go back to saved Position
     result=$(cursor_pos --get)
-    if [[ "$result" == "${POS[P5]} ${POS[P3]}" ]]; then
-        test_pass
-    else
-        test_fail "Expected '${POS[P5]} ${POS[P3]}', got '$result'"
-    fi
-    
+    [[ $result == "${POS[P5]} ${POS[P3]}" ]] && test_pass || test_fail "Expected '${POS[P5]} ${POS[P3]}', got '$result'"
+
     ### Test 11: --set with --save ###
     test_start "--set ${POS[P6]} ${POS[P4]} --save (set and save)"
     cursor_pos --set "${POS[P6]}" "${POS[P4]}" --save
-    if [[ "${POS[col]}" == "${POS[P6]}" && "${POS[row]}" == "${POS[P4]}" ]]; then
-        test_pass
-    else
-        test_fail "POS not saved: col=${POS[col]}, row=${POS[row]}"
-    fi
-    
+    [[ ${POS[col]} == ${POS[P6]} && ${POS[row]} == ${POS[P4]} ]] && test_pass || test_fail "POS not saved: col=${POS[col]}, row=${POS[row]}"
+
     ### Test 12: --restore --set (combined) ###
     test_start "--restore --set +10 (restore then move)"
     cursor_pos --set "${POS[P2]}" "${POS[P2]}" --save  # Save known position
@@ -272,69 +237,43 @@ test_cursor_pos() {
     cursor_pos --restore --set +10                     # Should restore then move
     expected_col=$((POS[P2] + 10))
     result=$(cursor_pos --get)
-    if [[ "$result" == "$expected_col ${POS[P2]}" ]]; then
-        test_pass
-    else
-        test_fail "Expected '$expected_col ${POS[P2]}', got '$result'"
-    fi
-    
+    [[ $result == "$expected_col ${POS[P2]}" ]] && test_pass || test_fail "Expected '$expected_col ${POS[P2]}', got '$result'"
+
     printf "\n--- Error Handling Tests ---\n\n"
     
-    ### Test 13: Invalid parameters ###
-    test_start "--set (no parameters)"
+    ### Test 13: Invalid Parameters ###
+    test_start "--set (no Parameters)"
     cursor_pos --set >/dev/null 2>&1
     ret_code=$?
-    if [[ "$ret_code" -ne 0 ]]; then
-        test_pass
-    else
-        test_fail "Should return error for missing parameters"
-    fi
-    
-    ### Test 14: Invalid numbers ###
-    test_start "--set abc (invalid number)"
+    [[ $ret_code -ne 0 ]] && test_pass || test_fail "Should return Rrror for missing Parameters"
+
+    ### Test 14: Invalid Numbers ###
+    test_start "--set abc (invalid Number)"
     cursor_pos --set abc >/dev/null 2>&1
     ret_code=$?
-    if [[ "$ret_code" -ne 0 ]]; then
-        test_pass
-    else
-        test_fail "Should return error for invalid number"
-    fi
-    
-    ### Test 15: Unknown parameter ###
-    test_start "--unknown (invalid parameter)"
+    [[ $ret_code -ne 0 ]] && test_pass || test_fail "Should return Error for invalid Number"
+
+    ### Test 15: Unknown Parameter ###
+    test_start "--unknown (invalid Parameter)"
     cursor_pos --unknown >/dev/null 2>&1
     ret_code=$?
-    if [[ "$ret_code" -ne 0 ]]; then
-        test_pass
-    else
-        test_fail "Should return error for unknown parameter"
-    fi
-    
+    [[ $ret_code -ne 0 ]] && test_pass || test_fail "Should return Error for unknown Parameter"
+
     printf "\n--- Bounds Testing ---\n\n"
     
-    ### Test 16: Negative bounds ###
-    test_start "--set -5 -3 (negative values)"
+    ### Test 16: Negative Bounds ###
+    test_start "--set -5 -3 (negative Values)"
     cursor_pos --set -5 -3
     result=$(cursor_pos --get)
-    if [[ "$result" == "1 1" ]]; then
-        test_pass
-        test_info "Correctly bounded to minimum values"
-    else
-        test_fail "Expected '1 1', got '$result'"
-    fi
+    [[ $result == "1 1" ]] && { test_pass; test_info "Correctly bounded to minimum Values"; } || test_fail "Expected '1 1', got '$result'"
     
     ### Test 17: Large bounds ###
-    test_start "--set 300 250 (large values)"
+    test_start "--set 300 250 (large Values)"
     cursor_pos --set 300 250
     result=$(cursor_pos --get)
-    if [[ "$result" == "200 200" ]]; then
-        test_pass
-        test_info "Correctly bounded to maximum values"
-    else
-        test_fail "Expected '200 200', got '$result'"
-    fi
-    
-    ### Restore to a reasonable position ###
+    [[ $result == "200 200" ]] && { test_pass; test_info "Correctly bounded to maximum Values"; } || test_fail "Expected '200 200', got '$result'"
+
+    ### Restore to a reasonable Position ###
     cursor_pos --set 1 $((test_count + 10))
     
     test_summary
