@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.31
+### Version: 1.0.32
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -108,7 +108,7 @@ test_reset() {
 ### Test cursor_pos function with all parameter combinations ###
 test_cursor_pos() {
     current_suite="cursor_pos"
-    local cur_row=24
+    local cur_row=25
     test_reset
     
     printf "Testing this Function with all it's Parameter in Combinations...\n\n"
@@ -184,7 +184,7 @@ test_cursor_pos() {
     
     ### Test 5: --set absolute Column only ###
     test_start "--set ${POS[P6]} ${cur_row} (absolute Column, Col & Row)"
-    cursor_pos --set "${POS[P6]} ${cur_row}"; printf "<- Curser here ->"
+    cursor_pos --set "${POS[P6]} ${cur_row}"; printf ">%s<" ">$symbol{[error]}<"
 
     echo
     echo "${POS[P6]} ${cur_row}"
