@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.5
+### Version: 1.0.6
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
