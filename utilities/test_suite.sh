@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.36
+### Version: 1.0.37
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -188,7 +188,7 @@ test_cursor_pos() {
     result=$(cursor_pos --get --col); cursor_pos --restore
     echo "$result, ${POS[P6]}"
 
-    # [[ $result == "${POS[P6]}" ]] && test_pass || test_fail "Expected ${POS[P6]}, got $result"
+    [[ $result == "${POS[P6]}" ]] && test_pass || test_fail "Expected ${POS[P6]}, got $result"
 
     return 0
 
