@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.28
+### Version: 1.0.29
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -108,7 +108,7 @@ test_reset() {
 ### Test cursor_pos function with all parameter combinations ###
 test_cursor_pos() {
     current_suite="cursor_pos"
-    local row=24
+    local cur_row=24
     test_reset
     
     printf "Testing this Function with all it's Parameter in Combinations...\n\n"
@@ -161,7 +161,7 @@ test_cursor_pos() {
 
     ### Test 1: Basic --get functionality ###
     test_start "--get (basic position query)"
-    # result=$(cursor_pos --get)
+    result=$(cursor_pos --get)
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Current Position (Col / Row): $result"; } || test_fail "Invalid format: '$result'"
 
 
@@ -183,11 +183,11 @@ test_cursor_pos() {
     printf "\n--- Position Setting Tests ---\n\n"
     
     ### Test 5: --set absolute Column only ###
-    test_start "--set ${POS[P6]} ${row} (absolute Column, Row & Row)"
+    test_start "--set ${POS[P6]} ${cur_row} (absolute Column, Row & Row)"
 
-    cursor_pos --set "${POS[P6]} ${row}"
+    cursor_pos --set "${POS[P6]} ${cur_row}"
 
-    echo "${POS[P6]} $row"
+    echo "${POS[P6]} ${cur_row}"
     return 0
 
     result=$(cursor_pos --get --col)
