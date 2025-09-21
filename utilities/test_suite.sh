@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.39
+### Version: 1.0.40
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -108,7 +108,7 @@ test_reset() {
 ### Test cursor_pos function with all parameter combinations ###
 test_cursor_pos() {
     current_suite="cursor_pos"
-    local cur_row=25
+    local target_row=25
     test_reset
     
     printf "Testing this Function with all it's Parameter in Combinations...\n\n"
@@ -183,9 +183,9 @@ test_cursor_pos() {
     printf "\n--- Position Setting Tests ---\n\n"; cursor_pos --save
     
     ### Test 5: --set absolute Column only ###
-    test_start "--set ${POS[P6]} ${cur_row} (absolute Column, Col & Row)"; cursor_pos --save; printf "Col: %02d, Row: %02d" "${POS[_col]}" "${POS[_row]}"
-    cursor_pos --set "${POS[P6]}" "${cur_row}"; printf "%s" "$SYMBOL_ERROR"
-    result=$(cursor_pos --get --col); cursor_pos --restore
+    test_start "--set ${POS[P6]} (absolute Column, Row: $target_row)"
+    cursor_pos --restore --set "${POS[P6]}"; printf "%s" "$SYMBOL_ERROR"
+    result=$(cursor_pos --get --col)
     echo "$result, ${POS[P6]}"
 
     [[ $result == "${POS[P6]}" ]] && test_pass || test_fail "Expected ${POS[P6]}, got $result"
