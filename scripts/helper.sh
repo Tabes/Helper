@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.23
+### Version: 3.0.24
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -835,40 +835,40 @@ cursor_pos() {
     
     ### Handle Main Action ###
     case "$action" in
-        get)
-            ### Get current cursor position and update POS array ###
-            if IFS=';' read -sdR -p $'\E[6n' row col; then
-                row="${row#*[}"
-                POS[row]="$row"
-                POS[col]="$col"
-                
-                ### Return requested Values ###
-                if [[ "$get_col" == "true" && "$get_row" == "true" ]]; then
+		get)
+			### Get current cursor position and return values only ###
+			if IFS=';' read -sdR -p $'\E[6n' row col; then
 
-                    echo "${POS[col]} ${POS[row]}"
+				row="${row#*[}"
+				# Verwende lokale Variablen, KEIN POS-Array Update
+				
+				### Return requested values ###
+				if [[ "$get_col" == "true" && "$get_row" == "true" ]]; then
 
-                elif [[ "$get_col" == "true" ]]; then
+					echo "$col $row"
 
-                    echo "${POS[col]}"
+				elif [[ "$get_col" == "true" ]]; then
 
-                elif [[ "$get_row" == "true" ]]; then
+					echo "$col"
 
-                    echo "${POS[row]}"
+				elif [[ "$get_row" == "true" ]]; then
 
-                else
+					echo "$row"
 
-                    echo "${POS[col]} ${POS[row]}"
+				else
 
-                fi
+					echo "$col $row"
 
-            else
+				fi
 
-                echo "1 1"
-                return 1
+			else
 
-            fi
-            ;;
-            
+				echo "1 1"
+				return 1
+
+			fi
+			;;
+
 		set)
 			### Validate set parameters ###
 			[[ -z "$col_param" ]] && {
