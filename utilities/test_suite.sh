@@ -108,6 +108,7 @@ test_reset() {
 ### Test cursor_pos function with all parameter combinations ###
 test_cursor_pos() {
     current_suite="cursor_pos"
+    local target_col="${POS[P6]}"
     local target_row=25
     test_reset
     
@@ -183,22 +184,21 @@ test_cursor_pos() {
     printf "\n--- Position Setting Tests ---\n\n"
     
     ### Test 5: --set absolute Column only ###
-    test_start "--set ${POS[P6]} (absolute Column, Row: $target_row)"; cursor_pos --save
-    cursor_pos --set "${POS[P6]}" "$target_row"; printf "%s" "$SYMBOL_ERROR"
-    # result=$((cursor_pos --get --col) - 1)
+    test_start "--set $target_col (absolute Column, Row: $target_row)"; cursor_pos --save
+    cursor_pos --set "$target_col" "$target_row"; printf "%s" "$SYMBOL_ERROR"
     result=$(( $(cursor_pos --get --col) - 1 ))
-    # echo "$result, ${POS[P6]}"
     cursor_pos --restore
-
-    [[ $result == "${POS[P6]}" ]] && test_pass || test_fail "Expected ${POS[P6]}, got $result"
-
-    return 0
+    [[ $result == "$target_col" ]] && { test_pass; test_info "Position moved: $result, $target_row"; } || test_fail "Expected $target_col, got $result"
 
     ### Test 6: --set absolute Column and Row ###
-    test_start "--set ${POS[P4]} ${POS[P2]} (absolute Column & Row)"
-    cursor_pos --set "${POS[P4]}" "${POS[P2]}"
+    ((target_col += 2))
+    test_start "--set $target_col $target_row (absolute Column & Row)"; cursor_pos --save
+    cursor_pos --set "$target_col" "$target_row"; printf "%s" "$SYMBOL_ERROR"
     result=$(cursor_pos --get)
-    [[ $result == "${POS[P4]} ${POS[P2]}" ]] && test_pass || test_fail "Expected '${POS[P4]} ${POS[P2]}', got '$result'"
+    cursor_pos --restore
+    [[ $result == "$target_col $target_row" ]] && { test_pass; test_info "Position moved: $result"; } || test_fail "Expected '$target_col $target_row', got '$result'"
+
+    return 0
 
     ### Test 7: --set relative column ###
     test_start "--set +5 (relative Column)"
@@ -227,20 +227,20 @@ test_cursor_pos() {
 
     ### Test 10: --restore Functionality ###
     test_start "--restore (restore saved Position)"
-    cursor_pos --set "${POS[P6]}" "${POS[P4]}"  # Move somewhere else
+    cursor_pos --set "$target_col" "${POS[P4]}"  # Move somewhere else
     cursor_pos --restore    # Should go back to saved Position
     result=$(cursor_pos --get)
     [[ $result == "${POS[P5]} ${POS[P3]}" ]] && test_pass || test_fail "Expected '${POS[P5]} ${POS[P3]}', got '$result'"
 
     ### Test 11: --set with --save ###
-    test_start "--set ${POS[P6]} ${POS[P4]} --save (set and save)"
-    cursor_pos --set "${POS[P6]}" "${POS[P4]}" --save
-    [[ ${POS[_col]} == ${POS[P6]} && ${POS[_row]} == ${POS[P4]} ]] && test_pass || test_fail "POS not saved: col=${POS[_col]}, row=${POS[_row]}"
+    test_start "--set $target_col ${POS[P4]} --save (set and save)"
+    cursor_pos --set "$target_col" "${POS[P4]}" --save
+    [[ ${POS[_col]} == $target_col && ${POS[_row]} == ${POS[P4]} ]] && test_pass || test_fail "POS not saved: col=${POS[_col]}, row=${POS[_row]}"
 
     ### Test 12: --restore --set (combined) ###
     test_start "--restore --set +10 (restore then move)"
     cursor_pos --set "${POS[P2]}" "${POS[P2]}" --save  # Save known position
-    cursor_pos --set "${POS[P6]}" "${POS[P6]}"         # Move elsewhere
+    cursor_pos --set "$target_col" "$target_col"         # Move elsewhere
     cursor_pos --restore --set +10                     # Should restore then move
     expected_col=$((POS[P2] + 10))
     result=$(cursor_pos --get)
