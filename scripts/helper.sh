@@ -973,6 +973,8 @@ cursor_pos() {
             row="${row#*[}"
             POS[row]="$row"
             POS[col]="$col"
+			echo "${POS[col]}, ${POS[row]}"
+
 
         fi
     }
