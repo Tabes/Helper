@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.21
+### Version: 3.0.22
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -966,6 +966,7 @@ cursor_pos() {
 
     esac
     
+	echo "Save Pos.: $save_pos"
     ### Handle save if requested ###
     [[ "$save_pos" == "true" ]] && {
         if IFS=';' read -sdR -p $'\E[6n' row col; then
