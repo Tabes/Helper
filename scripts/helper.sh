@@ -5,7 +5,7 @@
 ### Provides comprehensive Configuration loading for bash Framework Projects
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 3.0.22
+### Version: 3.0.23
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -833,7 +833,7 @@ cursor_pos() {
         }
     }
     
-    ### Handle main action ###
+    ### Handle Main Action ###
     case "$action" in
         get)
             ### Get current cursor position and update POS array ###
@@ -943,30 +943,8 @@ cursor_pos() {
 			}
 			;;
 
-       "")
-            ### No Action specified ###
-            if [[ "$restore_pos" == "true" ]]; then
-
-                # restore already handled above
-                :
-
-            else
-
-                # TODO: Log no action specified when logging system available
-                return 1
-
-            fi
-            ;;
-            
-        *)
-
-            # TODO: Log invalid action when logging system available
-            return 1
-            ;;
-
     esac
     
-	echo "Save Pos.: $save_pos"
     ### Handle save if requested ###
     [[ "$save_pos" == "true" ]] && {
         if IFS=';' read -sdR -p $'\E[6n' row col; then
@@ -974,8 +952,6 @@ cursor_pos() {
             row="${row#*[}"
             POS[row]="$row"
             POS[col]="$col"
-			echo "${POS[col]}, ${POS[row]}"
-
 
         fi
     }
