@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.40
+### Version: 1.0.41
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -181,11 +181,13 @@ test_cursor_pos() {
     [[ $result =~ ^[0-9]+\ [0-9]+$ ]] && { test_pass; test_info "Position: $result"; } || test_fail "Invalid format: '$result'"
     
     printf "\n--- Position Setting Tests ---\n\n"; cursor_pos --save
+    echo "${POS[col]}, ${POS[row]}"
     
     ### Test 5: --set absolute Column only ###
     test_start "--set ${POS[P6]} (absolute Column, Row: $target_row)"
     cursor_pos --restore --set "${POS[P6]}"; printf "%s" "$SYMBOL_ERROR"
-    result=$(cursor_pos --get --col)
+    # result=$((cursor_pos --get --col) - 1)
+    result=$(( $(cursor_pos --get --col) - 1 ))
     echo "$result, ${POS[P6]}"
 
     [[ $result == "${POS[P6]}" ]] && test_pass || test_fail "Expected ${POS[P6]}, got $result"
