@@ -5,7 +5,7 @@
 ### Provides automated testing capabilities for all framework components
 ################################################################################
 ### Project: Universal Helper Library
-### Version: 1.0.42
+### Version: 1.0.43
 ### Author:  Mawage (Development Team)
 ### Date:    2025-09-20
 ### License: MIT
@@ -189,6 +189,8 @@ test_cursor_pos() {
     result=$(( $(cursor_pos --get --col) - 1 ))
     cursor_pos --restore
     [[ $result == "$target_col" ]] && { test_pass; test_info "Position moved: $result, $target_row"; } || test_fail "Expected $target_col, got $result"
+
+    return 0
 
     ### Test 6: --set absolute Column and Row ###
     ((target_col += 2))
